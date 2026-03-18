@@ -1,4 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
+import LinkController from '@/actions/App/Http/Controllers/LinkController';
 import { dashboard, login, register } from '@/routes';
 
 export default function Welcome({
@@ -6,7 +8,17 @@ export default function Welcome({
 }: {
     canRegister?: boolean;
 }) {
-    const { auth } = usePage().props;
+    const { auth, flash } = usePage<{
+        auth: any;
+        flash: { shortened_link?: string };
+    }>().props;
+
+    const { data, setData, post, processing, errors, reset } = useForm({
+        url: '',
+        slug: '',
+    });
+
+    const shortened_link = flash?.shortened_link;
 
     return (
         <>
@@ -133,6 +145,81 @@ export default function Welcome({
                                     </a>
                                 </li>
                             </ul>
+
+                            <div className="mt-8 border-t border-[#e3e3e0] pt-8 dark:border-[#3E3E3A]">
+                                <h2 className="mb-4 font-medium">
+                                    Shorten a link
+                                </h2>
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        post(LinkController.store().url, {
+                                            preserveScroll: true,
+                                            onSuccess: () => reset('url', 'slug'),
+                                        });
+                                    }}
+                                    className="space-y-4"
+                                >
+                                    <div>
+                                        <input
+                                            type="url"
+                                            value={data.url}
+                                            onChange={(e) => setData('url', e.target.value)}
+                                            placeholder="Paste your long URL here..."
+                                            required
+                                            className="w-full rounded-sm border border-[#e3e3e0] bg-[#FDFDFC] px-4 py-2 text-sm focus:border-[#f53003] focus:ring-1 focus:ring-[#f53003] dark:border-[#3E3E3A] dark:bg-[#161615] dark:text-[#EDEDEC] dark:focus:border-[#FF4433] dark:focus:ring-[#FF4433]"
+                                        />
+                                        {errors.url && (
+                                            <p className="mt-1 text-xs text-red-500">
+                                                {errors.url}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={data.slug}
+                                            onChange={(e) => setData('slug', e.target.value)}
+                                            placeholder="Custom slug (optional)"
+                                            className="flex-1 rounded-sm border border-[#e3e3e0] bg-[#FDFDFC] px-4 py-2 text-sm focus:border-[#f53003] focus:ring-1 focus:ring-[#f53003] dark:border-[#3E3E3A] dark:bg-[#161615] dark:text-[#EDEDEC] dark:focus:border-[#FF4433] dark:focus:ring-[#FF4433]"
+                                        />
+                                        <button
+                                            type="submit"
+                                            disabled={processing}
+                                            className="rounded-sm bg-[#f53003] px-6 py-2 text-sm font-medium text-white hover:bg-[#e22c02] disabled:opacity-50 dark:bg-[#FF4433] dark:hover:bg-[#f63d2d]"
+                                        >
+                                            {processing ? 'Shortening...' : 'Shorten'}
+                                        </button>
+                                    </div>
+                                    {errors.slug && (
+                                        <p className="mt-1 text-xs text-red-500">
+                                            {errors.slug}
+                                        </p>
+                                    )}
+                                </form>
+
+                                {shortened_link && (
+                                    <div className="mt-6 rounded-sm border border-[#19140035] bg-[#fff9eb] p-4 dark:border-[#3E3E3A] dark:bg-[#1c1c1a]">
+                                        <p className="mb-2 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A]">
+                                            Your shortened link (valid for 1 month):
+                                        </p>
+                                        <div className="flex items-center justify-between gap-4">
+                                            <code className="break-all text-sm font-semibold text-[#f53003] dark:text-[#FF4433]">
+                                                {shortened_link}
+                                            </code>
+                                            <button
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(shortened_link);
+                                                    alert('Copied to clipboard!');
+                                                }}
+                                                className="shrink-0 text-xs font-medium underline underline-offset-4 hover:text-[#f53003] dark:hover:text-[#FF4433]"
+                                            >
+                                                Copy
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="relative -mb-px aspect-[335/364] w-full shrink-0 overflow-hidden rounded-t-lg bg-[#fff2f2] lg:mb-0 lg:-ml-px lg:aspect-auto lg:w-[438px] lg:rounded-t-none lg:rounded-r-lg dark:bg-[#1D0002]">
                             {/* Laravel Logo */}
