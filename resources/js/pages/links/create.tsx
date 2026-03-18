@@ -184,7 +184,7 @@ export default function Create() {
                                                 );
                                                 setCopied(true);
                                             }}
-                                            className={`flex min-w-[120px] items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-bold shadow-sm transition-all ${copied ? 'bg-green-500 text-white' : 'bg-gray-900 text-white hover:bg-black dark:bg-white dark:text-black dark:hover:bg-gray-200'}`}
+                                            className={`flex w-[130px] items-center justify-center gap-2 rounded-lg py-2 text-xs font-bold shadow-sm transition-all ${copied ? 'bg-green-500 text-white' : 'bg-gray-900 text-white hover:bg-black dark:bg-white dark:text-black dark:hover:bg-gray-200'}`}
                                         >
                                             {copied ? (
                                                 <>

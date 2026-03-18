@@ -85,7 +85,7 @@ export default function Status({ link }: Props) {
                                     navigator.clipboard.writeText(shortUrl);
                                     setCopied(true);
                                 }}
-                                className={`min-w-[110px] text-white px-5 py-3.5 rounded-xl font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 ${copied ? 'bg-green-500 shadow-green-500/20' : 'bg-gray-900 hover:bg-black shadow-black/10'}`}
+                                className={`w-[130px] text-white py-3.5 rounded-xl font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 ${copied ? 'bg-green-500 shadow-green-500/20' : 'bg-gray-900 hover:bg-black shadow-black/10'}`}
                             >
                                 {copied ? (
                                     <>
