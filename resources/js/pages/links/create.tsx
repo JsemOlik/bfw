@@ -135,37 +135,41 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <div className="space-y-6">
                                 <div className="space-y-1">
                                     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                                         Custom Slug (Optional)
                                     </label>
-                                    <input
-                                        type="text"
-                                        value={data.slug}
-                                        onChange={(e) =>
-                                            setData('slug', e.target.value)
-                                        }
-                                        placeholder="my-link"
-                                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-[#f53003] focus:ring-1 focus:ring-[#f53003] dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-[#EDEDEC] dark:focus:border-[#FF4433] dark:focus:ring-[#FF4433]"
-                                    />
+                                    <div className="flex items-stretch overflow-hidden rounded-xl border border-gray-200 bg-gray-50 focus-within:border-[#f53003] focus-within:ring-1 focus-within:ring-[#f53003] dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:focus-within:border-[#FF4433] dark:focus-within:ring-[#FF4433]">
+                                        <div className="flex items-center border-r border-gray-200 bg-gray-100/50 px-4 font-mono text-sm text-gray-400 select-none dark:border-white/10 dark:bg-white/5 dark:text-gray-500">
+                                            {window.location.host}/link/
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={data.slug}
+                                            onChange={(e) =>
+                                                setData('slug', e.target.value)
+                                            }
+                                            placeholder="my-link"
+                                            className="flex-1 border-none bg-transparent px-4 py-3 text-sm focus:ring-0 dark:text-[#EDEDEC]"
+                                        />
+                                    </div>
                                     {errors.slug && (
                                         <p className="mt-1 text-xs text-red-500">
                                             {errors.slug}
                                         </p>
                                     )}
                                 </div>
-                                <div className="flex items-end">
-                                    <button
-                                        type="submit"
-                                        disabled={processing}
-                                        className="w-full rounded-xl bg-[#f53003] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-red-500/20 transition-all hover:bg-[#e22c02] active:scale-[0.98] disabled:opacity-50 dark:bg-[#FF4433] dark:shadow-red-900/20 dark:hover:bg-[#f63d2d]"
-                                    >
-                                        {processing
-                                            ? 'Shortening...'
-                                            : 'Get Short Link'}
-                                    </button>
-                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="w-full rounded-xl bg-[#f53003] px-6 py-4 text-sm font-bold text-white shadow-lg shadow-red-500/20 transition-all hover:bg-[#e22c02] active:scale-[0.98] disabled:opacity-50 dark:bg-[#FF4433] dark:shadow-red-900/20 dark:hover:bg-[#f63d2d]"
+                                >
+                                    {processing
+                                        ? 'Shortening...'
+                                        : 'Get Short Link'}
+                                </button>
                             </div>
                         </form>
 
