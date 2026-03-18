@@ -42,7 +42,7 @@ export default function Index({ links }: Props) {
     };
 
     return (
-        <div className="flex min-h-screen flex-col items-center bg-[#F3F4F6] p-6 lg:p-12">
+        <div className="flex min-h-screen flex-col items-center bg-[#F3F4F6] px-6 pt-32 pb-6 lg:px-12 lg:pb-12">
             <MarketingNavbar />
             <Head title="All Shortened Links" />
 

@@ -9,45 +9,62 @@ export default function MarketingNavbar() {
     }>().props;
 
     return (
-        <header className="mb-6 w-full max-w-[335px] text-sm not-has-[nav]:hidden lg:max-w-4xl">
-            <nav className="flex items-center justify-end gap-4 px-6 py-4 lg:px-0">
-                <Link
-                    href="/"
-                    className="inline-block rounded-sm border border-transparent px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#19140035] dark:text-[#EDEDEC] dark:hover:border-[#3E3E3A]"
-                >
-                    Home
-                </Link>
-                <Link
-                    href={LinkController.create().url}
-                    className="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
-                >
-                    Link Shortener
-                </Link>
-                {auth.user ? (
+        <header className="fixed top-0 left-0 right-0 z-50 flex justify-center p-4">
+            <nav className="flex w-full max-w-5xl items-center justify-between rounded-2xl border border-white/20 bg-white/70 px-6 py-3 backdrop-blur-xl shadow-lg ring-1 ring-black/5 dark:border-white/10 dark:bg-black/60 dark:ring-white/10">
+                {/* Left: Brand */}
+                <div className="flex items-center">
                     <Link
-                        href={dashboard().url}
-                        className="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
+                        href="/"
+                        className="text-xl font-black tracking-tighter text-[#1b1b18] transition-opacity hover:opacity-80 dark:text-white"
                     >
-                        Dashboard
+                        bfw<span className="text-[#f53003] dark:text-[#ff4433]">.cz</span>
                     </Link>
-                ) : (
-                    <>
+                </div>
+
+                {/* Middle: Main Nav */}
+                <div className="hidden items-center gap-8 md:flex">
+                    <Link
+                        href={LinkController.create().url}
+                        className="text-sm font-semibold text-gray-600 transition-colors hover:text-[#f53003] dark:text-gray-400 dark:hover:text-[#ff4433]"
+                    >
+                        Link Shortener
+                    </Link>
+                    <Link
+                        href={LinkController.index().url}
+                        className="text-sm font-semibold text-gray-600 transition-colors hover:text-[#f53003] dark:text-gray-400 dark:hover:text-[#ff4433]"
+                    >
+                        All Links
+                    </Link>
+                </div>
+
+                {/* Right: Auth/Dashboard */}
+                <div className="flex items-center gap-3">
+                    {auth.user ? (
                         <Link
-                            href={login().url}
-                            className="inline-block rounded-sm border border-transparent px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#19140035] dark:text-[#EDEDEC] dark:hover:border-[#3E3E3A]"
+                            href={dashboard().url}
+                            className="rounded-xl bg-[#1b1b18] px-5 py-2 text-sm font-bold text-white transition-all hover:bg-black active:scale-95 dark:bg-white dark:text-black dark:hover:bg-gray-200"
                         >
-                            Log in
+                            Dashboard
                         </Link>
-                        {canRegister && (
+                    ) : (
+                        <>
                             <Link
-                                href={register().url}
-                                className="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
+                                href={login().url}
+                                className="px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:text-black dark:text-gray-300 dark:hover:text-white"
                             >
-                                Register
+                                Log in
                             </Link>
-                        )}
-                    </>
-                )}
+                            {canRegister && (
+                                <Link
+                                    href={register().url}
+                                    className="rounded-xl bg-[#f53003] px-5 py-2 text-sm font-bold text-white transition-all shadow-md shadow-red-500/20 hover:bg-[#e22c02] active:scale-95 dark:bg-[#ff4433] dark:hover:bg-[#f63d2d]"
+                                >
+                                    Register
+                                </Link>
+                            )}
+                        </>
+                    )}
+                </div>
             </nav>
         </header>
     );

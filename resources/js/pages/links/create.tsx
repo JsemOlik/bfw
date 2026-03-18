@@ -29,7 +29,7 @@ export default function Create() {
     return (
         <>
             <Head title="Shorten a Link" />
-            <div className="flex min-h-screen flex-col items-center bg-[#FDFDFC] p-6 text-[#1b1b18] lg:p-8 dark:bg-[#0a0a0a]">
+            <div className="flex min-h-screen flex-col items-center bg-[#FDFDFC] px-6 pt-32 pb-6 text-[#1b1b18] lg:px-8 lg:pb-8 dark:bg-[#0a0a0a]">
                 <MarketingNavbar />
                 <div className="flex w-full max-w-2xl flex-col items-center gap-8">
                     <div className="text-center">
