@@ -10,17 +10,41 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class LinkController extends Controller
 {
+    use AuthorizesRequests;
+
     /**
-     * Display a listing of all shortened links.
+     * Display a listing of shortened links.
      */
     public function index(): Response
     {
+        $query = Link::latest();
+
+        if (Auth::check()) {
+            // Show user's links and other public links if needed, 
+            // but for "My Links" logic we focus on ownership.
+            $links = Link::where('user_id', Auth::id())
+                ->orWhereNull('user_id')
+                ->latest()
+                ->get();
+        } else {
+            $links = Link::whereNull('user_id')->latest()->get();
+        }
+
         return Inertia::render('links/index', [
-            'links' => Link::latest()->get(),
+            'links' => $links,
         ]);
+    }
+
+    /**
+     * Show the form for creating a new link.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('links/create');
     }
 
     /**
@@ -58,6 +82,8 @@ class LinkController extends Controller
 
         return Inertia::render('links/status', [
             'link' => [
+                'id' => $link->id,
+                'user_id' => $link->user_id,
                 'original_url' => $link->original_url,
                 'slug' => $link->slug,
                 'created_at' => $link->created_at->toDateTimeString(),
@@ -65,5 +91,19 @@ class LinkController extends Controller
                 'is_expired' => $link->expires_at->isPast(),
             ],
         ]);
+    }
+
+    /**
+     * Remove the specified link from storage.
+     */
+    public function destroy(Link $link): RedirectResponse
+    {
+        if (!Auth::check() || $link->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $link->delete();
+
+        return back()->with('message', 'Link deleted successfully.');
     }
 }

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Prunable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 #[Fillable(['original_url', 'slug', 'expires_at', 'user_id'])]
@@ -24,6 +25,14 @@ class Link extends Model
         return [
             'expires_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Get the user that owns the link.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**
