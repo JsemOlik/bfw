@@ -29,7 +29,7 @@ export default function Welcome() {
                                 Free to use, built for everyone.
                             </p>
 
-                            <div className="space-y-8">
+                            <div className="spacexs-y-8">
                                 <section>
                                     <h2 className="mb-4 font-bold text-gray-900 dark:text-white">
                                         🚀 Link Shortener
