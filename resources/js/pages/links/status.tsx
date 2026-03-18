@@ -1,6 +1,8 @@
 import { Head, Link as InertiaLink, useForm, usePage } from '@inertiajs/react';
-import LinkController from '@/actions/App/Http/Controllers/LinkController';
 import { useState, useEffect } from 'react';
+import LinkController from '@/actions/App/Http/Controllers/LinkController';
+import MarketingNavbar from '@/components/marketing-navbar';
+import DeleteConfirmModal from '@/components/delete-confirm-modal';
 
 interface Props {
     link: {
@@ -21,6 +23,7 @@ export default function Status({ link }: Props) {
     
     const { delete: destroy, processing } = useForm();
     const isOwner = auth.user && link.user_id === auth.user.id;
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         if (copied) {
@@ -29,14 +32,21 @@ export default function Status({ link }: Props) {
         }
     }, [copied]);
 
-    const handleDelete = () => {
-        if (confirm('Are you sure you want to delete/expire this link?')) {
-            destroy(LinkController.destroy(link.id).url);
-        }
+    const handleDelete = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsModalOpen(true);
+    };
+
+    const confirmDelete = () => {
+        destroy(LinkController.destroy(link.id).url, {
+            onSuccess: () => setIsModalOpen(false),
+        });
     };
 
     return (
-        <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-6">
+        <div className="flex min-h-screen flex-col items-center bg-[#FDFDFC] p-6 lg:p-8 dark:bg-[#0a0a0a]">
+            <MarketingNavbar />
             <Head title={`Status: ${link.slug}`} />
             
             <div className="max-w-xl w-full bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden ring-1 ring-black/5">
@@ -128,7 +138,8 @@ export default function Status({ link }: Props) {
                         </div>
                         {isOwner && (
                             <button
-                                onClick={handleDelete}
+                                onClick={(e) => handleDelete(e)}
+                                type="button"
                                 disabled={processing}
                                 className="sm:w-auto w-full px-8 py-4 bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-2xl font-bold transition-all flex items-center justify-center gap-3 border border-red-100 disabled:opacity-50"
                             >
@@ -142,6 +153,13 @@ export default function Status({ link }: Props) {
                     </div>
                 </div>
             </div>
+
+            <DeleteConfirmModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onConfirm={confirmDelete}
+                processing={processing}
+            />
         </div>
     );
 }

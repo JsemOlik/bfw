@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import LinkController from '@/actions/App/Http/Controllers/LinkController';
+import MarketingNavbar from '@/components/marketing-navbar';
 
 export default function Create() {
     const { auth, flash } = usePage<{
@@ -28,7 +29,8 @@ export default function Create() {
     return (
         <>
             <Head title="Shorten a Link" />
-            <div className="flex min-h-screen flex-col items-center bg-[#FDFDFC] p-6 text-[#1b1b18] lg:justify-center lg:p-8 dark:bg-[#0a0a0a]">
+            <div className="flex min-h-screen flex-col items-center bg-[#FDFDFC] p-6 text-[#1b1b18] lg:p-8 dark:bg-[#0a0a0a]">
+                <MarketingNavbar />
                 <div className="flex w-full max-w-2xl flex-col items-center gap-8">
                     <div className="text-center">
                         <h1 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl dark:text-white">
@@ -243,13 +245,6 @@ export default function Create() {
                     </div>
 
                     <div className="flex items-center gap-6 text-sm font-medium">
-                        <Link
-                            href="/"
-                            className="text-gray-500 transition-colors hover:text-black dark:text-gray-400 dark:hover:text-white"
-                        >
-                            ← Back Home
-                        </Link>
-                        <span className="h-4 w-px bg-gray-200 dark:bg-gray-800"></span>
                         <Link
                             href={LinkController.index().url}
                             className="text-[#f53003] hover:underline dark:text-[#FF4433]"
