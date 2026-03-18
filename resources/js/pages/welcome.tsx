@@ -39,12 +39,6 @@ export default function Welcome() {
                                         >
                                             Shorten a Link Now
                                         </Link>
-                                        <Link
-                                            href={LinkController.index().url}
-                                            className="inline-block rounded-xl bg-gray-100 px-8 py-3 text-sm font-bold text-gray-700 hover:bg-gray-200 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10 transition-all"
-                                        >
-                                            View Links
-                                        </Link>
                                     </div>
                                 </section>
 

@@ -3,14 +3,20 @@ import { useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import LinkController from '@/actions/App/Http/Controllers/LinkController';
 import MarketingNavbar from '@/components/marketing-navbar';
+import DeleteConfirmModal from '@/components/delete-confirm-modal';
 
-export default function Create() {
+export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
     const { auth, flash } = usePage<{
         auth: any;
         flash: { shortened_link?: string };
     }>().props;
 
     const [copied, setCopied] = useState(false);
+    const [isDashboardOpen, setIsDashboardOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [linkToDelete, setLinkToDelete] = useState<number | null>(null);
+
+    const { delete: destroy, processing: deleting } = useForm();
 
     const { data, setData, post, processing, errors, reset } = useForm({
         url: '',
@@ -26,10 +32,27 @@ export default function Create() {
         }
     }, [copied]);
 
+    const handleDelete = (id: number) => {
+        setLinkToDelete(id);
+        setIsModalOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (linkToDelete) {
+            destroy(LinkController.destroy(linkToDelete).url, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsModalOpen(false);
+                    setLinkToDelete(null);
+                },
+            });
+        }
+    };
+
     return (
         <>
             <Head title="Shorten a Link" />
-            <div className="flex min-h-screen flex-col items-center bg-[#FDFDFC] px-6 pt-32 pb-6 text-[#1b1b18] lg:px-8 lg:pb-8 dark:bg-[#0a0a0a]">
+            <div className="flex min-h-screen flex-col items-center justify-center bg-[#FDFDFC] px-6 pt-32 pb-6 text-[#1b1b18] lg:px-8 lg:pb-8 dark:bg-[#0a0a0a]">
                 <MarketingNavbar />
                 <div className="flex w-full max-w-2xl flex-col items-center gap-8">
                     <div className="text-center">
@@ -244,16 +267,176 @@ export default function Create() {
                         )}
                     </div>
 
-                    <div className="flex items-center gap-6 text-sm font-medium">
-                        <Link
-                            href={LinkController.index().url}
-                            className="text-[#f53003] hover:underline dark:text-[#FF4433]"
-                        >
-                            View All Links
-                        </Link>
+                    <div className="mt-8 flex w-full flex-col items-center gap-6">
+                        <div className="flex items-center gap-6 text-sm font-medium">
+                            <button
+                                onClick={() =>
+                                    setIsDashboardOpen(!isDashboardOpen)
+                                }
+                                className="flex items-center gap-2 text-gray-600 transition-colors hover:text-black dark:text-gray-400 dark:hover:text-white"
+                            >
+                                <span className="font-semibold">My Links</span>
+                                <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className={`transition-transform duration-200 ${isDashboardOpen ? 'rotate-180' : ''}`}
+                                >
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* My Links Dropdown Content */}
+                        {isDashboardOpen && (
+                            <div className="w-full max-w-2xl animate-in duration-300 fade-in slide-in-from-top-4">
+                                <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white/50 shadow-xl backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+                                    {!auth.user ? (
+                                        <div className="p-8 text-center text-sm text-gray-500">
+                                            To use this feature, please{' '}
+                                            <Link
+                                                href="/login"
+                                                className="font-bold text-[#f53003] hover:underline dark:text-[#FF4433]"
+                                            >
+                                                log in
+                                            </Link>
+                                            .
+                                        </div>
+                                    ) : userLinks.length === 0 ? (
+                                        <div className="p-8 text-center text-sm text-gray-500">
+                                            You haven't shortened any links yet.
+                                        </div>
+                                    ) : (
+                                        <div className="divide-y divide-gray-100 dark:divide-white/10">
+                                            {userLinks.map((link) => (
+                                                <div
+                                                    key={link.id}
+                                                    className="group flex flex-col gap-3 p-4 transition-colors hover:bg-gray-50/50 sm:flex-row sm:items-center sm:justify-between dark:hover:bg-white/5"
+                                                >
+                                                    <div className="flex-1 space-y-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <a
+                                                                href={`/link/${link.slug}`}
+                                                                target="_blank"
+                                                                className="group flex items-center gap-1.5 font-mono text-sm font-bold text-gray-900 underline decoration-gray-300 decoration-2 underline-offset-4 transition-all hover:text-[#f53003] hover:decoration-[#f53003] dark:text-white dark:decoration-white/10 dark:hover:text-[#FF4433] dark:hover:decoration-[#FF4433]"
+                                                            >
+                                                                <span>
+                                                                    /{link.slug}
+                                                                </span>
+                                                                <svg
+                                                                    width="12"
+                                                                    height="12"
+                                                                    viewBox="0 0 24 24"
+                                                                    fill="none"
+                                                                    stroke="currentColor"
+                                                                    strokeWidth="3"
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                    className="opacity-0 transition-opacity group-hover:opacity-100"
+                                                                >
+                                                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                                                    <line
+                                                                        x1="10"
+                                                                        y1="14"
+                                                                        x2="21"
+                                                                        y2="3"
+                                                                    ></line>
+                                                                </svg>
+                                                            </a>
+                                                            {link.is_expired && (
+                                                                <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-600 uppercase dark:bg-red-900/20 dark:text-red-400">
+                                                                    Expired
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="max-w-[300px] truncate text-xs text-gray-500">
+                                                            {link.original_url}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Link
+                                                            href={
+                                                                LinkController.status(
+                                                                    link.slug,
+                                                                ).url
+                                                            }
+                                                            className="rounded-lg bg-gray-100 p-2 text-gray-500 transition-all hover:bg-gray-900 hover:text-white dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white dark:hover:text-black"
+                                                        >
+                                                            <svg
+                                                                width="14"
+                                                                height="14"
+                                                                viewBox="0 0 24 24"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                strokeWidth="2.5"
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                            >
+                                                                <circle
+                                                                    cx="12"
+                                                                    cy="12"
+                                                                    r="10"
+                                                                ></circle>
+                                                                <line
+                                                                    x1="12"
+                                                                    y1="16"
+                                                                    x2="12"
+                                                                    y2="12"
+                                                                ></line>
+                                                                <line
+                                                                    x1="12"
+                                                                    y1="8"
+                                                                    x2="12.01"
+                                                                    y2="8"
+                                                                ></line>
+                                                            </svg>
+                                                        </Link>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleDelete(
+                                                                    link.id,
+                                                                )
+                                                            }
+                                                            className="rounded-lg bg-red-50 p-2 text-red-500 transition-all hover:bg-red-500 hover:text-white dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white"
+                                                        >
+                                                            <svg
+                                                                width="14"
+                                                                height="14"
+                                                                viewBox="0 0 24 24"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                strokeWidth="2.5"
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                            >
+                                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
+
+            <DeleteConfirmModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onConfirm={confirmDelete}
+                processing={deleting}
+            />
         </>
     );
 }

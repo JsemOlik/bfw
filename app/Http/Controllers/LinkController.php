@@ -17,34 +17,27 @@ class LinkController extends Controller
     use AuthorizesRequests;
 
     /**
-     * Display a listing of shortened links.
-     */
-    public function index(): Response
-    {
-        $query = Link::latest();
-
-        if (Auth::check()) {
-            // Show user's links and other public links if needed, 
-            // but for "My Links" logic we focus on ownership.
-            $links = Link::where('user_id', Auth::id())
-                ->orWhereNull('user_id')
-                ->latest()
-                ->get();
-        } else {
-            $links = Link::whereNull('user_id')->latest()->get();
-        }
-
-        return Inertia::render('links/index', [
-            'links' => $links,
-        ]);
-    }
-
-    /**
      * Show the form for creating a new link.
      */
     public function create(): Response
     {
-        return Inertia::render('links/create');
+        $userLinks = [];
+        if (Auth::check()) {
+            $userLinks = Link::where('user_id', Auth::id())
+                ->latest()
+                ->get()
+                ->map(fn($link) => [
+                    'id' => $link->id,
+                    'original_url' => $link->original_url,
+                    'slug' => $link->slug,
+                    'expires_at' => $link->expires_at->toDateTimeString(),
+                    'is_expired' => $link->expires_at->isPast(),
+                ]);
+        }
+
+        return Inertia::render('links/create', [
+            'userLinks' => $userLinks,
+        ]);
     }
 
     /**

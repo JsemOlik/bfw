@@ -11,7 +11,6 @@ Route::inertia('/', 'welcome', [
 // Link routes
 Route::get('link', [LinkController::class, 'create'])->name('link.create');
 Route::post('link', [LinkController::class, 'store'])->name('link.store');
-Route::get('links', [LinkController::class, 'index'])->name('link.index');
 Route::get('link/{slug}/status', [LinkController::class, 'status'])->name('link.status');
 Route::delete('link/{link}', [LinkController::class, 'destroy'])->name('link.destroy');
 

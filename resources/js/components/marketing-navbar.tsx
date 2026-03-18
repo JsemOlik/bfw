@@ -9,15 +9,18 @@ export default function MarketingNavbar() {
     }>().props;
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 flex justify-center p-4">
-            <nav className="flex w-full max-w-5xl items-center justify-between rounded-2xl border border-white/20 bg-white/70 px-6 py-3 backdrop-blur-xl shadow-lg ring-1 ring-black/5 dark:border-white/10 dark:bg-black/60 dark:ring-white/10">
+        <header className="fixed top-0 right-0 left-0 z-50 flex justify-center p-4">
+            <nav className="flex w-full max-w-5xl items-center justify-between rounded-2xl border border-white/20 bg-white/70 px-6 py-3 shadow-lg ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-black/60 dark:ring-white/10">
                 {/* Left: Brand */}
                 <div className="flex items-center">
                     <Link
                         href="/"
                         className="text-xl font-black tracking-tighter text-[#1b1b18] transition-opacity hover:opacity-80 dark:text-white"
                     >
-                        bfw<span className="text-[#f53003] dark:text-[#ff4433]">.cz</span>
+                        bfw
+                        <span className="text-[#f53003] dark:text-[#ff4433]">
+                            .cz
+                        </span>
                     </Link>
                 </div>
 
@@ -28,12 +31,6 @@ export default function MarketingNavbar() {
                         className="text-sm font-semibold text-gray-600 transition-colors hover:text-[#f53003] dark:text-gray-400 dark:hover:text-[#ff4433]"
                     >
                         Link Shortener
-                    </Link>
-                    <Link
-                        href={LinkController.index().url}
-                        className="text-sm font-semibold text-gray-600 transition-colors hover:text-[#f53003] dark:text-gray-400 dark:hover:text-[#ff4433]"
-                    >
-                        All Links
                     </Link>
                 </div>
 
@@ -57,7 +54,7 @@ export default function MarketingNavbar() {
                             {canRegister && (
                                 <Link
                                     href={register().url}
-                                    className="rounded-xl bg-[#f53003] px-5 py-2 text-sm font-bold text-white transition-all shadow-md shadow-red-500/20 hover:bg-[#e22c02] active:scale-95 dark:bg-[#ff4433] dark:hover:bg-[#f63d2d]"
+                                    className="rounded-xl bg-[#f53003] px-5 py-2 text-sm font-bold text-white shadow-md shadow-red-500/20 transition-all hover:bg-[#e22c02] active:scale-95 dark:bg-[#ff4433] dark:hover:bg-[#f63d2d]"
                                 >
                                     Register
                                 </Link>
