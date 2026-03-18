@@ -1,5 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useForm } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
 import LinkController from '@/actions/App/Http/Controllers/LinkController';
 import { dashboard, login, register } from '@/routes';
 
@@ -13,12 +14,21 @@ export default function Welcome({
         flash: { shortened_link?: string };
     }>().props;
 
+    const [copied, setCopied] = useState(false);
+
     const { data, setData, post, processing, errors, reset } = useForm({
         url: '',
         slug: '',
     });
 
     const shortened_link = flash?.shortened_link;
+
+    useEffect(() => {
+        if (copied) {
+            const timeout = setTimeout(() => setCopied(false), 2000);
+            return () => clearTimeout(timeout);
+        }
+    }, [copied]);
 
     return (
         <>
@@ -199,23 +209,55 @@ export default function Welcome({
                                 </form>
 
                                 {shortened_link && (
-                                    <div className="mt-6 rounded-sm border border-[#19140035] bg-[#fff9eb] p-4 dark:border-[#3E3E3A] dark:bg-[#1c1c1a]">
-                                        <p className="mb-2 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A]">
-                                            Your shortened link (valid for 1 month):
-                                        </p>
-                                        <div className="flex items-center justify-between gap-4">
-                                            <code className="break-all text-sm font-semibold text-[#f53003] dark:text-[#FF4433]">
-                                                {shortened_link}
-                                            </code>
-                                            <button
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(shortened_link);
-                                                    alert('Copied to clipboard!');
-                                                }}
-                                                className="shrink-0 text-xs font-medium underline underline-offset-4 hover:text-[#f53003] dark:hover:text-[#FF4433]"
-                                            >
-                                                Copy
-                                            </button>
+                                    <div className="mt-8 overflow-hidden rounded-xl border border-green-100 bg-green-50/50 p-6 dark:border-green-900/20 dark:bg-green-900/10">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-white">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                                </svg>
+                                            </div>
+                                            <h3 className="text-sm font-semibold text-green-900 dark:text-green-400">
+                                                Link Created Successfully!
+                                            </h3>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded-lg border border-green-100 dark:bg-[#1c1c1a] dark:border-green-900/30">
+                                                <a 
+                                                    href={shortened_link} 
+                                                    target="_blank" 
+                                                    className="truncate text-sm font-medium text-[#f53003] hover:underline dark:text-[#FF4433]"
+                                                >
+                                                    {shortened_link}
+                                                </a>
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(shortened_link);
+                                                        setCopied(true);
+                                                    }}
+                                                    className="flex items-center justify-center gap-1.5 rounded-md bg-white px-3 py-2 sm:py-1.5 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-white/5 dark:text-gray-300 dark:ring-white/10 dark:hover:bg-white/10"
+                                                >
+                                                    {copied ? (
+                                                        <>
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-green-500">
+                                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                                            </svg>
+                                                            Copied!
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                            </svg>
+                                                            Copy Link
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                            <p className="text-[11px] text-green-700/70 dark:text-green-400/50 italic">
+                                                * This link will automatically expire in 24 hours.
+                                            </p>
                                         </div>
                                     </div>
                                 )}

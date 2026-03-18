@@ -22,7 +22,7 @@ it('can shorten a link', function () {
     $link = Link::first();
     expect($link->slug)->not->toBeNull()
         ->and(strlen($link->slug))->toBe(6)
-        ->and(abs($link->created_at->diffInHours($link->expires_at)))->toBe(24);
+        ->and(abs($link->created_at->diffInHours($link->expires_at)))->toEqual(24);
 });
 
 it('can shorten a link with a custom slug', function () {

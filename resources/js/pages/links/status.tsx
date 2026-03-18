@@ -1,4 +1,5 @@
 import { Head, Link as InertiaLink } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
 
 interface Props {
     link: {
@@ -12,6 +13,14 @@ interface Props {
 
 export default function Status({ link }: Props) {
     const shortUrl = `${window.location.origin}/link/${link.slug}`;
+    const [copied, setCopied] = useState(false);
+
+    useEffect(() => {
+        if (copied) {
+            const timeout = setTimeout(() => setCopied(false), 2000);
+            return () => clearTimeout(timeout);
+        }
+    }, [copied]);
 
     return (
         <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-6">
@@ -40,10 +49,13 @@ export default function Status({ link }: Props) {
                                 className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono text-gray-700"
                             />
                             <button 
-                                onClick={() => navigator.clipboard.writeText(shortUrl)}
-                                className="bg-orange-500 text-white px-5 py-3 rounded-xl font-semibold hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/20 active:scale-95"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(shortUrl);
+                                    setCopied(true);
+                                }}
+                                className={`min-w-[100px] text-white px-5 py-3 rounded-xl font-semibold transition-all shadow-lg active:scale-95 ${copied ? 'bg-green-500 shadow-green-500/20' : 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20'}`}
                             >
-                                Copy
+                                {copied ? 'Copied!' : 'Copy'}
                             </button>
                         </div>
                     </div>
