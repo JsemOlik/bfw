@@ -223,7 +223,7 @@ export default function Welcome() {
                                                                                         Short link
                                                                                     </div>
                                                                                     <div className="mt-2 flex items-center justify-between rounded-xl bg-[#f53003]/8 px-3 py-2 text-sm font-semibold text-[#f53003] dark:bg-[#ff4433]/10 dark:text-[#ff7b6d]">
-                                                                                        <span>bfw.cz/r/demo</span>
+                                                                                        <span>bfw.cz/link/demo</span>
                                                                                         <span className="text-[11px] tracking-[0.16em] uppercase">
                                                                                             Ready
                                                                                         </span>

@@ -327,7 +327,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                             account. You won&apos;t be able to delete or
                                             expire it manually. Log in to bump the expiry
                                             from 24 hours to{' '}
-                                            {data.type === 'text' ? '2 months' : '14 days'}.
+                                            {data.type === 'text' ? '3 months' : '2 weeks'}.
                                         </span>
                                     </p>
                                 </div>
