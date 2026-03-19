@@ -63,7 +63,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
         ? `Create a ${currentPasteLabel}. Admin pastes never expire ;).`
         : auth.user
           ? data.type === 'text'
-            ? 'Paste text, your code, or even logs. Expires in 2 months.'
+            ? 'Paste text, your code, or even logs. Expires in 3 months.'
             : data.type === 'image'
               ? 'Upload your cat, dog, or any other image. Expires in 2 weeks.'
               : 'Upload your birthday party, or any other video. Expires in 2 weeks.'
