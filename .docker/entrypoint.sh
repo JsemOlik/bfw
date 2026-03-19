@@ -18,15 +18,8 @@ else
     exit 1
 fi
 
-# Clear stale caches
-php artisan view:clear
-php artisan config:clear
-php artisan cache:clear
-
 # Run migrations if DB is up
 echo "Checking database connection..."
-# We can use pure PHP if nc is not available, but we installed bash/curl
-# Assuming DB_HOST=db and port 5432
 if [ "$DB_CONNECTION" = "pgsql" ]; then
     until php -r "try { new PDO('pgsql:host=$DB_HOST;port=$DB_PORT;dbname=$DB_DATABASE', '$DB_USERNAME', '$DB_PASSWORD'); } catch (Exception \$e) { exit(1); }"; do
         echo "Waiting for PostgreSQL ($DB_HOST:$DB_PORT)..."
@@ -35,6 +28,10 @@ if [ "$DB_CONNECTION" = "pgsql" ]; then
 fi
 
 php artisan migrate --force
+
+# Clear stale caches (Must happen AFTER migrations if using 'database' driver)
+echo "Clearing application caches..."
+php artisan optimize:clear
 
 # Generate Wayfinder actions/routes for the frontend
 echo "Generating Wayfinder types..."
