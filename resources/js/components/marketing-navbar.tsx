@@ -12,9 +12,9 @@ export default function MarketingNavbar() {
 
     return (
         <header className="fixed top-0 right-0 left-0 z-50 flex justify-center p-4">
-            <nav className="flex w-full max-w-5xl items-center justify-between rounded-2xl border border-white/20 bg-white/70 px-6 py-3 shadow-lg ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-black/60 dark:ring-white/10">
+            <nav className="flex w-full max-w-5xl items-center justify-between rounded-2xl border border-white/20 bg-white/70 px-3 py-3 shadow-lg ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-black/60 dark:ring-white/10">
                 {/* Left: Brand */}
-                <div className="flex items-center">
+                <div className="flex items-center ml-3">
                     <Link
                         href="/"
                         className="text-xl font-black tracking-tighter text-[#1b1b18] transition-opacity hover:opacity-80 dark:text-white"
