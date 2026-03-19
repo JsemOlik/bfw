@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Support\ExpirationResolver;
+use Database\Factories\PasteFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Prunable;
@@ -12,7 +15,7 @@ use Illuminate\Support\Str;
 #[Fillable(['user_id', 'slug', 'content', 'syntax', 'expires_at'])]
 class Paste extends Model
 {
-    /** @use HasFactory<\Database\Factories\PasteFactory> */
+    /** @use HasFactory<PasteFactory> */
     use HasFactory, Prunable;
 
     /**
@@ -38,9 +41,10 @@ class Paste extends Model
     /**
      * Get the prunable model query.
      */
-    public function prunable(): \Illuminate\Database\Eloquent\Builder
+    public function prunable(): Builder
     {
-        return static::where('expires_at', '<', now());
+        return static::whereNotNull('expires_at')
+            ->where('expires_at', '<', now());
     }
 
     /**
@@ -50,12 +54,11 @@ class Paste extends Model
     {
         static::creating(function (Paste $paste) {
             if (! $paste->slug) {
-                // Ensure unique slug logic if we wanted, but randomly 6 chars is fine for now
                 $paste->slug = Str::random(6);
             }
 
-            if (! $paste->expires_at) {
-                $paste->expires_at = now()->addHours(24);
+            if (! $paste->isDirty('expires_at')) {
+                $paste->expires_at = app(ExpirationResolver::class)->resolveForUserId($paste->user_id);
             }
         });
     }

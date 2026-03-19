@@ -31,8 +31,8 @@ class PasteController extends Controller
                     'id' => $paste->id,
                     'slug' => $paste->slug,
                     'syntax' => $paste->syntax,
-                    'expires_at' => $paste->expires_at->toDateTimeString(),
-                    'is_expired' => $paste->expires_at->isPast(),
+                    'expires_at' => $paste->expires_at?->toDateTimeString(),
+                    'is_expired' => $paste->expires_at?->isPast() ?? false,
                     'snippet' => Str::limit($paste->content, 50),
                 ]);
         }
@@ -63,7 +63,10 @@ class PasteController extends Controller
     public function show(string $slug, PasteHighlighter $pasteHighlighter): Response
     {
         $paste = Paste::where('slug', $slug)
-            ->where('expires_at', '>', now())
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
             ->firstOrFail();
 
         return Inertia::render('pastes/show', [
@@ -84,7 +87,10 @@ class PasteController extends Controller
     public function raw(string $slug): HttpResponse
     {
         $paste = Paste::where('slug', $slug)
-            ->where('expires_at', '>', now())
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
             ->firstOrFail();
 
         return response($paste->content, 200, [
@@ -107,8 +113,8 @@ class PasteController extends Controller
                 'syntax' => $paste->syntax,
                 'snippet' => Str::limit($paste->content, 100),
                 'created_at' => $paste->created_at->toDateTimeString(),
-                'expires_at' => $paste->expires_at->toDateTimeString(),
-                'is_expired' => $paste->expires_at->isPast(),
+                'expires_at' => $paste->expires_at?->toDateTimeString(),
+                'is_expired' => $paste->expires_at?->isPast() ?? false,
             ],
         ]);
     }

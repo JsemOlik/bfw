@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Support\ExpirationResolver;
+use Database\Factories\LinkFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Prunable;
@@ -12,7 +15,7 @@ use Illuminate\Support\Str;
 #[Fillable(['original_url', 'slug', 'expires_at', 'user_id'])]
 class Link extends Model
 {
-    /** @use HasFactory<\Database\Factories\LinkFactory> */
+    /** @use HasFactory<LinkFactory> */
     use HasFactory, Prunable;
 
     /**
@@ -38,9 +41,10 @@ class Link extends Model
     /**
      * Get the prunable model query.
      */
-    public function prunable(): \Illuminate\Database\Eloquent\Builder
+    public function prunable(): Builder
     {
-        return static::where('expires_at', '<', now());
+        return static::whereNotNull('expires_at')
+            ->where('expires_at', '<', now());
     }
 
     /**
@@ -53,7 +57,9 @@ class Link extends Model
                 $link->slug = Str::random(6);
             }
 
-                $link->expires_at = now()->addHours(24);
+            if (! $link->isDirty('expires_at')) {
+                $link->expires_at = app(ExpirationResolver::class)->resolveForUserId($link->user_id);
+            }
         });
     }
 }

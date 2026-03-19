@@ -2,15 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-
 use App\Http\Requests\StoreLinkRequest;
 use App\Models\Link;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class LinkController extends Controller
 {
@@ -26,12 +24,12 @@ class LinkController extends Controller
             $userLinks = Link::where('user_id', Auth::id())
                 ->latest()
                 ->get()
-                ->map(fn($link) => [
+                ->map(fn ($link) => [
                     'id' => $link->id,
                     'original_url' => $link->original_url,
                     'slug' => $link->slug,
-                    'expires_at' => $link->expires_at->toDateTimeString(),
-                    'is_expired' => $link->expires_at->isPast(),
+                    'expires_at' => $link->expires_at?->toDateTimeString(),
+                    'is_expired' => $link->expires_at?->isPast() ?? false,
                 ]);
         }
 
@@ -60,7 +58,10 @@ class LinkController extends Controller
     public function show(string $slug): RedirectResponse
     {
         $link = Link::where('slug', $slug)
-            ->where('expires_at', '>', now())
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
             ->firstOrFail();
 
         return redirect()->away($link->original_url);
@@ -80,8 +81,8 @@ class LinkController extends Controller
                 'original_url' => $link->original_url,
                 'slug' => $link->slug,
                 'created_at' => $link->created_at->toDateTimeString(),
-                'expires_at' => $link->expires_at->toDateTimeString(),
-                'is_expired' => $link->expires_at->isPast(),
+                'expires_at' => $link->expires_at?->toDateTimeString(),
+                'is_expired' => $link->expires_at?->isPast() ?? false,
             ],
         ]);
     }
@@ -91,7 +92,7 @@ class LinkController extends Controller
      */
     public function destroy(Link $link): RedirectResponse
     {
-        if (!Auth::check() || $link->user_id !== Auth::id()) {
+        if (! Auth::check() || $link->user_id !== Auth::id()) {
             abort(403);
         }
 

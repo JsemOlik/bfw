@@ -11,7 +11,7 @@ interface Props {
         original_url: string;
         slug: string;
         created_at: string;
-        expires_at: string;
+        expires_at: string | null;
         is_expired: boolean;
     };
 }
@@ -19,6 +19,9 @@ interface Props {
 export default function Status({ link }: Props) {
     const { auth } = usePage<any>().props;
     const shortUrl = `${window.location.origin}/link/${link.slug}`;
+    const expiresAtText = link.expires_at
+        ? new Date(link.expires_at).toLocaleString()
+        : 'Never';
     const [copied, setCopied] = useState(false);
 
     const { delete: destroy, processing } = useForm();
@@ -159,7 +162,7 @@ export default function Status({ link }: Props) {
                             <div
                                 className={`flex items-center gap-2 text-sm font-bold ${link.is_expired ? 'text-red-500' : 'text-green-600'}`}
                             >
-                                {new Date(link.expires_at).toLocaleString()}
+                                {expiresAtText}
                                 {link.is_expired && (
                                     <span className="rounded bg-red-50 px-1.5 py-0.5 text-[10px] ring-1 ring-red-100">
                                         EXPIRED

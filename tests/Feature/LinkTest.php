@@ -40,6 +40,33 @@ it('associates a link with the authenticated user', function () {
     ]);
 });
 
+it('expires authenticated user links in two months', function () {
+    $this->travelTo(now()->startOfSecond());
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post(route('link.store'), [
+        'url' => 'https://two-months.com',
+    ]);
+
+    $link = Link::first();
+
+    expect($link->expires_at?->toDateTimeString())
+        ->toBe(now()->addMonthsNoOverflow(2)->toDateTimeString());
+});
+
+it('does not expire admin links', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->post(route('link.store'), [
+        'url' => 'https://forever.com',
+    ]);
+
+    $link = Link::first();
+
+    expect($link->expires_at)->toBeNull();
+});
+
 it('can see the create link page', function () {
     $response = $this->get(route('link.create'));
 
@@ -54,7 +81,7 @@ it('shows guest warning on create page for unauthenticated users', function () {
         ->assertInertia(fn ($page) => $page
             ->where('auth.user', null)
         );
-    
+
     // We can also check if the warning text is present in the rendered HTML if needed,
     // but Inertia tests usually focus on props.
 });
@@ -197,8 +224,8 @@ it('prevents guests from deleting links', function () {
 
     $response = $this->delete(route('link.destroy', $link));
 
-    // Controller checks if ($link->user_id !== Auth::id()) which is true for guests 
-    // since user_id is null and Auth::id() is null. 
+    // Controller checks if ($link->user_id !== Auth::id()) which is true for guests
+    // since user_id is null and Auth::id() is null.
     // Wait, null === null. I should fix that in the controller!
     $response->assertStatus(403);
 });

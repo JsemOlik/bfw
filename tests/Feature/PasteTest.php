@@ -45,6 +45,35 @@ it('allows authenticated users to create a paste', function () {
     ]);
 });
 
+it('expires authenticated user pastes in two months', function () {
+    $this->travelTo(now()->startOfSecond());
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->from('/paste')->post('/paste', [
+        'content' => 'Two months please',
+        'syntax' => 'plaintext',
+    ]);
+
+    $paste = Paste::first();
+
+    expect($paste->expires_at?->toDateTimeString())
+        ->toBe(now()->addMonthsNoOverflow(2)->toDateTimeString());
+});
+
+it('does not expire admin pastes', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->from('/paste')->post('/paste', [
+        'content' => 'Forever paste',
+        'syntax' => 'plaintext',
+    ]);
+
+    $paste = Paste::first();
+
+    expect($paste->expires_at)->toBeNull();
+});
+
 it('validates paste creation requests', function () {
     $response = $this->post('/paste', [
         'content' => '', // Required

@@ -12,7 +12,7 @@ interface Props {
         syntax: string;
         snippet: string;
         created_at: string;
-        expires_at: string;
+        expires_at: string | null;
         is_expired: boolean;
     };
 }
@@ -20,6 +20,9 @@ interface Props {
 export default function Status({ paste }: Props) {
     const { auth } = usePage<any>().props;
     const shortUrl = `${window.location.origin}/paste/${paste.slug}`;
+    const expiresAtText = paste.expires_at
+        ? new Date(paste.expires_at).toLocaleString()
+        : 'Never';
     const [copied, setCopied] = useState(false);
 
     const { delete: destroy, processing } = useForm();
@@ -160,7 +163,7 @@ export default function Status({ paste }: Props) {
                             <div
                                 className={`flex items-center gap-2 text-sm font-bold ${paste.is_expired ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}
                             >
-                                {new Date(paste.expires_at).toLocaleString()}
+                                {expiresAtText}
                                 {paste.is_expired && (
                                     <span className="rounded bg-red-50 px-1.5 py-0.5 text-[10px] ring-1 ring-red-100 dark:bg-red-900/20 dark:ring-red-900/50">
                                         EXPIRED
