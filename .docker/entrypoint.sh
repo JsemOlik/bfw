@@ -1,6 +1,16 @@
 #!/bin/bash
 set -e
 
+# Ensure critical storage directories exist and are writable
+mkdir -p storage/framework/{sessions,views,cache}
+mkdir -p bootstrap/cache
+chmod -R 777 storage bootstrap/cache
+
+# Clear any stale caches that might cause path issues (common on Windows mounts)
+php artisan view:clear
+php artisan config:clear
+php artisan cache:clear
+
 # Install PHP dependencies
 composer install --no-interaction
 
