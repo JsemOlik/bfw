@@ -30,10 +30,18 @@ class PasteHighlighter
         }
 
         $pattern = match ($syntax) {
+            'bash', 'shell', 'sh' => '/("(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\'|`(?:\\\\.|[^`\\\\])*`)|\$\w+|\b(?:if|then|else|elif|fi|for|while|do|done|case|esac|function|echo|export|local|readonly|return|exit)\b|\b-?(?:0|[1-9]\d*)(?:\.\d+)?\b/',
             'json' => '/("(?:\\\\.|[^"\\\\])*"(?=\s*:))|("(?:\\\\.|[^"\\\\])*")|\b(true|false|null)\b|\b-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?\b/',
             'javascript', 'typescript' => '/("(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\'|`(?:\\\\.|[^`\\\\])*`)|\b(?:const|let|var|function|return|if|else|for|while|switch|case|break|continue|import|from|export|default|new|class|extends|async|await|try|catch|finally|throw|typeof)\b|\b(?:true|false|null|undefined)\b|\b-?(?:0|[1-9]\d*)(?:\.\d+)?\b/',
             'php' => '/(<\?php)|("(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\'|`(?:\\\\.|[^`\\\\])*`)|\b(?:echo|function|return|if|else|elseif|foreach|for|while|public|protected|private|class|trait|interface|enum|match|new|use|namespace|extends|implements|static|fn)\b|\$\w+|\b(?:true|false|null)\b|\b-?(?:0|[1-9]\d*)(?:\.\d+)?\b/',
+            'powershell', 'pwsh' => '/("(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\')|\$\w+|\b(?:function|param|if|else|elseif|foreach|for|while|switch|return|Write-Host|Write-Output|Get-Item|Set-Item|New-Item|Remove-Item)\b|\b-?(?:0|[1-9]\d*)(?:\.\d+)?\b/i',
             'python' => '/("(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\'|"""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\')|\b(?:def|class|return|if|elif|else|for|while|import|from|as|try|except|finally|with|lambda|yield|pass|break|continue|async|await)\b|\b(?:True|False|None)\b|\b-?(?:0|[1-9]\d*)(?:\.\d+)?\b/',
+            'rust' => '/("(?:\\\\.|[^"\\\\])*"|r#?"(?:[^"\\\\]|\\\\.)*"|b"(?:\\\\.|[^"\\\\])*")|\b(?:fn|let|mut|pub|struct|enum|impl|trait|match|if|else|for|while|loop|return|use|mod|async|await)\b|\b(?:true|false|None|Some)\b|\b-?(?:0|[1-9]\d*)(?:\.\d+)?\b/',
+            'ruby' => '/("(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\')|\b(?:def|class|module|if|elsif|else|unless|do|end|while|until|case|when|return|puts|require)\b|\b(?:true|false|nil)\b|\b-?(?:0|[1-9]\d*)(?:\.\d+)?\b/',
+            'go', 'golang' => '/("(?:\\\\.|[^"\\\\])*"|`(?:[^`]*)`)|\b(?:func|package|import|type|struct|interface|if|else|for|range|switch|case|return|go|defer|var|const)\b|\b(?:true|false|nil)\b|\b-?(?:0|[1-9]\d*)(?:\.\d+)?\b/',
+            'c' => '/("(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\')|\b(?:int|char|float|double|void|struct|enum|typedef|if|else|for|while|switch|case|return|static|const|sizeof)\b|\b-?(?:0|[1-9]\d*)(?:\.\d+)?\b/',
+            'cpp', 'c++' => '/("(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\')|\b(?:int|char|float|double|void|class|struct|namespace|template|typename|auto|const|constexpr|if|else|for|while|switch|case|return|using|public|private|protected)\b|\b-?(?:0|[1-9]\d*)(?:\.\d+)?\b/',
+            'csharp', 'c#' => '/("(?:\\\\.|[^"\\\\])*"|@"(?:[^"]|"")*")|\b(?:using|namespace|class|interface|struct|enum|public|private|protected|internal|static|void|string|int|bool|if|else|for|foreach|while|switch|case|return|new)\b|\b(?:true|false|null)\b|\b-?(?:0|[1-9]\d*)(?:\.\d+)?\b/',
             'lua' => '/("(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\'|\[\[[\s\S]*?\]\])|\b(?:function|local|return|if|then|elseif|else|for|while|repeat|until|end|do|in)\b|\b(?:true|false|nil)\b|\b-?(?:0|[1-9]\d*)(?:\.\d+)?\b/',
             'yaml' => '/^(\s*[\w-]+:)|("(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\'|\b-?(?:0|[1-9]\d*)(?:\.\d+)?\b|\b(?:true|false|null)\b)/',
             'xml', 'html' => '/(<\/?[\w:-]+(?:\s+[\w:-]+(?:=(?:"[^"]*"|\'[^\']*\'))?)*\s*\/?>)|("(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\')/',
@@ -49,8 +57,8 @@ class PasteHighlighter
     protected function buildTokens(string $line, string $syntax, ?string $pattern): array
     {
         $commentPrefix = match ($syntax) {
-            'php', 'javascript', 'typescript' => '//',
-            'python', 'yaml' => '#',
+            'php', 'javascript', 'typescript', 'rust', 'go', 'c', 'cpp', 'c++', 'csharp', 'c#' => '//',
+            'python', 'yaml', 'bash', 'shell', 'sh', 'powershell', 'pwsh', 'ruby' => '#',
             'lua' => '--',
             default => null,
         };

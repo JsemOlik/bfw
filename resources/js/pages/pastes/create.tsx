@@ -150,10 +150,18 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                                         <option value="plaintext">Plain Text</option>
                                         <option value="json">JSON</option>
                                         <option value="yaml">YAML</option>
+                                        <option value="bash">Bash / Shell</option>
+                                        <option value="powershell">PowerShell</option>
                                         <option value="lua">Lua</option>
                                         <option value="javascript">JavaScript / TypeScript</option>
+                                        <option value="go">Go</option>
                                         <option value="php">PHP</option>
                                         <option value="python">Python</option>
+                                        <option value="rust">Rust</option>
+                                        <option value="ruby">Ruby</option>
+                                        <option value="c">C</option>
+                                        <option value="cpp">C++</option>
+                                        <option value="csharp">C#</option>
                                         <option value="xml">XML / HTML</option>
                                     </select>
                                     {errors.syntax && (

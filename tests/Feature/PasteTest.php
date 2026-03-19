@@ -73,6 +73,32 @@ it('shows the raw text of a paste', function () {
         );
 });
 
+it('highlights additional supported syntaxes', function (string $syntax, string $content) {
+    $paste = Paste::factory()->create([
+        'content' => $content,
+        'syntax' => $syntax,
+    ]);
+
+    $response = $this->get('/paste/'.$paste->slug);
+
+    $response->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('pastes/show')
+            ->where('paste.syntax', $syntax)
+            ->where('paste.highlighted_lines.0.0.type', 'keyword')
+            ->etc()
+        );
+})->with([
+    'bash' => ['bash', 'echo "hello"'],
+    'powershell' => ['powershell', 'Write-Host "hello"'],
+    'rust' => ['rust', 'fn main() {}'],
+    'ruby' => ['ruby', 'def greet'],
+    'go' => ['go', 'func main() {}'],
+    'c' => ['c', 'return 0;'],
+    'cpp' => ['cpp', 'return 0;'],
+    'csharp' => ['csharp', 'public class Demo {}'],
+]);
+
 it('returns raw paste content without ui', function () {
     $paste = Paste::factory()->create(['content' => "#!/bin/sh\necho 'hello'"]);
 
