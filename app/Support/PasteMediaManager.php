@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Paste;
+use Illuminate\Filesystem\AwsS3V3Adapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -38,11 +39,7 @@ class PasteMediaManager
             throw new RuntimeException('Unable to store uploaded image.');
         }
 
-        $stored = Storage::disk($disk)->put(
-            $path,
-            $contents,
-            ['visibility' => (string) config("filesystems.disks.{$disk}.visibility", 'public')],
-        );
+        $stored = $this->storeContents($disk, $path, $contents, $file);
 
         if ($stored === false) {
             throw new RuntimeException('Unable to store uploaded image.');
@@ -82,6 +79,36 @@ class PasteMediaManager
 
         Storage::disk($paste->storage_disk ?: config('filesystems.default_media_disk', 'public'))
             ->delete($paste->storage_path);
+    }
+
+    protected function storeContents(string $disk, string $path, string $contents, UploadedFile $file): bool
+    {
+        $filesystem = Storage::disk($disk);
+        $visibility = (string) config("filesystems.disks.{$disk}.visibility", 'public');
+
+        if ($filesystem instanceof AwsS3V3Adapter) {
+            $options = [
+                'Bucket' => (string) config("filesystems.disks.{$disk}.bucket"),
+                'Key' => $path,
+                'Body' => $contents,
+                'ContentLength' => strlen($contents),
+                'ContentType' => $file->getMimeType() ?? 'application/octet-stream',
+            ];
+
+            if ($visibility === 'public') {
+                $options['ACL'] = 'public-read';
+            }
+
+            $filesystem->getClient()->putObject($options);
+
+            return true;
+        }
+
+        return $filesystem->put(
+            $path,
+            $contents,
+            ['visibility' => $visibility],
+        );
     }
 
     /**
