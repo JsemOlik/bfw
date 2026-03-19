@@ -87,5 +87,9 @@ RUN mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache \
 
 EXPOSE 80 5173
 
+# Final permission and line-ending fix for entrypoint
+RUN sed -i 's/\r$//' .docker/entrypoint.sh \
+    && chmod +x .docker/entrypoint.sh
+
 ENTRYPOINT [".docker/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]

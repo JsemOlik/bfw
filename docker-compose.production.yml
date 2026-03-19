@@ -1,6 +1,7 @@
 services:
     app:
         image: ghcr.io/jsemolik/bfw:latest
+        platform: linux/amd64
         build:
             context: .
             dockerfile: Dockerfile

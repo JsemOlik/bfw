@@ -10,6 +10,7 @@
         "compose": "docker compose -f docker-compose.develop.yml up -d db dbgate",
         "dev:docker": "docker compose -f docker-compose.develop.yml up app",
         "build:docker": "docker compose -f docker-compose.production.yml build",
+        "build:docker:amd64": "docker buildx build --platform linux/amd64 -t ghcr.io/jsemolik/bfw:latest --load .",
         "docker": "docker compose -f docker-compose.production.yml up app",
         "compose:down": "docker compose -f docker-compose.develop.yml down",
         "format": "prettier --write resources/",
