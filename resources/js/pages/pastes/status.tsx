@@ -8,12 +8,13 @@ interface Props {
     paste: {
         id: number;
         user_id: number | null;
-        type: 'text' | 'image';
+        type: 'text' | 'image' | 'video';
         slug: string;
         syntax: string | null;
         snippet: string;
-        image_url: string | null;
+        media_url: string | null;
         original_filename: string | null;
+        mime_type: string | null;
         created_at: string;
         expires_at: string | null;
         is_expired: boolean;
@@ -31,6 +32,7 @@ export default function Status({ paste }: Props) {
     const { delete: destroy, processing } = useForm();
     const isOwner = auth.user && paste.user_id === auth.user.id;
     const isImagePaste = paste.type === 'image';
+    const isVideoPaste = paste.type === 'video';
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
@@ -84,17 +86,30 @@ export default function Status({ paste }: Props) {
                         <label className="mb-3 block text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
                             {isImagePaste
                                 ? 'Image Preview'
+                                : isVideoPaste
+                                  ? 'Video Preview'
                                 : `Snippet Preview (${paste.syntax ?? 'plaintext'})`}
                         </label>
-                        {isImagePaste && paste.image_url ? (
+                        {isImagePaste && paste.media_url ? (
                             <div className="overflow-hidden rounded-xl border border-gray-100 bg-gray-50 p-3 dark:border-[#3E3E3A] dark:bg-[#0a0a0a]">
                                 <img
-                                    src={paste.image_url}
+                                    src={paste.media_url}
                                     alt={paste.original_filename ?? paste.slug}
                                     className="max-h-80 w-full rounded-lg object-contain"
                                 />
                                 <p className="mt-3 truncate text-xs font-medium text-gray-500 dark:text-gray-400">
                                     {paste.original_filename ?? 'Image paste'}
+                                </p>
+                            </div>
+                        ) : isVideoPaste && paste.media_url ? (
+                            <div className="overflow-hidden rounded-xl border border-gray-100 bg-gray-50 p-3 dark:border-[#3E3E3A] dark:bg-[#0a0a0a]">
+                                <video
+                                    src={paste.media_url}
+                                    controls
+                                    className="max-h-80 w-full rounded-lg bg-black object-contain"
+                                />
+                                <p className="mt-3 truncate text-xs font-medium text-gray-500 dark:text-gray-400">
+                                    {paste.original_filename ?? 'Video paste'}
                                 </p>
                             </div>
                         ) : (

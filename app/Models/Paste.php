@@ -58,6 +58,16 @@ class Paste extends Model
         return $this->type === 'image';
     }
 
+    public function isVideo(): bool
+    {
+        return $this->type === 'video';
+    }
+
+    public function isMedia(): bool
+    {
+        return $this->isImage() || $this->isVideo();
+    }
+
     /**
      * Get the user that owns the paste.
      */

@@ -43,4 +43,20 @@ class PasteFactory extends Factory
             'image_height' => 240,
         ]);
     }
+
+    public function video(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'type' => 'video',
+            'content' => null,
+            'syntax' => null,
+            'storage_disk' => 'paste_media',
+            'storage_path' => 'pastes/videos/test/example.mp4',
+            'original_filename' => 'example.mp4',
+            'mime_type' => 'video/mp4',
+            'size_bytes' => 2048,
+            'image_width' => null,
+            'image_height' => null,
+        ]);
+    }
 }

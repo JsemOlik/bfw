@@ -8,12 +8,12 @@ interface HighlightedToken {
 }
 
 interface Paste {
-    type: 'text' | 'image';
+    type: 'text' | 'image' | 'video';
     content: string | null;
     syntax: string | null;
     slug: string;
     raw_url: string;
-    image_url: string | null;
+    media_url: string | null;
     original_filename: string | null;
     mime_type: string | null;
     size_bytes: number | null;
@@ -46,11 +46,13 @@ function formatBytes(size: number | null): string | null {
 export default function Show({ paste }: Props) {
     const [copied, setCopied] = useState(false);
     const isImagePaste = paste.type === 'image';
-    const copyLabel = isImagePaste ? 'Copy Raw URL' : 'Copy Raw';
-    const badgeLabel = isImagePaste ? 'image' : (paste.syntax ?? 'plaintext');
+    const isVideoPaste = paste.type === 'video';
+    const isMediaPaste = isImagePaste || isVideoPaste;
+    const copyLabel = isMediaPaste ? 'Copy Raw URL' : 'Copy Raw';
+    const badgeLabel = isMediaPaste ? paste.type : (paste.syntax ?? 'plaintext');
     const metadata = [
         paste.original_filename,
-        paste.image_width && paste.image_height
+        isImagePaste && paste.image_width && paste.image_height
             ? `${paste.image_width}×${paste.image_height}`
             : null,
         formatBytes(paste.size_bytes),
@@ -113,7 +115,7 @@ export default function Show({ paste }: Props) {
                             type="button"
                             onClick={() => {
                                 navigator.clipboard.writeText(
-                                    isImagePaste
+                                    isMediaPaste
                                         ? paste.raw_url
                                         : (paste.content ?? ''),
                                 );
@@ -174,11 +176,21 @@ export default function Show({ paste }: Props) {
                     <div className="overflow-x-auto p-4 sm:p-6">
                         {isImagePaste ? (
                             <div className="flex justify-center">
-                                {paste.image_url && (
+                                {paste.media_url && (
                                     <img
-                                        src={paste.image_url}
+                                        src={paste.media_url}
                                         alt={paste.original_filename ?? paste.slug}
                                         className="max-h-[75vh] w-auto max-w-full rounded-xl object-contain"
+                                    />
+                                )}
+                            </div>
+                        ) : isVideoPaste ? (
+                            <div className="flex justify-center">
+                                {paste.media_url && (
+                                    <video
+                                        src={paste.media_url}
+                                        controls
+                                        className="max-h-[75vh] w-full max-w-full rounded-xl bg-black object-contain"
                                     />
                                 )}
                             </div>

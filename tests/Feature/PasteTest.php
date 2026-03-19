@@ -41,6 +41,13 @@ function fakeIcoUpload(string $name = 'favicon.ico'): UploadedFile
         ->mimeType('image/x-icon');
 }
 
+function fakeVideoUpload(string $name = 'clip.mp4'): UploadedFile
+{
+    return UploadedFile::fake()
+        ->createWithContent($name, 'video-placeholder')
+        ->mimeType('video/mp4');
+}
+
 it('allows guests to create a paste', function () {
     $response = $this->from('/paste')->post('/paste', [
         'content' => 'Hello World!',
@@ -153,6 +160,34 @@ it('allows guests to create an ico image paste', function () {
     expect(Storage::disk('paste_media')->get($paste->storage_path))->toBe($originalContents);
 });
 
+it('allows guests to create a video paste', function () {
+    $video = fakeVideoUpload();
+    $originalContents = file_get_contents($video->getRealPath());
+
+    expect($originalContents)->toBeString();
+
+    $response = $this->from('/paste')->post('/paste', [
+        'type' => 'video',
+        'slug' => 'clip-shot',
+        'video' => $video,
+    ]);
+
+    $paste = Paste::first();
+
+    $response->assertRedirect('/paste');
+    $response->assertSessionHas('shortened_link', url('/paste/clip-shot'));
+    expect($paste->type)
+        ->toBe('video')
+        ->and($paste->content)->toBeNull()
+        ->and($paste->original_filename)->toBe('clip.mp4')
+        ->and($paste->mime_type)->toBe('video/mp4')
+        ->and($paste->image_width)->toBeNull()
+        ->and($paste->image_height)->toBeNull();
+
+    Storage::disk('paste_media')->assertExists($paste->storage_path);
+    expect(Storage::disk('paste_media')->get($paste->storage_path))->toBe($originalContents);
+});
+
 it('does not create a broken paste record when image upload fails', function () {
     $this->mock(PasteMediaManager::class, function (MockInterface $mock) {
         $mock->shouldReceive('storeUploadedImage')
@@ -252,7 +287,25 @@ it('shows image pastes with a raw image url', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('pastes/show')
             ->where('paste.type', 'image')
-            ->where('paste.image_url', Storage::disk('paste_media')->url('pastes/images/test/example.png'))
+            ->where('paste.media_url', Storage::disk('paste_media')->url('pastes/images/test/example.png'))
+            ->etc()
+        );
+});
+
+it('shows video pastes with a raw video url', function () {
+    Storage::disk('paste_media')->put('pastes/videos/test/example.mp4', 'video-bytes');
+
+    $paste = Paste::factory()->video()->create([
+        'slug' => 'video-paste',
+    ]);
+
+    $response = $this->get('/paste/'.$paste->slug);
+
+    $response->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('pastes/show')
+            ->where('paste.type', 'video')
+            ->where('paste.media_url', Storage::disk('paste_media')->url('pastes/videos/test/example.mp4'))
             ->etc()
         );
 });
@@ -303,6 +356,16 @@ it('redirects image raw requests to the stored media url', function () {
     $response->assertRedirect(Storage::disk('paste_media')->url('pastes/images/test/example.png'));
 });
 
+it('redirects video raw requests to the stored media url', function () {
+    Storage::disk('paste_media')->put('pastes/videos/test/example.mp4', 'video-bytes');
+
+    $paste = Paste::factory()->video()->create();
+
+    $response = $this->get('/paste/'.$paste->slug.'/raw');
+
+    $response->assertRedirect(Storage::disk('paste_media')->url('pastes/videos/test/example.mp4'));
+});
+
 it('does not show expired pastes', function () {
     $paste = Paste::factory()->create([
         'expires_at' => now()->subDay(),
@@ -346,6 +409,21 @@ it('deletes stored image files when owners delete image pastes', function () {
     $response->assertRedirect();
     $this->assertDatabaseMissing('pastes', ['id' => $paste->id]);
     Storage::disk('paste_media')->assertMissing('pastes/images/test/example.png');
+});
+
+it('deletes stored video files when owners delete video pastes', function () {
+    $user = User::factory()->create();
+    Storage::disk('paste_media')->put('pastes/videos/test/example.mp4', 'video-bytes');
+
+    $paste = Paste::factory()->video()->create([
+        'user_id' => $user->id,
+    ]);
+
+    $response = $this->actingAs($user)->delete(route('paste.destroy', $paste));
+
+    $response->assertRedirect();
+    $this->assertDatabaseMissing('pastes', ['id' => $paste->id]);
+    Storage::disk('paste_media')->assertMissing('pastes/videos/test/example.mp4');
 });
 
 it('redirects owners to the create page after deleting from a paste status page', function () {

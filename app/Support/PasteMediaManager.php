@@ -23,10 +23,48 @@ class PasteMediaManager
      */
     public function storeUploadedImage(UploadedFile $file): array
     {
+        return $this->storeUploadedMedia($file, 'image');
+    }
+
+    /**
+     * @return array{
+     *     disk: string,
+     *     path: string,
+     *     mime_type: string,
+     *     size_bytes: int,
+     *     image_width: int|null,
+     *     image_height: int|null,
+     *     original_filename: string
+     * }
+     */
+    public function storeUploadedVideo(UploadedFile $file): array
+    {
+        return $this->storeUploadedMedia($file, 'video');
+    }
+
+    /**
+     * @return array{
+     *     disk: string,
+     *     path: string,
+     *     mime_type: string,
+     *     size_bytes: int,
+     *     image_width: int|null,
+     *     image_height: int|null,
+     *     original_filename: string
+     * }
+     */
+    protected function storeUploadedMedia(UploadedFile $file, string $type): array
+    {
         $disk = (string) config('filesystems.default_media_disk', 'public');
         $extension = $file->guessExtension() ?: $file->extension() ?: 'bin';
+        $directory = match ($type) {
+            'image' => 'images',
+            'video' => 'videos',
+            default => throw new RuntimeException('Unsupported media type.'),
+        };
         $path = sprintf(
-            'pastes/images/%s/%s/%s.%s',
+            'pastes/%s/%s/%s/%s.%s',
+            $directory,
             now()->format('Y/m'),
             Str::uuid(),
             Str::random(12),
@@ -44,7 +82,9 @@ class PasteMediaManager
             throw new RuntimeException('Unable to store uploaded image.');
         }
 
-        [$width, $height] = $this->imageDimensions($file);
+        [$width, $height] = $type === 'image'
+            ? $this->imageDimensions($file)
+            : [null, null];
 
         return [
             'disk' => $disk,
@@ -72,7 +112,7 @@ class PasteMediaManager
 
     public function delete(Paste $paste): void
     {
-        if (! $paste->isImage() || ! $paste->storage_path) {
+        if (! $paste->isMedia() || ! $paste->storage_path) {
             return;
         }
 

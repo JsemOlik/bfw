@@ -43,30 +43,38 @@ class PasteController extends Controller
      */
     public function store(StorePasteRequest $request, PasteMediaManager $pasteMediaManager): RedirectResponse
     {
-        if ($request->pasteType() === 'image') {
+        if (in_array($request->pasteType(), ['image', 'video'], true)) {
+            $pasteType = $request->pasteType();
+            $uploadField = $pasteType;
+
             try {
-                $storedImage = $pasteMediaManager->storeUploadedImage($request->file('image'));
+                $storedMedia = $pasteType === 'image'
+                    ? $pasteMediaManager->storeUploadedImage($request->file('image'))
+                    : $pasteMediaManager->storeUploadedVideo($request->file('video'));
 
                 $paste = Paste::create([
-                    'type' => 'image',
+                    'type' => $pasteType,
                     'content' => null,
                     'syntax' => null,
                     'slug' => $request->slug,
                     'user_id' => Auth::id(),
-                    'storage_disk' => $storedImage['disk'],
-                    'storage_path' => $storedImage['path'],
-                    'original_filename' => $storedImage['original_filename'],
-                    'mime_type' => $storedImage['mime_type'],
-                    'size_bytes' => $storedImage['size_bytes'],
-                    'image_width' => $storedImage['image_width'],
-                    'image_height' => $storedImage['image_height'],
+                    'storage_disk' => $storedMedia['disk'],
+                    'storage_path' => $storedMedia['path'],
+                    'original_filename' => $storedMedia['original_filename'],
+                    'mime_type' => $storedMedia['mime_type'],
+                    'size_bytes' => $storedMedia['size_bytes'],
+                    'image_width' => $storedMedia['image_width'],
+                    'image_height' => $storedMedia['image_height'],
                 ]);
             } catch (Throwable $exception) {
                 report($exception);
 
                 return back()
                     ->withErrors([
-                        'image' => 'We could not upload that image right now. Please try again.',
+                        $uploadField => sprintf(
+                            'We could not upload that %s right now. Please try again.',
+                            $pasteType,
+                        ),
                     ])
                     ->withInput();
             }
@@ -105,7 +113,7 @@ class PasteController extends Controller
                 'syntax' => $paste->syntax,
                 'slug' => $paste->slug,
                 'raw_url' => route('paste.raw', $paste->slug),
-                'image_url' => $paste->isImage() ? $pasteMediaManager->url($paste) : null,
+                'media_url' => $paste->isMedia() ? $pasteMediaManager->url($paste) : null,
                 'original_filename' => $paste->original_filename,
                 'mime_type' => $paste->mime_type,
                 'size_bytes' => $paste->size_bytes,
@@ -131,7 +139,7 @@ class PasteController extends Controller
             })
             ->firstOrFail();
 
-        if ($paste->isImage()) {
+        if ($paste->isMedia()) {
             $url = $pasteMediaManager->url($paste);
 
             if (Str::startsWith($url, ['http://', 'https://'])) {
@@ -162,9 +170,10 @@ class PasteController extends Controller
                 'syntax' => $paste->syntax,
                 'snippet' => $paste->isText()
                     ? Str::limit($paste->content ?? '', 100)
-                    : ($paste->original_filename ?? 'Image paste'),
-                'image_url' => $paste->isImage() ? $pasteMediaManager->url($paste) : null,
+                    : ($paste->original_filename ?? Str::headline($paste->type).' paste'),
+                'media_url' => $paste->isMedia() ? $pasteMediaManager->url($paste) : null,
                 'original_filename' => $paste->original_filename,
+                'mime_type' => $paste->mime_type,
                 'created_at' => $paste->created_at->toDateTimeString(),
                 'expires_at' => $paste->expires_at?->toDateTimeString(),
                 'is_expired' => $paste->expires_at?->isPast() ?? false,
@@ -211,12 +220,12 @@ class PasteController extends Controller
             'id' => $paste->id,
             'type' => $paste->type,
             'slug' => $paste->slug,
-            'syntax' => $paste->isText() ? ($paste->syntax ?? 'plaintext') : 'image',
+            'syntax' => $paste->isText() ? ($paste->syntax ?? 'plaintext') : $paste->type,
             'expires_at' => $paste->expires_at?->toDateTimeString(),
             'is_expired' => $paste->expires_at?->isPast() ?? false,
             'snippet' => $paste->isText()
                 ? Str::limit($paste->content ?? '', 50)
-                : ($paste->original_filename ?? 'Image paste'),
+                : ($paste->original_filename ?? Str::headline($paste->type).' paste'),
         ];
     }
 }

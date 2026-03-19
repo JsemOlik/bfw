@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/app-layout';
 
 interface UserPaste {
     id: number;
-    type: 'text' | 'image';
+    type: 'text' | 'image' | 'video';
     slug: string;
     syntax: string;
     snippet: string;
@@ -14,11 +14,12 @@ interface UserPaste {
 }
 
 interface PasteFormData {
-    type: 'text' | 'image';
+    type: 'text' | 'image' | 'video';
     content: string;
     syntax: string;
     slug: string;
     image: File | null;
+    video: File | null;
 }
 
 export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }) {
@@ -34,6 +35,9 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
     const [isDraggingImage, setIsDraggingImage] = useState(false);
     const [imageSelectionError, setImageSelectionError] = useState<string | null>(null);
+    const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+    const [isDraggingVideo, setIsDraggingVideo] = useState(false);
+    const [videoSelectionError, setVideoSelectionError] = useState<string | null>(null);
 
     const { delete: destroy, processing: deleting } = useForm();
 
@@ -44,6 +48,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
             syntax: 'plaintext',
             slug: '',
             image: null,
+            video: null,
         });
 
     const shortenedLink = flash?.shortened_link;
@@ -79,6 +84,19 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
         return () => URL.revokeObjectURL(previewUrl);
     }, [data.image]);
 
+    useEffect(() => {
+        if (! data.video) {
+            setVideoPreviewUrl(null);
+            return;
+        }
+
+        const previewUrl = URL.createObjectURL(data.video);
+
+        setVideoPreviewUrl(previewUrl);
+
+        return () => URL.revokeObjectURL(previewUrl);
+    }, [data.video]);
+
     const handleDelete = (id: number): void => {
         setPasteToDelete(id);
         setIsModalOpen(true);
@@ -96,8 +114,20 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
         }
     };
 
-    const switchType = (type: 'text' | 'image'): void => {
+    const switchType = (type: 'text' | 'image' | 'video'): void => {
         setData('type', type);
+
+        if (type !== 'image') {
+            setData('image', null);
+            setImageSelectionError(null);
+            setIsDraggingImage(false);
+        }
+
+        if (type !== 'video') {
+            setData('video', null);
+            setVideoSelectionError(null);
+            setIsDraggingVideo(false);
+        }
     };
 
     const supportedImageTypes = new Set([
@@ -110,6 +140,8 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
         'image/vnd.microsoft.icon',
     ]);
     const supportedImageExtensions = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico']);
+    const supportedVideoTypes = new Set(['video/mp4', 'video/webm', 'video/ogg']);
+    const supportedVideoExtensions = new Set(['mp4', 'webm', 'ogg', 'ogv']);
 
     const isSupportedImageFile = (file: File): boolean => {
         if (supportedImageTypes.has(file.type)) {
@@ -119,6 +151,16 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
         const extension = file.name.split('.').pop()?.toLowerCase();
 
         return extension ? supportedImageExtensions.has(extension) : false;
+    };
+
+    const isSupportedVideoFile = (file: File): boolean => {
+        if (supportedVideoTypes.has(file.type)) {
+            return true;
+        }
+
+        const extension = file.name.split('.').pop()?.toLowerCase();
+
+        return extension ? supportedVideoExtensions.has(extension) : false;
     };
 
     const setSelectedImage = (file: File | null): void => {
@@ -162,6 +204,49 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
         event.preventDefault();
         setIsDraggingImage(false);
         setSelectedImage(event.dataTransfer.files?.[0] ?? null);
+    };
+
+    const setSelectedVideo = (file: File | null): void => {
+        if (! file) {
+            setVideoSelectionError(null);
+            setData('video', null);
+            return;
+        }
+
+        if (isSupportedVideoFile(file)) {
+            setVideoSelectionError(null);
+            setData('video', file);
+            return;
+        }
+
+        setVideoSelectionError("Woops, you can't upload this format!");
+        setData('video', null);
+    };
+
+    const handleVideoChange = (event: ChangeEvent<HTMLInputElement>): void => {
+        const file = event.target.files?.[0] ?? null;
+
+        setSelectedVideo(file);
+
+        if (file && ! isSupportedVideoFile(file)) {
+            event.target.value = '';
+        }
+    };
+
+    const handleVideoDragOver = (event: DragEvent<HTMLLabelElement>): void => {
+        event.preventDefault();
+        setIsDraggingVideo(true);
+    };
+
+    const handleVideoDragLeave = (event: DragEvent<HTMLLabelElement>): void => {
+        event.preventDefault();
+        setIsDraggingVideo(false);
+    };
+
+    const handleVideoDrop = (event: DragEvent<HTMLLabelElement>): void => {
+        event.preventDefault();
+        setIsDraggingVideo(false);
+        setSelectedVideo(event.dataTransfer.files?.[0] ?? null);
     };
 
     return (
@@ -224,7 +309,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                                     Paste Type
                                 </label>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-3 gap-3">
                                     <button
                                         type="button"
                                         onClick={() => switchType('text')}
@@ -246,6 +331,17 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                         }`}
                                     >
                                         Image Paste
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => switchType('video')}
+                                        className={`rounded-xl border px-4 py-3 text-sm font-bold transition-all ${
+                                            data.type === 'video'
+                                                ? 'border-[#f53003] bg-red-50 text-[#f53003] dark:border-[#FF4433] dark:bg-red-950/30 dark:text-[#FF4433]'
+                                                : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-gray-300'
+                                        }`}
+                                    >
+                                        Video Paste
                                     </button>
                                 </div>
                             </div>
@@ -399,6 +495,76 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                         </div>
                                     </div>
                                 </div>
+
+                                <div
+                                    aria-hidden={data.type !== 'video'}
+                                    className={`grid transition-[grid-template-rows,opacity,transform] duration-300 ease-out ${
+                                        data.type === 'video'
+                                            ? 'grid-rows-[1fr] opacity-100'
+                                            : 'pointer-events-none grid-rows-[0fr] translate-y-1 opacity-0'
+                                    }`}
+                                >
+                                    <div className="overflow-hidden">
+                                        <div className="space-y-1 pb-1">
+                                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                                Video File
+                                            </label>
+                                            <label
+                                                onDragOver={handleVideoDragOver}
+                                                onDragLeave={handleVideoDragLeave}
+                                                onDrop={handleVideoDrop}
+                                                className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-10 text-center transition-all ${
+                                                    isDraggingVideo
+                                                        ? 'border-[#f53003] bg-red-50/60 dark:border-[#FF4433] dark:bg-red-950/30'
+                                                        : 'border-gray-300 bg-gray-50 hover:border-[#f53003] hover:bg-red-50/30 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:hover:border-[#FF4433] dark:hover:bg-red-950/20'
+                                                }`}
+                                            >
+                                                {videoPreviewUrl && (
+                                                    <video
+                                                        src={videoPreviewUrl}
+                                                        controls
+                                                        className="max-h-56 w-full rounded-lg border border-gray-200 bg-black object-contain shadow-sm dark:border-[#3E3E3A]"
+                                                    />
+                                                )}
+                                                <svg
+                                                    width="24"
+                                                    height="24"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    className="text-gray-400 dark:text-gray-500"
+                                                >
+                                                    <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                                                </svg>
+                                                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                                    {data.video
+                                                        ? data.video.name
+                                                        : 'Choose a video to upload'}
+                                                </span>
+                                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {isDraggingVideo
+                                                        ? 'Drop your video here'
+                                                        : 'MP4, WebM or OGG up to 50 MB'}
+                                                </span>
+                                                <input
+                                                    type="file"
+                                                    accept="video/mp4,video/webm,video/ogg,.mp4,.webm,.ogg,.ogv"
+                                                    className="hidden"
+                                                    onChange={handleVideoChange}
+                                                />
+                                            </label>
+                                            {(videoSelectionError || errors.video) && (
+                                                <p className="mt-1 text-xs text-red-500">
+                                                    {videoSelectionError ?? errors.video}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="space-y-6">
@@ -436,6 +602,8 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                         ? 'Saving Paste...'
                                         : data.type === 'image'
                                           ? 'Create Image Paste'
+                                          : data.type === 'video'
+                                            ? 'Create Video Paste'
                                           : 'Create Paste'}
                                 </button>
                             </div>
@@ -616,7 +784,9 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                             <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-600 uppercase dark:bg-gray-800 dark:text-gray-400">
                                                                 {paste.type === 'image'
                                                                     ? 'image'
-                                                                    : paste.syntax}
+                                                                    : paste.type === 'video'
+                                                                      ? 'video'
+                                                                      : paste.syntax}
                                                             </span>
                                                         </div>
                                                         <p className="max-w-[300px] truncate font-mono text-xs text-gray-500">
