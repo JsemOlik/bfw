@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import LinkController from '@/actions/App/Http/Controllers/LinkController';
-import { dashboard, login, register } from '@/routes/index';
+import { login, register } from '@/routes/index';
+import { UserProfileDropdown } from '@/components/user-profile-dropdown';
 
 export default function MarketingNavbar() {
     const { auth, canRegister } = usePage<{
@@ -34,15 +35,10 @@ export default function MarketingNavbar() {
                     </Link>
                 </div>
 
-                {/* Right: Auth/Dashboard */}
+                {/* Right: Auth/User Menu */}
                 <div className="flex items-center gap-3">
                     {auth.user ? (
-                        <Link
-                            href={dashboard().url}
-                            className="rounded-xl bg-[#1b1b18] px-5 py-2 text-sm font-bold text-white transition-all hover:bg-black active:scale-95 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-                        >
-                            Dashboard
-                        </Link>
+                        <UserProfileDropdown />
                     ) : (
                         <>
                             <Link

@@ -16,7 +16,7 @@ Route::delete('link/{link}', [LinkController::class, 'destroy'])->name('link.des
 Route::get('link/{slug}', [LinkController::class, 'show'])->name('link.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::redirect('dashboard', 'link')->name('dashboard');
 });
 
 require __DIR__.'/settings.php';

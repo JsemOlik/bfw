@@ -2,7 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import LinkController from '@/actions/App/Http/Controllers/LinkController';
-import MarketingNavbar from '@/components/marketing-navbar';
+import AppLayout from '@/layouts/app-layout';
 import DeleteConfirmModal from '@/components/delete-confirm-modal';
 
 export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
@@ -50,10 +50,9 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
     };
 
     return (
-        <>
+        <AppLayout>
             <Head title="Shorten a Link" />
-            <div className="flex min-h-screen flex-col items-center justify-center bg-[#FDFDFC] px-6 pt-32 pb-6 text-[#1b1b18] lg:px-8 lg:pb-8 dark:bg-[#0a0a0a]">
-                <MarketingNavbar />
+            <div className="flex flex-col items-center justify-center">
                 <div className="flex w-full max-w-2xl flex-col items-center gap-8">
                     <div className="text-center">
                         <h1 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl dark:text-white">
@@ -429,13 +428,12 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
                     </div>
                 </div>
             </div>
-
             <DeleteConfirmModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onConfirm={confirmDelete}
                 processing={deleting}
             />
-        </>
+        </AppLayout>
     );
 }
