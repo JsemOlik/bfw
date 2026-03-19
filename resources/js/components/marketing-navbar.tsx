@@ -33,6 +33,12 @@ export default function MarketingNavbar() {
                     >
                         Link Shortener
                     </Link>
+                    <Link
+                        href={PasteController.create().url}
+                        className="text-sm font-semibold text-gray-600 transition-colors hover:text-[#f53003] dark:text-gray-400 dark:hover:text-[#ff4433]"
+                    >
+                        Text Paste
+                    </Link>
                 </div>
 
                 {/* Right: Auth/User Menu */}

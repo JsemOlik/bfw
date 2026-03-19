@@ -36,6 +36,14 @@ export function UserMenuContent({ user }: Props) {
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full cursor-pointer"
+                        href={PasteController.create().url}
+                    >
+                        Text Paste
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link
+                        className="block w-full cursor-pointer"
                         href={edit()}
                         prefetch
                         onClick={cleanup}

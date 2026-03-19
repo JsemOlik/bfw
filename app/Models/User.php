@@ -31,4 +31,12 @@ class User extends Authenticatable
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
+
+    /**
+     * Get the user's pastes.
+     */
+    public function pastes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Paste::class);
+    }
 }
