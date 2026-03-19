@@ -41,12 +41,12 @@ services:
             timeout: 5s
             retries: 5
 
-    adminer:
-        image: adminer
-        container_name: bfw-adminer
+    dbgate:
+        image: dbgate/dbgate
+        container_name: bfw-dbgate
         restart: unless-stopped
         ports:
-            - "8080:8080"
+            - "3000:3000"
         depends_on:
             - db
 
