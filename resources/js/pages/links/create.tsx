@@ -151,7 +151,7 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
                                                 setData('slug', e.target.value)
                                             }
                                             placeholder="my-link"
-                                            className="flex-1 border-none bg-transparent px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 dark:text-[#EDEDEC] dark:focus:ring-blue-400"
+                                            className="flex-1 border-none bg-transparent px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-inset dark:text-[#EDEDEC] dark:focus:ring-blue-400"
                                         />
                                     </div>
                                     {errors.slug && (
@@ -257,7 +257,9 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
                                         </button>
                                     </div>
                                     <p className="px-1 text-[11px] font-medium text-green-700/70 italic dark:text-green-400/50">
-                                        * Link expires in 24 hours. You can see its status in the My Links dashboard below.
+                                        * Link expires in 24 hours. You can see
+                                        its status in the My Links dropdown
+                                        below.
                                     </p>
                                 </div>
                             </div>
