@@ -25,13 +25,26 @@ class PasteMediaManager
     {
         $disk = (string) config('filesystems.default_media_disk', 'public');
         $extension = $file->guessExtension() ?: $file->extension() ?: 'bin';
-        $path = $file->storeAs(
-            sprintf('pastes/images/%s/%s', now()->format('Y/m'), Str::uuid()),
-            sprintf('%s.%s', Str::random(12), $extension),
-            $disk,
+        $path = sprintf(
+            'pastes/images/%s/%s/%s.%s',
+            now()->format('Y/m'),
+            Str::uuid(),
+            Str::random(12),
+            $extension,
+        );
+        $contents = @file_get_contents($file->getRealPath() ?: '');
+
+        if (! is_string($contents)) {
+            throw new RuntimeException('Unable to store uploaded image.');
+        }
+
+        $stored = Storage::disk($disk)->put(
+            $path,
+            $contents,
+            ['visibility' => (string) config("filesystems.disks.{$disk}.visibility", 'public')],
         );
 
-        if (! is_string($path) || $path === '') {
+        if ($stored === false) {
             throw new RuntimeException('Unable to store uploaded image.');
         }
 

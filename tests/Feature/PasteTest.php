@@ -55,10 +55,15 @@ it('allows authenticated users to create a paste', function () {
 });
 
 it('allows guests to create an image paste', function () {
+    $image = UploadedFile::fake()->image('kitten.png', 320, 240);
+    $originalContents = file_get_contents($image->getRealPath());
+
+    expect($originalContents)->toBeString();
+
     $response = $this->from('/paste')->post('/paste', [
         'type' => 'image',
         'slug' => 'kitten-shot',
-        'image' => UploadedFile::fake()->image('kitten.png', 320, 240),
+        'image' => $image,
     ]);
 
     $paste = Paste::first();
@@ -74,6 +79,7 @@ it('allows guests to create an image paste', function () {
         ->and($paste->image_height)->toBe(240);
 
     Storage::disk('paste_media')->assertExists($paste->storage_path);
+    expect(Storage::disk('paste_media')->get($paste->storage_path))->toBe($originalContents);
 });
 
 it('does not create a broken paste record when image upload fails', function () {
