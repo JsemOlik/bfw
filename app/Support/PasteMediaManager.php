@@ -3,7 +3,6 @@
 namespace App\Support;
 
 use App\Models\Paste;
-use Illuminate\Filesystem\AwsS3V3Adapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -85,24 +84,6 @@ class PasteMediaManager
     {
         $filesystem = Storage::disk($disk);
         $visibility = (string) config("filesystems.disks.{$disk}.visibility", 'public');
-
-        if ($filesystem instanceof AwsS3V3Adapter) {
-            $options = [
-                'Bucket' => (string) config("filesystems.disks.{$disk}.bucket"),
-                'Key' => $path,
-                'Body' => $contents,
-                'ContentLength' => strlen($contents),
-                'ContentType' => $file->getMimeType() ?? 'application/octet-stream',
-            ];
-
-            if ($visibility === 'public') {
-                $options['ACL'] = 'public-read';
-            }
-
-            $filesystem->getClient()->putObject($options);
-
-            return true;
-        }
 
         return $filesystem->put(
             $path,
