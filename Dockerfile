@@ -46,7 +46,7 @@ COPY . .
 COPY --from=frontend /app/node_modules ./node_modules
 
 # Pre-install Composer dependencies
-RUN composer install --no-interaction --no-dev --optimize-autoloader
+RUN composer install --no-interaction --optimize-autoloader
 
 # Setup Nginx and Supervisord configs
 COPY .docker/nginx.conf /etc/nginx/http.d/default.conf
