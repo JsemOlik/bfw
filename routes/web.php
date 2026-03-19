@@ -15,8 +15,4 @@ Route::delete('link/{link}', [LinkController::class, 'destroy'])->name('link.des
 // Redirection route must be last to avoid catching sub-routes
 Route::get('link/{slug}', [LinkController::class, 'show'])->name('link.show');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::redirect('dashboard', 'link')->name('dashboard');
-});
-
 require __DIR__ . '/settings.php';
