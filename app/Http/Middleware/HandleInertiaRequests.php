@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Laravel\Fortify\Features;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -44,8 +45,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'shortened_link' => $request->session()->get('shortened_link'),
             ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'canRegister' => \Laravel\Fortify\Features::enabled(\Laravel\Fortify\Features::registration()),
+            'canRegister' => Features::enabled(Features::registration()),
         ];
     }
 }
