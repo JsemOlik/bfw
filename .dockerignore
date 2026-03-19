@@ -16,6 +16,8 @@ vendor
 
 # Build artifacts
 public/build
+public/hot
+public/hot
 storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*
