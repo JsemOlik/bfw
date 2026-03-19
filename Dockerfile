@@ -9,10 +9,15 @@ WORKDIR /var/www/html
 RUN apk add --no-cache --virtual .build-deps \
     postgresql-dev \
     libpng-dev \
+    libjpeg-turbo-dev \
+    libwebp-dev \
     libzip-dev \
     libxml2-dev \
     icu-dev \
+    imagemagick-dev \
     $PHPIZE_DEPS \
+    && pecl install imagick \
+    && docker-php-ext-enable imagick \
     && docker-php-ext-install \
     pdo_pgsql \
     intl \
@@ -23,9 +28,12 @@ RUN apk add --no-cache --virtual .build-deps \
     && apk add --no-cache \
     postgresql-client \
     libpng \
+    libjpeg-turbo \
+    libwebp \
     libzip \
     libxml2 \
     icu-libs \
+    imagemagick \
     nginx \
     supervisor \
     bash \

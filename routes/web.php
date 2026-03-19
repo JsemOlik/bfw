@@ -1,9 +1,15 @@
 <?php
 
+use App\Http\Controllers\ConverterController;
 use App\Http\Controllers\LinkController;
+use App\Http\Controllers\PasteController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
+
+// Converter routes
+Route::get('converter', [ConverterController::class, 'create'])->name('converter.create');
+Route::post('converter', [ConverterController::class, 'store'])->name('converter.store');
 
 // Link routes
 Route::get('link', [LinkController::class, 'create'])->name('link.create');
@@ -13,8 +19,6 @@ Route::delete('link/{link}', [LinkController::class, 'destroy'])->name('link.des
 
 // Redirection route must be last to avoid catching sub-routes
 Route::get('link/{slug}', [LinkController::class, 'show'])->name('link.show');
-
-use App\Http\Controllers\PasteController;
 
 // Paste routes
 Route::get('paste', [PasteController::class, 'create'])->name('paste.create');

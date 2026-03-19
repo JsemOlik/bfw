@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import ConverterController from '@/actions/App/Http/Controllers/ConverterController';
 import MarketingFooter from '@/components/marketing-footer';
 import LinkController from '@/actions/App/Http/Controllers/LinkController';
 import PasteController from '@/actions/App/Http/Controllers/PasteController';
@@ -75,6 +76,24 @@ export default function Welcome() {
                                 </div>
 
                                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                                    <section className="rounded-3xl border border-gray-200/80 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#111111] dark:shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f53003]/8 text-2xl shadow-sm dark:bg-[#ff4433]/12">
+                                            🪄
+                                        </div>
+                                        <h2 className="text-xl font-semibold text-gray-950 dark:text-white">
+                                            Image Converter
+                                        </h2>
+                                        <p className="mt-3 text-sm leading-7 text-gray-600 dark:text-gray-400">
+                                            Convert raster images between PNG, JPG, GIF, WebP, and ICO in a quick clean flow.
+                                        </p>
+                                        <Link
+                                            href={ConverterController.create().url}
+                                            className="mt-5 inline-flex items-center text-sm font-semibold text-[#f53003] hover:underline dark:text-[#FF4433]"
+                                        >
+                                            Open converter
+                                        </Link>
+                                    </section>
+
                                     <section className="rounded-3xl border border-gray-200/80 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#111111] dark:shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
                                         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f53003]/8 text-2xl shadow-sm dark:bg-[#ff4433]/12">
                                             🚀

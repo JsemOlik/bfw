@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import ConverterController from '@/actions/App/Http/Controllers/ConverterController';
 import LinkController from '@/actions/App/Http/Controllers/LinkController';
 import PasteController from '@/actions/App/Http/Controllers/PasteController';
 
@@ -30,6 +31,12 @@ export default function MarketingFooter() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold text-gray-600 dark:text-gray-400">
+                    <Link
+                        href={ConverterController.create().url}
+                        className="transition-colors hover:text-[#f53003] dark:hover:text-[#ff4433]"
+                    >
+                        Converter
+                    </Link>
                     <Link
                         href={LinkController.create().url}
                         className="transition-colors hover:text-[#f53003] dark:hover:text-[#ff4433]"
