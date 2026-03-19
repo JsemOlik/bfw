@@ -1,10 +1,9 @@
-# Stage 0: Build the frontend
+# Stage 0: Pre-install frontend dependencies
 FROM oven/bun:alpine AS frontend
 WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install
-COPY . .
-RUN bun run build
+# No build here because Wayfinder requires PHP which isn't in this image
 
 # Stage 1: Build the final PHP application
 FROM php:8.4-fpm-alpine
@@ -43,8 +42,8 @@ WORKDIR /var/www/html
 # Copy application code
 COPY . .
 
-# Copy frontend assets from Stage 0
-COPY --from=frontend /app/public/build ./public/build
+# Copy pre-installed node_modules to speed up first start
+COPY --from=frontend /app/node_modules ./node_modules
 
 # Pre-install Composer dependencies
 RUN composer install --no-interaction --no-dev --optimize-autoloader

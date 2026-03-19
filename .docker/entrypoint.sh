@@ -36,5 +36,9 @@ fi
 
 php artisan migrate --force
 
+# Generate Wayfinder actions/routes for the frontend
+echo "Generating Wayfinder types..."
+php artisan wayfinder:generate --with-form
+
 # Start the command (Supervisord)
 exec "$@"
