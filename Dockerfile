@@ -48,9 +48,10 @@ COPY --from=frontend /app/node_modules ./node_modules
 # Pre-install Composer dependencies
 RUN composer install --no-interaction --optimize-autoloader
 
-# Setup Nginx and Supervisord configs
+# Setup Nginx, PHP, and Supervisord configs
 COPY .docker/nginx.conf /etc/nginx/http.d/default.conf
 COPY .docker/supervisord.conf /etc/supervisord.conf
+COPY .docker/php.ini /usr/local/etc/php/conf.d/bfw-optimized.ini
 
 # Expose ports
 EXPOSE 80 5173
