@@ -1,16 +1,19 @@
 import { Head, Link as InertiaLink, useForm, usePage } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import DeleteConfirmModal from '@/components/delete-confirm-modal';
 import PasteController from '@/actions/App/Http/Controllers/PasteController';
 import MarketingNavbar from '@/components/marketing-navbar';
-import DeleteConfirmModal from '@/components/delete-confirm-modal';
 
 interface Props {
     paste: {
         id: number;
         user_id: number | null;
+        type: 'text' | 'image';
         slug: string;
-        syntax: string;
+        syntax: string | null;
         snippet: string;
+        image_url: string | null;
+        original_filename: string | null;
         created_at: string;
         expires_at: string | null;
         is_expired: boolean;
@@ -18,7 +21,7 @@ interface Props {
 }
 
 export default function Status({ paste }: Props) {
-    const { auth } = usePage<any>().props;
+    const { auth } = usePage<{ auth: { user?: { id: number } | null } }>().props;
     const shortUrl = `${window.location.origin}/paste/${paste.slug}`;
     const expiresAtText = paste.expires_at
         ? new Date(paste.expires_at).toLocaleString()
@@ -27,6 +30,7 @@ export default function Status({ paste }: Props) {
 
     const { delete: destroy, processing } = useForm();
     const isOwner = auth.user && paste.user_id === auth.user.id;
+    const isImagePaste = paste.type === 'image';
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
@@ -36,13 +40,13 @@ export default function Status({ paste }: Props) {
         }
     }, [copied]);
 
-    const handleDelete = (e: React.MouseEvent) => {
+    const handleDelete = (e: React.MouseEvent): void => {
         e.preventDefault();
         e.stopPropagation();
         setIsModalOpen(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = (): void => {
         destroy(PasteController.destroy(paste.id).url, {
             onSuccess: () => setIsModalOpen(false),
         });
@@ -53,7 +57,7 @@ export default function Status({ paste }: Props) {
             <MarketingNavbar />
             <Head title={`Status: ${paste.slug}`} />
 
-            <div className="w-full max-w-xl overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl ring-1 ring-black/5">
+            <div className="w-full max-w-xl overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl ring-1 ring-black/5 dark:border-[#3E3E3A] dark:bg-[#161615]">
                 <div className="relative bg-gradient-to-br from-[#f53003] via-[#ff4433] to-[#e22c02] p-8 text-white">
                     <div className="relative z-10">
                         <h1 className="mb-1 text-2xl font-bold">
@@ -78,11 +82,27 @@ export default function Status({ paste }: Props) {
                 <div className="space-y-8 p-8">
                     <div>
                         <label className="mb-3 block text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
-                            Snippet Preview ({paste.syntax})
+                            {isImagePaste
+                                ? 'Image Preview'
+                                : `Snippet Preview (${paste.syntax ?? 'plaintext'})`}
                         </label>
-                        <div className="text-sm font-mono leading-snug break-all text-gray-900 bg-gray-50 p-4 border border-gray-100 rounded-xl dark:bg-[#161615] dark:border-[#3E3E3A] dark:text-[#EDEDEC]">
-                            {paste.snippet}...
-                        </div>
+                        {isImagePaste && paste.image_url ? (
+                            <div className="overflow-hidden rounded-xl border border-gray-100 bg-gray-50 p-3 dark:border-[#3E3E3A] dark:bg-[#0a0a0a]">
+                                <img
+                                    src={paste.image_url}
+                                    alt={paste.original_filename ?? paste.slug}
+                                    className="max-h-80 w-full rounded-lg object-contain"
+                                />
+                                <p className="mt-3 truncate text-xs font-medium text-gray-500 dark:text-gray-400">
+                                    {paste.original_filename ?? 'Image paste'}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 font-mono text-sm leading-snug break-all text-gray-900 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-[#EDEDEC]">
+                                {paste.snippet}
+                                {!isImagePaste && '...'}
+                            </div>
+                        )}
                     </div>
 
                     <div>
@@ -96,6 +116,7 @@ export default function Status({ paste }: Props) {
                                 className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 font-mono text-sm text-gray-700 focus:outline-none dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-gray-300"
                             />
                             <button
+                                type="button"
                                 onClick={() => {
                                     navigator.clipboard.writeText(shortUrl);
                                     setCopied(true);

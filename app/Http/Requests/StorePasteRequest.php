@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StorePasteRequest extends FormRequest
 {
@@ -18,14 +19,56 @@ class StorePasteRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'content' => ['required', 'string', 'max:16777215'], // 16MB max limit for mediumtext/longtext
+            'type' => ['required', Rule::in(['text', 'image'])],
+            'content' => [
+                Rule::requiredIf($this->pasteType() === 'text'),
+                'nullable',
+                'string',
+                'max:16777215',
+            ],
             'slug' => ['nullable', 'string', 'max:50', 'alpha_dash', 'unique:pastes,slug'],
-            'syntax' => ['nullable', 'string', 'max:50'],
+            'syntax' => [
+                Rule::requiredIf($this->pasteType() === 'text'),
+                'nullable',
+                'string',
+                'max:50',
+            ],
+            'image' => [
+                Rule::requiredIf($this->pasteType() === 'image'),
+                'nullable',
+                'file',
+                'image',
+                'max:10240',
+            ],
         ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'content.required' => 'Please provide text content for the paste.',
+            'image.required' => 'Please choose an image to upload.',
+            'image.image' => 'The uploaded file must be a valid image.',
+            'image.max' => 'Images must be 10 MB or smaller.',
+            'type.in' => 'The selected paste type is invalid.',
+        ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'type' => $this->input('type', 'text'),
+            'syntax' => $this->input('syntax', 'plaintext'),
+        ]);
+    }
+
+    public function pasteType(): string
+    {
+        return (string) $this->input('type', 'text');
     }
 }

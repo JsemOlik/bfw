@@ -3,12 +3,17 @@
 use App\Models\Paste;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->withoutVite();
+    config()->set('filesystems.default_media_disk', 'paste_media');
+    config()->set('filesystems.paste_media_cdn_url', null);
+    Storage::fake('paste_media');
 });
 
 it('allows guests to create a paste', function () {
@@ -43,6 +48,28 @@ it('allows authenticated users to create a paste', function () {
         'slug' => 'auth-paste',
         'user_id' => $user->id,
     ]);
+});
+
+it('allows guests to create an image paste', function () {
+    $response = $this->from('/paste')->post('/paste', [
+        'type' => 'image',
+        'slug' => 'kitten-shot',
+        'image' => UploadedFile::fake()->image('kitten.png', 320, 240),
+    ]);
+
+    $paste = Paste::first();
+
+    $response->assertRedirect('/paste');
+    $response->assertSessionHas('shortened_link', url('/paste/kitten-shot'));
+    expect($paste->type)
+        ->toBe('image')
+        ->and($paste->content)->toBeNull()
+        ->and($paste->original_filename)->toBe('kitten.png')
+        ->and($paste->mime_type)->toContain('image/')
+        ->and($paste->image_width)->toBe(320)
+        ->and($paste->image_height)->toBe(240);
+
+    Storage::disk('paste_media')->assertExists($paste->storage_path);
 });
 
 it('expires authenticated user pastes in two months', function () {
@@ -102,6 +129,24 @@ it('shows the raw text of a paste', function () {
         );
 });
 
+it('shows image pastes with a raw image url', function () {
+    Storage::disk('paste_media')->put('pastes/images/test/example.png', 'image-bytes');
+
+    $paste = Paste::factory()->image()->create([
+        'slug' => 'image-paste',
+    ]);
+
+    $response = $this->get('/paste/'.$paste->slug);
+
+    $response->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('pastes/show')
+            ->where('paste.type', 'image')
+            ->where('paste.image_url', Storage::disk('paste_media')->url('pastes/images/test/example.png'))
+            ->etc()
+        );
+});
+
 it('highlights additional supported syntaxes', function (string $syntax, string $content) {
     $paste = Paste::factory()->create([
         'content' => $content,
@@ -136,6 +181,16 @@ it('returns raw paste content without ui', function () {
     $response->assertSuccessful();
     $response->assertHeader('content-type', 'text/plain; charset=UTF-8');
     expect($response->getContent())->toBe("#!/bin/sh\necho 'hello'");
+});
+
+it('redirects image raw requests to the stored media url', function () {
+    Storage::disk('paste_media')->put('pastes/images/test/example.png', 'image-bytes');
+
+    $paste = Paste::factory()->image()->create();
+
+    $response = $this->get('/paste/'.$paste->slug.'/raw');
+
+    $response->assertRedirect(Storage::disk('paste_media')->url('pastes/images/test/example.png'));
 });
 
 it('does not show expired pastes', function () {

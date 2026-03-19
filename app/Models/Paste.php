@@ -12,7 +12,21 @@ use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
-#[Fillable(['user_id', 'slug', 'content', 'syntax', 'expires_at'])]
+#[Fillable([
+    'user_id',
+    'slug',
+    'type',
+    'content',
+    'syntax',
+    'storage_disk',
+    'storage_path',
+    'original_filename',
+    'mime_type',
+    'size_bytes',
+    'image_width',
+    'image_height',
+    'expires_at',
+])]
 class Paste extends Model
 {
     /** @use HasFactory<PasteFactory> */
@@ -26,8 +40,22 @@ class Paste extends Model
     protected function casts(): array
     {
         return [
+            'type' => 'string',
             'expires_at' => 'datetime',
+            'size_bytes' => 'integer',
+            'image_width' => 'integer',
+            'image_height' => 'integer',
         ];
+    }
+
+    public function isText(): bool
+    {
+        return $this->type === 'text';
+    }
+
+    public function isImage(): bool
+    {
+        return $this->type === 'image';
     }
 
     /**

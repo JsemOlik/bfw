@@ -15,6 +15,10 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
+    'default_media_disk' => env('PASTE_MEDIA_DISK', 'public'),
+
+    'paste_media_cdn_url' => env('PASTE_MEDIA_CDN_URL'),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks
@@ -56,6 +60,19 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'b2' => [
+            'driver' => 's3',
+            'key' => env('B2_ACCESS_KEY_ID'),
+            'secret' => env('B2_SECRET_ACCESS_KEY'),
+            'region' => env('B2_REGION', 'us-west-000'),
+            'bucket' => env('B2_BUCKET'),
+            'url' => env('B2_URL'),
+            'endpoint' => env('B2_ENDPOINT'),
+            'use_path_style_endpoint' => env('B2_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => false,
             'report' => false,
         ],

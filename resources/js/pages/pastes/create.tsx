@@ -1,13 +1,29 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { useForm } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+import DeleteConfirmModal from '@/components/delete-confirm-modal';
 import PasteController from '@/actions/App/Http/Controllers/PasteController';
 import AppLayout from '@/layouts/app-layout';
-import DeleteConfirmModal from '@/components/delete-confirm-modal';
 
-export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
+interface UserPaste {
+    id: number;
+    type: 'text' | 'image';
+    slug: string;
+    syntax: string;
+    snippet: string;
+    is_expired: boolean;
+}
+
+interface PasteFormData {
+    type: 'text' | 'image';
+    content: string;
+    syntax: string;
+    slug: string;
+    image: File | null;
+}
+
+export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }) {
     const { auth, flash } = usePage<{
-        auth: any;
+        auth: { user?: { role?: string } | null };
         flash: { shortened_link?: string };
     }>().props;
 
@@ -18,19 +34,27 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
 
     const { delete: destroy, processing: deleting } = useForm();
 
-    const { data, setData, post, processing, errors, reset } = useForm({
-        content: '',
-        syntax: 'plaintext',
-        slug: '',
-    });
+    const { data, setData, post, processing, errors, reset } =
+        useForm<PasteFormData>({
+            type: 'text',
+            content: '',
+            syntax: 'plaintext',
+            slug: '',
+            image: null,
+        });
 
-    const shortened_link = flash?.shortened_link;
+    const shortenedLink = flash?.shortened_link;
     const isAdmin = auth.user?.role === 'admin';
     const expiryDescription = isAdmin
-        ? 'Paste your text, code, or logs. Admin pastes never expire.'
+        ? 'Paste text or upload an image. Admin pastes never expire.'
         : auth.user
-          ? 'Paste your text, code, or logs. Expiring in 2 months.'
-          : 'Paste your text, code, or logs. Expiring in 24 hours.';
+          ? 'Paste text or upload an image. Expiring in 2 months.'
+          : 'Paste text or upload an image. Expiring in 24 hours.';
+    const successExpiryNote = isAdmin
+        ? '* Admin pastes do not expire. You can still manage them from My Pastes below.'
+        : auth.user
+          ? '* Paste expires in 2 months. You can see its status in the My Pastes dropdown below.'
+          : '* Paste expires in 24 hours. You can see its status in the My Pastes dropdown below.';
 
     useEffect(() => {
         if (copied) {
@@ -39,12 +63,12 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
         }
     }, [copied]);
 
-    const handleDelete = (id: number) => {
+    const handleDelete = (id: number): void => {
         setPasteToDelete(id);
         setIsModalOpen(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = (): void => {
         if (pasteToDelete) {
             destroy(PasteController.destroy(pasteToDelete).url, {
                 preserveScroll: true,
@@ -54,6 +78,10 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                 },
             });
         }
+    };
+
+    const switchType = (type: 'text' | 'image'): void => {
+        setData('type', type);
     };
 
     return (
@@ -92,26 +120,15 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                                         strokeLinejoin="round"
                                     >
                                         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                                        <line
-                                            x1="12"
-                                            y1="9"
-                                            x2="12"
-                                            y2="13"
-                                        ></line>
-                                        <line
-                                            x1="12"
-                                            y1="17"
-                                            x2="12.01"
-                                            y2="17"
-                                        ></line>
+                                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
                                     </svg>
                                     <p className="text-sm font-medium">
                                         You are pasting as a guest.
                                         <span className="mt-1 block font-normal italic opacity-80">
-                                            This paste will not be tied to an
-                                            account. You won't be able to delete
-                                            or expire it manually. Log in to
-                                            bump the expiry from 24 hours to 2
+                                            This paste will not be tied to an account. You
+                                            won&apos;t be able to delete or expire it manually.
+                                            Log in to bump the expiry from 24 hours to 2
                                             months.
                                         </span>
                                     </p>
@@ -124,68 +141,159 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                                 e.preventDefault();
                                 post(PasteController.store().url, {
                                     preserveScroll: true,
-                                    onSuccess: () => reset('content', 'slug', 'syntax'),
+                                    forceFormData: true,
+                                    onSuccess: () => reset(),
                                 });
                             }}
                             className="space-y-6"
                         >
-                            <div className="space-y-1">
+                            <div className="space-y-3">
                                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                    Text Content
+                                    Paste Type
                                 </label>
-                                <textarea
-                                    value={data.content}
-                                    onChange={(e) =>
-                                        setData('content', e.target.value)
-                                    }
-                                    placeholder="Paste your text here..."
-                                    required
-                                    rows={6}
-                                    className="w-full resize-y rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-[#EDEDEC] dark:focus:border-blue-400 dark:focus:ring-blue-400"
-                                />
-                                {errors.content && (
-                                    <p className="mt-1 text-xs text-red-500">
-                                        {errors.content}
-                                    </p>
-                                )}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => switchType('text')}
+                                        className={`rounded-xl border px-4 py-3 text-sm font-bold transition-all ${
+                                            data.type === 'text'
+                                                ? 'border-[#f53003] bg-red-50 text-[#f53003] dark:border-[#FF4433] dark:bg-red-950/30 dark:text-[#FF4433]'
+                                                : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-gray-300'
+                                        }`}
+                                    >
+                                        Text Paste
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => switchType('image')}
+                                        className={`rounded-xl border px-4 py-3 text-sm font-bold transition-all ${
+                                            data.type === 'image'
+                                                ? 'border-[#f53003] bg-red-50 text-[#f53003] dark:border-[#FF4433] dark:bg-red-950/30 dark:text-[#FF4433]'
+                                                : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-gray-300'
+                                        }`}
+                                    >
+                                        Image Paste
+                                    </button>
+                                </div>
                             </div>
 
-                            <div className="space-y-6">
+                            {data.type === 'text' ? (
+                                <>
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                            Text Content
+                                        </label>
+                                        <textarea
+                                            value={data.content}
+                                            onChange={(e) =>
+                                                setData('content', e.target.value)
+                                            }
+                                            placeholder="Paste your text here..."
+                                            required={data.type === 'text'}
+                                            rows={6}
+                                            className="w-full resize-y rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-[#EDEDEC] dark:focus:border-blue-400 dark:focus:ring-blue-400"
+                                        />
+                                        {errors.content && (
+                                            <p className="mt-1 text-xs text-red-500">
+                                                {errors.content}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                            Syntax Highlighting
+                                        </label>
+                                        <select
+                                            value={data.syntax}
+                                            onChange={(e) =>
+                                                setData('syntax', e.target.value)
+                                            }
+                                            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-[#EDEDEC] dark:focus:border-blue-400 dark:focus:ring-blue-400"
+                                        >
+                                            <option value="plaintext">Plain Text</option>
+                                            <option value="json">JSON</option>
+                                            <option value="yaml">YAML</option>
+                                            <option value="bash">Bash / Shell</option>
+                                            <option value="powershell">PowerShell</option>
+                                            <option value="lua">Lua</option>
+                                            <option value="javascript">
+                                                JavaScript / TypeScript
+                                            </option>
+                                            <option value="go">Go</option>
+                                            <option value="php">PHP</option>
+                                            <option value="python">Python</option>
+                                            <option value="rust">Rust</option>
+                                            <option value="ruby">Ruby</option>
+                                            <option value="c">C</option>
+                                            <option value="cpp">C++</option>
+                                            <option value="csharp">C#</option>
+                                            <option value="xml">XML / HTML</option>
+                                        </select>
+                                        {errors.syntax && (
+                                            <p className="mt-1 text-xs text-red-500">
+                                                {errors.syntax}
+                                            </p>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
                                 <div className="space-y-1">
                                     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                        Syntax Highlighting
+                                        Image File
                                     </label>
-                                    <select
-                                        value={data.syntax}
-                                        onChange={(e) =>
-                                            setData('syntax', e.target.value)
-                                        }
-                                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-[#EDEDEC] dark:focus:border-blue-400 dark:focus:ring-blue-400"
-                                    >
-                                        <option value="plaintext">Plain Text</option>
-                                        <option value="json">JSON</option>
-                                        <option value="yaml">YAML</option>
-                                        <option value="bash">Bash / Shell</option>
-                                        <option value="powershell">PowerShell</option>
-                                        <option value="lua">Lua</option>
-                                        <option value="javascript">JavaScript / TypeScript</option>
-                                        <option value="go">Go</option>
-                                        <option value="php">PHP</option>
-                                        <option value="python">Python</option>
-                                        <option value="rust">Rust</option>
-                                        <option value="ruby">Ruby</option>
-                                        <option value="c">C</option>
-                                        <option value="cpp">C++</option>
-                                        <option value="csharp">C#</option>
-                                        <option value="xml">XML / HTML</option>
-                                    </select>
-                                    {errors.syntax && (
+                                    <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-10 text-center transition-all hover:border-[#f53003] hover:bg-red-50/30 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:hover:border-[#FF4433] dark:hover:bg-red-950/20">
+                                        <svg
+                                            width="24"
+                                            height="24"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            className="text-gray-400 dark:text-gray-500"
+                                        >
+                                            <rect
+                                                x="3"
+                                                y="3"
+                                                width="18"
+                                                height="18"
+                                                rx="2"
+                                                ry="2"
+                                            ></rect>
+                                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                            <path d="m21 15-5-5L5 21"></path>
+                                        </svg>
+                                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                            {data.image
+                                                ? data.image.name
+                                                : 'Choose an image to upload'}
+                                        </span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                            PNG, JPG, GIF or WebP up to 10 MB
+                                        </span>
+                                        <input
+                                            type="file"
+                                            accept="image/png,image/jpeg,image/gif,image/webp"
+                                            className="hidden"
+                                            onChange={(e) =>
+                                                setData(
+                                                    'image',
+                                                    e.target.files?.[0] ?? null,
+                                                )
+                                            }
+                                        />
+                                    </label>
+                                    {errors.image && (
                                         <p className="mt-1 text-xs text-red-500">
-                                            {errors.syntax}
+                                            {errors.image}
                                         </p>
                                     )}
                                 </div>
+                            )}
 
+                            <div className="space-y-6">
                                 <div className="space-y-1">
                                     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                                         Custom Slug (Optional)
@@ -218,12 +326,14 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                                 >
                                     {processing
                                         ? 'Saving Paste...'
-                                        : 'Create Paste'}
+                                        : data.type === 'image'
+                                          ? 'Create Image Paste'
+                                          : 'Create Paste'}
                                 </button>
                             </div>
                         </form>
 
-                        {shortened_link && (
+                        {shortenedLink && (
                             <div className="mt-10 overflow-hidden rounded-2xl border border-green-100 bg-green-50/50 p-6 dark:border-green-900/20 dark:bg-green-900/10">
                                 <div className="mb-4 flex items-center gap-2 text-green-700 dark:text-green-400">
                                     <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white">
@@ -248,17 +358,16 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                                 <div className="space-y-4">
                                     <div className="flex flex-col items-stretch justify-between gap-3 rounded-xl border border-green-100 bg-white p-4 sm:flex-row sm:items-center dark:border-green-900/30 dark:bg-[#0a0a0a]">
                                         <a
-                                            href={shortened_link}
+                                            href={shortenedLink}
                                             target="_blank"
                                             className="truncate font-mono text-sm font-medium text-[#f53003] hover:underline dark:text-[#FF4433]"
                                         >
-                                            {shortened_link}
+                                            {shortenedLink}
                                         </a>
                                         <button
+                                            type="button"
                                             onClick={() => {
-                                                navigator.clipboard.writeText(
-                                                    shortened_link,
-                                                );
+                                                navigator.clipboard.writeText(shortenedLink);
                                                 setCopied(true);
                                             }}
                                             className={`flex w-[130px] items-center justify-center gap-2 rounded-lg py-2 text-xs font-bold shadow-sm transition-all ${copied ? 'bg-green-500 text-white' : 'bg-gray-900 text-white hover:bg-black dark:bg-white dark:text-black dark:hover:bg-gray-200'}`}
@@ -307,9 +416,7 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                                         </button>
                                     </div>
                                     <p className="px-1 text-[11px] font-medium text-green-700/70 italic dark:text-green-400/50">
-                                        * Paste expires in 24 hours. You can see
-                                        its status in the My Pastes dropdown
-                                        below.
+                                        {successExpiryNote}
                                     </p>
                                 </div>
                             </div>
@@ -319,9 +426,7 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                     <div className="mt-8 flex w-full flex-col items-center gap-6">
                         <div className="flex items-center gap-6 text-sm font-medium">
                             <button
-                                onClick={() =>
-                                    setIsDashboardOpen(!isDashboardOpen)
-                                }
+                                onClick={() => setIsDashboardOpen(!isDashboardOpen)}
                                 className="flex items-center gap-2 text-gray-600 transition-colors hover:text-black dark:text-gray-400 dark:hover:text-white"
                             >
                                 <span className="font-semibold">My Pastes</span>
@@ -341,7 +446,6 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                             </button>
                         </div>
 
-                        {/* My Pastes Dropdown Content */}
                         {isDashboardOpen && (
                             <div className="w-full max-w-2xl animate-in duration-300 fade-in slide-in-from-top-4">
                                 <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white/50 shadow-xl backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
@@ -358,7 +462,7 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                                         </div>
                                     ) : userPastes.length === 0 ? (
                                         <div className="p-8 text-center text-sm text-gray-500">
-                                            You haven't pasted anything yet.
+                                            You haven&apos;t pasted anything yet.
                                         </div>
                                     ) : (
                                         <div className="divide-y divide-gray-100 dark:divide-white/10">
@@ -374,9 +478,7 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                                                                 target="_blank"
                                                                 className="group flex items-center gap-1.5 font-mono text-sm font-bold text-gray-900 underline decoration-gray-300 decoration-2 underline-offset-4 transition-all hover:text-[#f53003] hover:decoration-[#f53003] dark:text-white dark:decoration-white/10 dark:hover:text-[#FF4433] dark:hover:decoration-[#FF4433]"
                                                             >
-                                                                <span>
-                                                                    /{paste.slug}
-                                                                </span>
+                                                                <span>/{paste.slug}</span>
                                                                 <svg
                                                                     width="12"
                                                                     height="12"
@@ -404,7 +506,9 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                                                                 </span>
                                                             )}
                                                             <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-600 uppercase dark:bg-gray-800 dark:text-gray-400">
-                                                                {paste.syntax}
+                                                                {paste.type === 'image'
+                                                                    ? 'image'
+                                                                    : paste.syntax}
                                                             </span>
                                                         </div>
                                                         <p className="max-w-[300px] truncate font-mono text-xs text-gray-500">
@@ -450,10 +554,9 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                                                             </svg>
                                                         </Link>
                                                         <button
+                                                            type="button"
                                                             onClick={() =>
-                                                                handleDelete(
-                                                                    paste.id,
-                                                                )
+                                                                handleDelete(paste.id)
                                                             }
                                                             className="rounded-lg bg-red-50 p-2 text-red-500 transition-all hover:bg-red-500 hover:text-white dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white"
                                                         >
