@@ -10,6 +10,8 @@ services:
             - "5173:5173"
         volumes:
             - .:/var/www/html
+            - /var/www/html/node_modules
+            - /var/www/html/vendor
         environment:
             - DB_CONNECTION=pgsql
             - DB_HOST=db
