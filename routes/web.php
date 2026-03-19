@@ -19,6 +19,7 @@ use App\Http\Controllers\PasteController;
 // Paste routes
 Route::get('paste', [PasteController::class, 'create'])->name('paste.create');
 Route::post('paste', [PasteController::class, 'store'])->name('paste.store');
+Route::get('paste/{slug}/raw', [PasteController::class, 'raw'])->name('paste.raw');
 Route::get('paste/{slug}/status', [PasteController::class, 'status'])->name('paste.status');
 Route::delete('paste/{paste}', [PasteController::class, 'destroy'])->name('paste.destroy');
 

@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Http\Requests\StorePasteRequest;
 use App\Models\Paste;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class PasteController extends Controller
 {
@@ -25,13 +26,13 @@ class PasteController extends Controller
             $userPastes = Paste::where('user_id', Auth::id())
                 ->latest()
                 ->get()
-                ->map(fn($paste) => [
+                ->map(fn ($paste) => [
                     'id' => $paste->id,
                     'slug' => $paste->slug,
                     'syntax' => $paste->syntax,
                     'expires_at' => $paste->expires_at->toDateTimeString(),
                     'is_expired' => $paste->expires_at->isPast(),
-                    'snippet' => \Illuminate\Support\Str::limit($paste->content, 50),
+                    'snippet' => Str::limit($paste->content, 50),
                 ]);
         }
 
@@ -72,7 +73,21 @@ class PasteController extends Controller
                 'syntax' => $paste->syntax,
                 'slug' => $paste->slug,
                 'created_at' => $paste->created_at->toDateTimeString(),
-            ]
+            ],
+        ]);
+    }
+
+    /**
+     * Display the raw text content of the specified paste.
+     */
+    public function raw(string $slug): HttpResponse
+    {
+        $paste = Paste::where('slug', $slug)
+            ->where('expires_at', '>', now())
+            ->firstOrFail();
+
+        return response($paste->content, 200, [
+            'Content-Type' => 'text/plain; charset=UTF-8',
         ]);
     }
 
@@ -89,7 +104,7 @@ class PasteController extends Controller
                 'user_id' => $paste->user_id,
                 'slug' => $paste->slug,
                 'syntax' => $paste->syntax,
-                'snippet' => \Illuminate\Support\Str::limit($paste->content, 100),
+                'snippet' => Str::limit($paste->content, 100),
                 'created_at' => $paste->created_at->toDateTimeString(),
                 'expires_at' => $paste->expires_at->toDateTimeString(),
                 'is_expired' => $paste->expires_at->isPast(),
@@ -102,7 +117,7 @@ class PasteController extends Controller
      */
     public function destroy(Paste $paste): RedirectResponse
     {
-        if (!Auth::check() || $paste->user_id !== Auth::id()) {
+        if (! Auth::check() || $paste->user_id !== Auth::id()) {
             abort(403);
         }
 

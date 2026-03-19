@@ -58,8 +58,18 @@ it('shows the raw text of a paste', function () {
 
     $response = $this->get('/paste/'.$paste->slug);
 
-    $response->assertStatus(200);
+    $response->assertSuccessful();
     $response->assertSee('Raw text content');
+});
+
+it('returns raw paste content without ui', function () {
+    $paste = Paste::factory()->create(['content' => "#!/bin/sh\necho 'hello'"]);
+
+    $response = $this->get('/paste/'.$paste->slug.'/raw');
+
+    $response->assertSuccessful();
+    $response->assertHeader('content-type', 'text/plain; charset=UTF-8');
+    expect($response->getContent())->toBe("#!/bin/sh\necho 'hello'");
 });
 
 it('does not show expired pastes', function () {
@@ -69,7 +79,17 @@ it('does not show expired pastes', function () {
 
     $response = $this->get('/paste/'.$paste->slug);
 
-    $response->assertStatus(404);
+    $response->assertNotFound();
+});
+
+it('does not return raw content for expired pastes', function () {
+    $paste = Paste::factory()->create([
+        'expires_at' => now()->subDay(),
+    ]);
+
+    $response = $this->get('/paste/'.$paste->slug.'/raw');
+
+    $response->assertNotFound();
 });
 
 it('allows owners to delete their paste', function () {
@@ -87,7 +107,7 @@ it('prevents guests from deleting pastes', function () {
 
     $response = $this->delete('/paste/'.$paste->id);
 
-    $response->assertStatus(403);
+    $response->assertForbidden();
     $this->assertDatabaseHas('pastes', ['id' => $paste->id]);
 });
 
@@ -98,6 +118,6 @@ it('prevents users from deleting others pastes', function () {
 
     $response = $this->actingAs($otherUser)->delete('/paste/'.$paste->id);
 
-    $response->assertStatus(403);
+    $response->assertForbidden();
     $this->assertDatabaseHas('pastes', ['id' => $paste->id]);
 });
