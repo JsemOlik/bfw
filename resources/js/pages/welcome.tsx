@@ -68,40 +68,6 @@ export default function Welcome() {
                                         </Link>
                                     </div>
                                 </section>
-
-                                <div className="mt-8 border-t border-[#e3e3e0] pt-8 dark:border-[#3E3E3A]">
-                                    <h2 className="mb-4 font-medium">
-                                        Ecosystem
-                                    </h2>
-                                    <ul className="mb-4 flex flex-col gap-2">
-                                        <li className="flex items-center gap-3">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-[#f53003] dark:bg-[#FF4433]" />
-                                            <span>
-                                                Read the{' '}
-                                                <a
-                                                    href="https://laravel.com/docs"
-                                                    target="_blank"
-                                                    className="underline underline-offset-4 hover:text-[#f53003] dark:hover:text-[#FF4433]"
-                                                >
-                                                    Documentation
-                                                </a>
-                                            </span>
-                                        </li>
-                                        <li className="flex items-center gap-3">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-[#f53003] dark:bg-[#FF4433]" />
-                                            <span>
-                                                Watch{' '}
-                                                <a
-                                                    href="https://laracasts.com"
-                                                    target="_blank"
-                                                    className="underline underline-offset-4 hover:text-[#f53003] dark:hover:text-[#FF4433]"
-                                                >
-                                                    Laracasts
-                                                </a>
-                                            </span>
-                                        </li>
-                                    </ul>
-                                </div>
                             </div>
                         </div>
                         <div className="relative -mb-px aspect-[335/364] w-full shrink-0 overflow-hidden rounded-t-lg bg-[#fff2f2] lg:mb-0 lg:-ml-px lg:aspect-auto lg:w-[438px] lg:rounded-t-none lg:rounded-r-lg dark:bg-[#1D0002]">
