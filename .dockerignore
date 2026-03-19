@@ -25,20 +25,12 @@ bootstrap/cache/*
 # IDE configs
 .idea
 .vscode
-.cursor
-.claude
-.gemini
-.agents
-.codex
 
 # Docker files
 Dockerfile
 docker-compose*.yml
-.docker
 
 # Others
 tests
 readme.md
-composer.phar
-.php-cs-fixer.cache
 phpunit.result.cache
