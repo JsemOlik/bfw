@@ -313,7 +313,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                         Custom Slug (Optional)
                                     </label>
                                     <div className="flex items-stretch overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-[#3E3E3A] dark:bg-[#0a0a0a]">
-                                        <div className="flex items-center border-r border-gray-200 bg-gray-100/50 px-4 font-mono text-sm text-gray-400 select-none dark:border-white/10 dark:bg-white/5 dark:text-gray-500">
+                                        <div className="flex items-center border-r border-gray-200 bg-gray-100/50 px-4 font-mono text-sm text-black select-none dark:border-white/10 dark:bg-white/5 dark:text-gray-500">
                                             {window.location.host}/paste/
                                         </div>
                                         <input
