@@ -18,7 +18,7 @@ export default function MarketingFooter() {
                         </span>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Simple tools for links and pastes, made with ❤️ by{' '}
+                        Made with ❤️ by{' '}
                         <a
                             href="https://github.com/jsemolik"
                             target="_blank"
