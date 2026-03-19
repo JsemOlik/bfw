@@ -386,7 +386,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
+                            <div>
                                 <div
                                     aria-hidden={data.type !== 'text'}
                                     className={`grid transition-[grid-template-rows,opacity,transform] duration-300 ease-out ${
@@ -396,7 +396,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                     }`}
                                 >
                                     <div className="overflow-hidden">
-                                        <div className="space-y-4 pb-1">
+                                        <div className="space-y-4">
                                             <div className="space-y-1">
                                                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                                                     Text Content
@@ -467,7 +467,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                     }`}
                                 >
                                     <div className="overflow-hidden">
-                                        <div className="space-y-1 pb-1">
+                                        <div className="space-y-1">
                                             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                                                 Image File
                                             </label>
@@ -545,7 +545,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                     }`}
                                 >
                                     <div className="overflow-hidden">
-                                        <div className="space-y-1 pb-1">
+                                        <div className="space-y-1">
                                             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                                                 Video File
                                             </label>
