@@ -20,7 +20,7 @@ export default function Welcome() {
                     <div className="h-64 w-64 rounded-full bg-[#f53003]/10 blur-3xl dark:bg-[#ff4433]/10"></div>
                 </div>
                 <MarketingNavbar />
-                <div className="flex w-full flex-1 items-center justify-center opacity-100 transition-opacity duration-750 starting:opacity-0">
+                <div className="flex w-full flex-1 translate-y-0 items-center justify-center opacity-100 transition-all duration-500 ease-out starting:translate-y-4 starting:opacity-0">
                     <main className="w-full max-w-6xl">
                         <section className="relative overflow-hidden rounded-[2rem] border border-black/8 bg-white/92 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.08)] backdrop-blur xl:p-10 dark:border-white/10 dark:bg-[#161615]/96 dark:shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
                             <div className="grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center">

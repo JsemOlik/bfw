@@ -75,7 +75,7 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
         <AppLayout>
             <Head title="Shorten a Link" />
             <div className="flex min-h-[calc(100vh-14rem)] flex-col items-center justify-start py-10">
-                <div className="flex w-full max-w-2xl flex-col items-center gap-8">
+                <div className="flex w-full max-w-2xl translate-y-0 flex-col items-center gap-8 opacity-100 transition-all duration-500 ease-out starting:translate-y-4 starting:opacity-0">
                     <div className="text-center">
                         <h1 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl dark:text-white">
                             Shorten a Link

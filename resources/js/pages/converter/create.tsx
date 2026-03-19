@@ -319,7 +319,7 @@ export default function Create({ supportedFormats }: Props) {
         <AppLayout>
             <Head title="Convert Images" />
             <div className="flex min-h-[calc(100vh-14rem)] flex-col items-center justify-start py-10">
-                <div className="flex w-full max-w-3xl flex-col items-center gap-8">
+                <div className="flex w-full max-w-3xl translate-y-0 flex-col items-center gap-8 opacity-100 transition-all duration-500 ease-out starting:translate-y-4 starting:opacity-0">
                     <div className="text-center">
                         <h1 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl dark:text-white">
                             Convert Images
