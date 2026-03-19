@@ -1,18 +1,27 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
+import { raw } from '@/actions/App/Http/Controllers/PasteController';
 import MarketingNavbar from '@/components/marketing-navbar';
 import { useState, useEffect } from 'react';
+
+interface HighlightedToken {
+    content: string;
+    type: string;
+}
 
 interface Props {
     paste: {
         content: string;
         syntax: string;
         slug: string;
+        raw_url: string;
         created_at: string;
+        highlighted_lines: HighlightedToken[][];
     };
 }
 
 export default function Show({ paste }: Props) {
     const [copied, setCopied] = useState(false);
+    const rawUrl = raw(paste.slug).url;
 
     useEffect(() => {
         if (copied) {
@@ -41,6 +50,13 @@ export default function Show({ paste }: Props) {
                         <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-600 uppercase tracking-wider dark:bg-[#161615] dark:text-gray-400">
                             {paste.syntax}
                         </span>
+                        <a
+                            href={rawUrl}
+                            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:border-[#3E3E3A] dark:bg-[#161615] dark:text-gray-200 dark:hover:bg-[#202020]"
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path></svg>
+                            View Raw
+                        </a>
                         <button
                             onClick={() => {
                                 navigator.clipboard.writeText(paste.content);
@@ -69,8 +85,22 @@ export default function Show({ paste }: Props) {
 
                 <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-[#3E3E3A] dark:bg-[#161615]">
                     <div className="overflow-x-auto p-4 sm:p-6">
-                        <pre className="font-mono text-sm leading-relaxed text-gray-800 dark:text-gray-200">
-                            <code>{paste.content}</code>
+                        <pre className="paste-code font-mono text-sm leading-relaxed text-gray-800 dark:text-gray-200">
+                            <code>
+                                {paste.highlighted_lines.map((line, lineIndex) => (
+                                    <span key={lineIndex}>
+                                        {line.map((token, tokenIndex) => (
+                                            <span
+                                                key={`${lineIndex}-${tokenIndex}`}
+                                                className={`token-${token.type}`}
+                                            >
+                                                {token.content}
+                                            </span>
+                                        ))}
+                                        {lineIndex < paste.highlighted_lines.length - 1 && '\n'}
+                                    </span>
+                                ))}
+                            </code>
                         </pre>
                     </div>
                 </div>

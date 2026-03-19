@@ -141,3 +141,72 @@
         @apply bg-background text-foreground;
     }
 }
+
+@layer components {
+    .paste-code .token-comment {
+        color: oklch(0.6 0.05 220);
+        font-style: italic;
+    }
+
+    .paste-code .token-string {
+        color: oklch(0.64 0.17 150);
+    }
+
+    .paste-code .token-number {
+        color: oklch(0.7 0.16 45);
+    }
+
+    .paste-code .token-keyword {
+        color: oklch(0.58 0.19 275);
+        font-weight: 600;
+    }
+
+    .paste-code .token-literal {
+        color: oklch(0.64 0.19 20);
+        font-weight: 600;
+    }
+
+    .paste-code .token-variable {
+        color: oklch(0.55 0.17 250);
+    }
+
+    .paste-code .token-property {
+        color: oklch(0.53 0.15 240);
+    }
+
+    .paste-code .token-tag {
+        color: oklch(0.62 0.19 20);
+    }
+
+    .dark .paste-code .token-comment {
+        color: oklch(0.72 0.04 220);
+    }
+
+    .dark .paste-code .token-string {
+        color: oklch(0.82 0.14 150);
+    }
+
+    .dark .paste-code .token-number {
+        color: oklch(0.8 0.15 60);
+    }
+
+    .dark .paste-code .token-keyword {
+        color: oklch(0.78 0.15 285);
+    }
+
+    .dark .paste-code .token-literal {
+        color: oklch(0.8 0.16 25);
+    }
+
+    .dark .paste-code .token-variable {
+        color: oklch(0.78 0.12 255);
+    }
+
+    .dark .paste-code .token-property {
+        color: oklch(0.8 0.1 235);
+    }
+
+    .dark .paste-code .token-tag {
+        color: oklch(0.83 0.12 25);
+    }
+}

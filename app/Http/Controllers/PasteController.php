@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePasteRequest;
 use App\Models\Paste;
+use App\Support\PasteHighlighter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response as HttpResponse;
@@ -59,20 +60,20 @@ class PasteController extends Controller
     /**
      * Display the specified paste.
      */
-    public function show(string $slug)
+    public function show(string $slug, PasteHighlighter $pasteHighlighter): Response
     {
         $paste = Paste::where('slug', $slug)
             ->where('expires_at', '>', now())
             ->firstOrFail();
 
-        // For now, return plain text response or a basic view. The user asked for raw text content.
-        // We can just return an Inertia view if we build one, or plain text. Let's return Inertia view.
         return Inertia::render('pastes/show', [
             'paste' => [
                 'content' => $paste->content,
                 'syntax' => $paste->syntax,
                 'slug' => $paste->slug,
+                'raw_url' => route('paste.raw', $paste->slug),
                 'created_at' => $paste->created_at->toDateTimeString(),
+                'highlighted_lines' => $pasteHighlighter->highlight($paste->content, $paste->syntax),
             ],
         ]);
     }

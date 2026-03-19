@@ -3,6 +3,7 @@
 use App\Models\Paste;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
@@ -54,12 +55,22 @@ it('validates paste creation requests', function () {
 });
 
 it('shows the raw text of a paste', function () {
-    $paste = Paste::factory()->create(['content' => 'Raw text content']);
+    $paste = Paste::factory()->create([
+        'content' => "<?php\nreturn 'Raw text content';",
+        'syntax' => 'php',
+    ]);
 
     $response = $this->get('/paste/'.$paste->slug);
 
-    $response->assertSuccessful();
-    $response->assertSee('Raw text content');
+    $response->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('pastes/show')
+            ->where('paste.syntax', 'php')
+            ->where('paste.raw_url', url('/paste/'.$paste->slug.'/raw'))
+            ->where('paste.highlighted_lines.0.0.type', 'keyword')
+            ->where('paste.highlighted_lines.1.2.type', 'string')
+            ->etc()
+        );
 });
 
 it('returns raw paste content without ui', function () {
