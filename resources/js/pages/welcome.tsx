@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import LinkController from '@/actions/App/Http/Controllers/LinkController';
+import PasteController from '@/actions/App/Http/Controllers/PasteController';
 import MarketingNavbar from '@/components/marketing-navbar';
 
 export default function Welcome() {
@@ -45,6 +46,25 @@ export default function Welcome() {
                                             className="inline-block rounded-xl bg-[#f53003] px-8 py-3 text-sm font-bold text-white shadow-lg shadow-red-500/20 transition-all hover:bg-[#e22c02] dark:bg-[#FF4433] dark:shadow-red-900/20 dark:hover:bg-[#f63d2d]"
                                         >
                                             Shorten a Link Now
+                                        </Link>
+                                    </div>
+                                </section>
+
+                                <section className="mt-8 border-t border-[#e3e3e0] pt-8 dark:border-[#3E3E3A]">
+                                    <h2 className="mb-4 font-bold text-gray-900 dark:text-white">
+                                        📝 Paste Tool
+                                    </h2>
+                                    <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
+                                        Share text, code, logs, and scripts with
+                                        a simple paste link, plus a raw view for
+                                        tools like curl.
+                                    </p>
+                                    <div className="flex gap-4">
+                                        <Link
+                                            href={PasteController.create().url}
+                                            className="inline-block rounded-xl bg-[#f53003] px-8 py-3 text-sm font-bold text-white shadow-lg shadow-red-500/20 transition-all hover:bg-[#e22c02] dark:bg-[#FF4433] dark:shadow-red-900/20 dark:hover:bg-[#f63d2d]"
+                                        >
+                                            Create a Paste
                                         </Link>
                                     </div>
                                 </section>
