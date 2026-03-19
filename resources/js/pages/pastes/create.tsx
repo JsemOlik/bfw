@@ -53,20 +53,32 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
 
     const shortenedLink = flash?.shortened_link;
     const isAdmin = auth.user?.role === 'admin';
-    const isMediaType = data.type === 'image' || data.type === 'video';
+    const currentPasteLabel = data.type === 'text'
+        ? 'text paste'
+        : data.type === 'image'
+          ? 'image paste'
+          : 'video paste';
     const expiryDescription = isAdmin
-        ? 'Create a text, image, or video paste. Admin pastes never expire ;).'
+        ? `Create a ${currentPasteLabel}. Admin pastes never expire ;).`
         : auth.user
-          ? isMediaType
-            ? 'Upload an image or video paste. Media pastes expire in 14 days, text pastes in 2 months.'
-            : 'Write a text paste. Text pastes expire in 2 months, media pastes in 14 days.'
-          : 'Guest pastes expire in 24 hours.';
+          ? data.type === 'text'
+            ? 'Write a text paste. Expires in 2 months.'
+            : data.type === 'image'
+              ? 'Upload an image paste. Expires in 2 weeks.'
+              : 'Upload a video paste. Expires in 2 weeks.'
+          : data.type === 'text'
+            ? 'Create a text paste. Expires in 24 hours.'
+            : data.type === 'image'
+              ? 'Upload an image paste. Expires in 24 hours.'
+              : 'Upload a video paste. Expires in 24 hours.';
     const successExpiryNote = isAdmin
         ? '* Admin pastes do not expire. You can still manage them from My Pastes below.'
         : auth.user
-          ? isMediaType
-            ? '* This media paste expires in 14 days. You can see its status in the My Pastes dropdown below.'
-            : '* This text paste expires in 2 months. You can see its status in the My Pastes dropdown below.'
+          ? data.type === 'text'
+            ? '* This text paste expires in 2 months. You can see its status in the My Pastes dropdown below.'
+            : data.type === 'image'
+              ? '* This image paste expires in 2 weeks. You can see its status in the My Pastes dropdown below.'
+              : '* This video paste expires in 2 weeks. You can see its status in the My Pastes dropdown below.'
           : '* This paste expires in 24 hours. You can see its status in the My Pastes dropdown below.';
 
     useEffect(() => {
@@ -295,10 +307,11 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                     <p className="text-sm font-medium">
                                         You are pasting as a guest.
                                         <span className="mt-1 block font-normal italic opacity-80">
-                                            This paste will not be tied to an account. You
-                                            won&apos;t be able to delete or expire it manually.
-                                            Log in to bump the expiry from 24 hours to 2
-                                            months.
+                                            This {currentPasteLabel} will not be tied to an
+                                            account. You won&apos;t be able to delete or
+                                            expire it manually. Log in to bump the expiry
+                                            from 24 hours to{' '}
+                                            {data.type === 'text' ? '2 months' : '14 days'}.
                                         </span>
                                     </p>
                                 </div>
