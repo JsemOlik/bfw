@@ -96,7 +96,10 @@ class Paste extends Model
             }
 
             if (! $paste->isDirty('expires_at')) {
-                $paste->expires_at = app(ExpirationResolver::class)->resolveForUserId($paste->user_id);
+                $paste->expires_at = app(ExpirationResolver::class)->resolveForUserId(
+                    $paste->user_id,
+                    sprintf('paste.%s', $paste->type ?: 'text'),
+                );
             }
         });
     }

@@ -28,7 +28,7 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
     const expiryDescription = isAdmin
         ? 'Create a custom, short URL. Admin links never expire.'
         : auth.user
-          ? 'Create a custom, short URL that expires in 2 months.'
+          ? 'Create a custom, short URL that expires in 3 months.'
           : 'Create a custom, short URL that expires in 24 hours.';
 
     useEffect(() => {
@@ -110,7 +110,7 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
                                             This link will not be tied to an
                                             account. You won't be able to delete
                                             or expire it manually. Log in to
-                                            bump the expiry from 24 hours to 2
+                                            bump the expiry from 24 hours to 3
                                             months.
                                         </span>
                                     </p>

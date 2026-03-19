@@ -40,7 +40,7 @@ it('associates a link with the authenticated user', function () {
     ]);
 });
 
-it('expires authenticated user links in two months', function () {
+it('expires authenticated user links in three months', function () {
     $this->travelTo(now()->startOfSecond());
 
     $user = User::factory()->create();
@@ -52,7 +52,7 @@ it('expires authenticated user links in two months', function () {
     $link = Link::first();
 
     expect($link->expires_at?->toDateTimeString())
-        ->toBe(now()->addMonthsNoOverflow(2)->toDateTimeString());
+        ->toBe(now()->addMonthsNoOverflow(3)->toDateTimeString());
 });
 
 it('does not expire admin links', function () {

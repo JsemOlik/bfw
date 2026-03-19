@@ -7,7 +7,7 @@ use Carbon\CarbonInterface;
 
 class ExpirationResolver
 {
-    public function resolveForUser(?User $user): ?CarbonInterface
+    public function resolveForUser(?User $user, string $context = 'paste.text'): ?CarbonInterface
     {
         if ($user === null) {
             return now()->addDay();
@@ -17,15 +17,19 @@ class ExpirationResolver
             return null;
         }
 
-        return now()->addMonthsNoOverflow(2);
+        return match ($context) {
+            'link' => now()->addMonthsNoOverflow(3),
+            'paste.image', 'paste.video' => now()->addDays(14),
+            default => now()->addMonthsNoOverflow(2),
+        };
     }
 
-    public function resolveForUserId(?int $userId): ?CarbonInterface
+    public function resolveForUserId(?int $userId, string $context = 'paste.text'): ?CarbonInterface
     {
         if ($userId === null) {
-            return $this->resolveForUser(null);
+            return $this->resolveForUser(null, $context);
         }
 
-        return $this->resolveForUser(User::query()->find($userId));
+        return $this->resolveForUser(User::query()->find($userId), $context);
     }
 }

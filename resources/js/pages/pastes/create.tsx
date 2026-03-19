@@ -53,16 +53,21 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
 
     const shortenedLink = flash?.shortened_link;
     const isAdmin = auth.user?.role === 'admin';
+    const isMediaType = data.type === 'image' || data.type === 'video';
     const expiryDescription = isAdmin
-        ? 'Paste text or upload an image. Admin pastes never expire ;).'
+        ? 'Create a text, image, or video paste. Admin pastes never expire ;).'
         : auth.user
-          ? 'Paste text or upload an image. Expiring in 2 months.'
-          : 'Paste text or upload an image. Expiring in 24 hours.';
+          ? isMediaType
+            ? 'Upload an image or video paste. Media pastes expire in 14 days, text pastes in 2 months.'
+            : 'Write a text paste. Text pastes expire in 2 months, media pastes in 14 days.'
+          : 'Guest pastes expire in 24 hours.';
     const successExpiryNote = isAdmin
         ? '* Admin pastes do not expire. You can still manage them from My Pastes below.'
         : auth.user
-          ? '* Paste expires in 2 months. You can see its status in the My Pastes dropdown below.'
-          : '* Paste expires in 24 hours. You can see its status in the My Pastes dropdown below.';
+          ? isMediaType
+            ? '* This media paste expires in 14 days. You can see its status in the My Pastes dropdown below.'
+            : '* This text paste expires in 2 months. You can see its status in the My Pastes dropdown below.'
+          : '* This paste expires in 24 hours. You can see its status in the My Pastes dropdown below.';
 
     useEffect(() => {
         if (copied) {
@@ -140,8 +145,14 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
         'image/vnd.microsoft.icon',
     ]);
     const supportedImageExtensions = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico']);
-    const supportedVideoTypes = new Set(['video/mp4', 'video/webm', 'video/ogg']);
-    const supportedVideoExtensions = new Set(['mp4', 'webm', 'ogg', 'ogv']);
+    const supportedVideoTypes = new Set([
+        'video/mp4',
+        'video/webm',
+        'video/ogg',
+        'video/quicktime',
+        'video/x-matroska',
+    ]);
+    const supportedVideoExtensions = new Set(['mp4', 'webm', 'ogg', 'ogv', 'mov', 'mkv']);
 
     const isSupportedImageFile = (file: File): boolean => {
         if (supportedImageTypes.has(file.type)) {
@@ -548,11 +559,11 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                 <span className="text-xs text-gray-500 dark:text-gray-400">
                                                     {isDraggingVideo
                                                         ? 'Drop your video here'
-                                                        : 'MP4, WebM or OGG up to 50 MB'}
+                                                        : 'MP4, WebM, OGG, MOV or MKV up to 25 MB'}
                                                 </span>
                                                 <input
                                                     type="file"
-                                                    accept="video/mp4,video/webm,video/ogg,.mp4,.webm,.ogg,.ogv"
+                                                    accept="video/mp4,video/webm,video/ogg,video/quicktime,video/x-matroska,.mp4,.webm,.ogg,.ogv,.mov,.mkv"
                                                     className="hidden"
                                                     onChange={handleVideoChange}
                                                 />

@@ -43,9 +43,17 @@ function fakeIcoUpload(string $name = 'favicon.ico'): UploadedFile
 
 function fakeVideoUpload(string $name = 'clip.mp4'): UploadedFile
 {
+    $mimeType = match (pathinfo($name, PATHINFO_EXTENSION)) {
+        'mov' => 'video/quicktime',
+        'mkv' => 'video/x-matroska',
+        'webm' => 'video/webm',
+        'ogg', 'ogv' => 'video/ogg',
+        default => 'video/mp4',
+    };
+
     return UploadedFile::fake()
         ->createWithContent($name, 'video-placeholder')
-        ->mimeType('video/mp4');
+        ->mimeType($mimeType);
 }
 
 it('allows guests to create a paste', function () {
@@ -188,6 +196,28 @@ it('allows guests to create a video paste', function () {
     expect(Storage::disk('paste_media')->get($paste->storage_path))->toBe($originalContents);
 });
 
+it('allows guests to create mov and mkv video pastes', function (string $filename, string $expectedMimeType) {
+    $video = fakeVideoUpload($filename);
+
+    $response = $this->from('/paste')->post('/paste', [
+        'type' => 'video',
+        'image' => null,
+        'slug' => pathinfo($filename, PATHINFO_FILENAME),
+        'video' => $video,
+    ]);
+
+    $paste = Paste::first();
+
+    $response->assertRedirect('/paste');
+    expect($paste->type)
+        ->toBe('video')
+        ->and($paste->original_filename)->toBe($filename)
+        ->and($paste->mime_type)->toBe($expectedMimeType);
+})->with([
+    'mov' => ['clip.mov', 'video/quicktime'],
+    'mkv' => ['clip.mkv', 'video/x-matroska'],
+]);
+
 it('does not create a broken paste record when image upload fails', function () {
     $this->mock(PasteMediaManager::class, function (MockInterface $mock) {
         $mock->shouldReceive('storeUploadedImage')
@@ -231,6 +261,38 @@ it('expires authenticated user pastes in two months', function () {
 
     expect($paste->expires_at?->toDateTimeString())
         ->toBe(now()->addMonthsNoOverflow(2)->toDateTimeString());
+});
+
+it('expires authenticated image pastes in fourteen days', function () {
+    $this->travelTo(now()->startOfSecond());
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->from('/paste')->post('/paste', [
+        'type' => 'image',
+        'image' => UploadedFile::fake()->image('kitten.png', 320, 240),
+    ]);
+
+    $paste = Paste::first();
+
+    expect($paste->expires_at?->toDateTimeString())
+        ->toBe(now()->addDays(14)->toDateTimeString());
+});
+
+it('expires authenticated video pastes in fourteen days', function () {
+    $this->travelTo(now()->startOfSecond());
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->from('/paste')->post('/paste', [
+        'type' => 'video',
+        'video' => fakeVideoUpload(),
+    ]);
+
+    $paste = Paste::first();
+
+    expect($paste->expires_at?->toDateTimeString())
+        ->toBe(now()->addDays(14)->toDateTimeString());
 });
 
 it('does not expire admin pastes', function () {

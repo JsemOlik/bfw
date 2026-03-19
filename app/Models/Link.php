@@ -58,7 +58,7 @@ class Link extends Model
             }
 
             if (! $link->isDirty('expires_at')) {
-                $link->expires_at = app(ExpirationResolver::class)->resolveForUserId($link->user_id);
+                $link->expires_at = app(ExpirationResolver::class)->resolveForUserId($link->user_id, 'link');
             }
         });
     }

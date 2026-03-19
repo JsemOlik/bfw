@@ -48,7 +48,7 @@ export default function Show({ paste }: Props) {
     const isImagePaste = paste.type === 'image';
     const isVideoPaste = paste.type === 'video';
     const isMediaPaste = isImagePaste || isVideoPaste;
-    const copyLabel = isMediaPaste ? 'Copy Raw URL' : 'Copy Raw';
+    const copyLabel = 'Copy Raw';
     const badgeLabel = isMediaPaste ? paste.type : (paste.syntax ?? 'plaintext');
     const metadata = [
         paste.original_filename,
@@ -91,60 +91,33 @@ export default function Show({ paste }: Props) {
                         <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold tracking-wider text-gray-600 uppercase dark:bg-[#161615] dark:text-gray-400">
                             {badgeLabel}
                         </span>
-                        <a
-                            href={paste.raw_url}
-                            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:border-[#3E3E3A] dark:bg-[#161615] dark:text-gray-200 dark:hover:bg-[#202020]"
-                        >
-                            <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
+                        {isMediaPaste ? (
+                            <a
+                                href={paste.raw_url}
+                                className="flex items-center gap-2 rounded-lg bg-[#f53003] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-red-500/20 transition-all hover:bg-[#e22c02] dark:bg-[#FF4433] dark:hover:bg-[#f63d2d]"
                             >
-                                <path d="M14 3h7v7"></path>
-                                <path d="M10 14 21 3"></path>
-                                <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path>
-                            </svg>
-                            View Raw
-                        </a>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                navigator.clipboard.writeText(
-                                    isMediaPaste
-                                        ? paste.raw_url
-                                        : (paste.content ?? ''),
-                                );
-                                setCopied(true);
-                            }}
-                            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold shadow-sm transition-all ${
-                                copied
-                                    ? 'bg-green-500 text-white shadow-green-500/20'
-                                    : 'bg-[#f53003] text-white shadow-red-500/20 hover:bg-[#e22c02] dark:bg-[#FF4433] dark:hover:bg-[#f63d2d]'
-                            }`}
-                        >
-                            {copied ? (
-                                <>
-                                    <svg
-                                        width="14"
-                                        height="14"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="3"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                    Copied!
-                                </>
-                            ) : (
-                                <>
+                                <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M14 3h7v7"></path>
+                                    <path d="M10 14 21 3"></path>
+                                    <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path>
+                                </svg>
+                                Open Raw
+                            </a>
+                        ) : (
+                            <>
+                                <a
+                                    href={paste.raw_url}
+                                    className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:border-[#3E3E3A] dark:bg-[#161615] dark:text-gray-200 dark:hover:bg-[#202020]"
+                                >
                                     <svg
                                         width="14"
                                         height="14"
@@ -155,20 +128,68 @@ export default function Show({ paste }: Props) {
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                     >
-                                        <rect
-                                            x="9"
-                                            y="9"
-                                            width="13"
-                                            height="13"
-                                            rx="2"
-                                            ry="2"
-                                        ></rect>
-                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        <path d="M14 3h7v7"></path>
+                                        <path d="M10 14 21 3"></path>
+                                        <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path>
                                     </svg>
-                                    {copyLabel}
-                                </>
-                            )}
-                        </button>
+                                    View Raw
+                                </a>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(paste.content ?? '');
+                                        setCopied(true);
+                                    }}
+                                    className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold shadow-sm transition-all ${
+                                        copied
+                                            ? 'bg-green-500 text-white shadow-green-500/20'
+                                            : 'bg-[#f53003] text-white shadow-red-500/20 hover:bg-[#e22c02] dark:bg-[#FF4433] dark:hover:bg-[#f63d2d]'
+                                    }`}
+                                >
+                                    {copied ? (
+                                        <>
+                                            <svg
+                                                width="14"
+                                                height="14"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="3"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            >
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                            Copied!
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg
+                                                width="14"
+                                                height="14"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2.5"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            >
+                                                <rect
+                                                    x="9"
+                                                    y="9"
+                                                    width="13"
+                                                    height="13"
+                                                    rx="2"
+                                                    ry="2"
+                                                ></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                            </svg>
+                                            {copyLabel}
+                                        </>
+                                    )}
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
 

@@ -49,8 +49,8 @@ class StorePasteRequest extends FormRequest
                 Rule::requiredIf($this->pasteType() === 'video'),
                 'nullable',
                 'file',
-                'mimes:mp4,webm,ogg,ogv',
-                'max:51200',
+                'mimes:mp4,webm,ogg,ogv,mov,mkv',
+                'max:25600',
             ],
         ];
     }
@@ -63,8 +63,8 @@ class StorePasteRequest extends FormRequest
             'image.mimes' => 'Please upload a PNG, JPG, GIF, WebP, SVG, or ICO image.',
             'image.max' => 'Images must be 10 MB or smaller.',
             'video.required' => 'Please choose a video to upload.',
-            'video.mimes' => 'Please upload an MP4, WebM, or OGG video.',
-            'video.max' => 'Videos must be 50 MB or smaller.',
+            'video.mimes' => 'Please upload an MP4, WebM, OGG, MOV, or MKV video.',
+            'video.max' => 'Videos must be 25 MB or smaller.',
             'type.in' => 'The selected paste type is invalid.',
         ];
     }
