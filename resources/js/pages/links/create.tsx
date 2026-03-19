@@ -52,7 +52,7 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
     return (
         <AppLayout>
             <Head title="Shorten a Link" />
-            <div className="flex flex-col items-center justify-center">
+            <div className="flex min-h-[calc(100vh-14rem)] flex-col items-center justify-center">
                 <div className="flex w-full max-w-2xl flex-col items-center gap-8">
                     <div className="text-center">
                         <h1 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl dark:text-white">
