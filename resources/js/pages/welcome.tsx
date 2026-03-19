@@ -86,7 +86,7 @@ export default function Welcome() {
                                     <div className="absolute inset-x-10 top-8 h-48 rounded-full bg-[#f53003]/8 blur-3xl dark:bg-[#ff4433]/10"></div>
 
                                     <div className="relative w-full max-w-md">
-                                        <div className="absolute -top-6 left-2 z-10 w-44 rounded-3xl border border-gray-200/80 bg-white/95 p-4 shadow-[0_18px_48px_rgba(15,23,42,0.10)] backdrop-blur transition-transform duration-500 ease-out hover:-translate-y-1 hover:rotate-[-1deg] dark:border-white/10 dark:bg-[#121212]/95 dark:shadow-[0_18px_48px_rgba(0,0,0,0.28)]">
+                                        <div className="absolute -top-9 left-2 z-10 w-44 rounded-3xl border border-gray-200/80 bg-white/95 p-4 shadow-[0_18px_48px_rgba(15,23,42,0.10)] backdrop-blur transition-transform duration-500 ease-out hover:-translate-y-4 hover:rotate-[-3deg] dark:border-white/10 dark:bg-[#121212]/95 dark:shadow-[0_18px_48px_rgba(0,0,0,0.28)]">
                                             <div className="mb-3 flex items-center gap-2">
                                                 <div className="flex size-9 items-center justify-center rounded-2xl bg-[#f53003]/10 text-[#f53003] dark:bg-[#ff4433]/12 dark:text-[#ff7b6d]">
                                                     🔗
