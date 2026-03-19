@@ -40,6 +40,7 @@ export default function Create({ supportedFormats }: Props) {
     const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
     const [outputFormat, setOutputFormat] = useState<string>(supportedFormats[0] ?? 'png');
     const [isDragging, setIsDragging] = useState(false);
+    const [isImageListOpen, setIsImageListOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [errors, setErrors] = useState<ValidationErrors>({});
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -101,6 +102,7 @@ export default function Create({ supportedFormats }: Props) {
 
         if (nextFiles.length === 0) {
             clearSelectedImages();
+            setIsImageListOpen(false);
             setErrors({});
             return;
         }
@@ -109,6 +111,7 @@ export default function Create({ supportedFormats }: Props) {
 
         if (unsupportedFiles.length > 0) {
             clearSelectedImages();
+            setIsImageListOpen(false);
             setErrors({
                 images: "Woops, you can't convert one of those formats!",
             });
@@ -124,6 +127,7 @@ export default function Create({ supportedFormats }: Props) {
                 previewUrl: URL.createObjectURL(file),
             })),
         );
+        setIsImageListOpen(false);
         setErrors({});
     };
 
@@ -139,6 +143,7 @@ export default function Create({ supportedFormats }: Props) {
 
             if (nextImages.length === 0) {
                 setErrors({});
+                setIsImageListOpen(false);
             }
 
             return nextImages;
@@ -360,34 +365,64 @@ export default function Create({ supportedFormats }: Props) {
                             </div>
 
                             {selectedImages.length > 0 && (
-                                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                    {selectedImages.map((image) => (
-                                        <div
-                                            key={image.id}
-                                            className="rounded-2xl border border-gray-200 bg-gray-50 p-3 shadow-sm dark:border-[#2b2b28] dark:bg-[#0f0f0f]"
+                                <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-3 shadow-sm dark:border-[#2b2b28] dark:bg-[#0f0f0f]">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsImageListOpen((current) => !current)}
+                                        className="flex w-full items-center justify-between rounded-xl px-2 py-1.5 text-left transition-colors hover:text-[#f53003] dark:hover:text-[#FF4433]"
+                                        aria-expanded={isImageListOpen}
+                                    >
+                                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                            View all images
+                                        </span>
+                                        <span
+                                            className={`text-xs font-semibold text-gray-500 transition-transform dark:text-gray-400 ${
+                                                isImageListOpen ? 'rotate-180' : ''
+                                            }`}
                                         >
-                                            <img
-                                                src={image.previewUrl}
-                                                alt={image.file.name}
-                                                className="h-28 w-full rounded-xl object-cover"
-                                            />
-                                            <div className="mt-3 space-y-1">
-                                                <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-                                                    {image.file.name}
-                                                </p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                    {(image.file.size / 1024 / 1024).toFixed(2)} MB
-                                                </p>
+                                            ↓
+                                        </span>
+                                    </button>
+
+                                    <div
+                                        className={`grid transition-[grid-template-rows,opacity,margin] duration-300 ease-out ${
+                                            isImageListOpen
+                                                ? 'mt-3 grid-rows-[1fr] opacity-100'
+                                                : 'grid-rows-[0fr] opacity-0'
+                                        }`}
+                                    >
+                                        <div className="overflow-hidden">
+                                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                                {selectedImages.map((image) => (
+                                                    <div
+                                                        key={image.id}
+                                                        className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-[#2b2b28] dark:bg-[#161615]"
+                                                    >
+                                                        <img
+                                                            src={image.previewUrl}
+                                                            alt={image.file.name}
+                                                            className="h-28 w-full rounded-xl object-cover"
+                                                        />
+                                                        <div className="mt-3 space-y-1">
+                                                            <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                                                                {image.file.name}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                {(image.file.size / 1024 / 1024).toFixed(2)} MB
+                                                            </p>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeSelectedImage(image.id)}
+                                                            className="mt-3 text-xs font-semibold text-gray-500 transition-colors hover:text-[#f53003] dark:text-gray-400 dark:hover:text-[#FF4433]"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </div>
+                                                ))}
                                             </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => removeSelectedImage(image.id)}
-                                                className="mt-3 text-xs font-semibold text-gray-500 transition-colors hover:text-[#f53003] dark:text-gray-400 dark:hover:text-[#FF4433]"
-                                            >
-                                                Remove
-                                            </button>
                                         </div>
-                                    ))}
+                                    </div>
                                 </div>
                             )}
 
