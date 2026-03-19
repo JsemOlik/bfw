@@ -6,6 +6,7 @@ use App\Models\Paste;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class PasteMediaManager
 {
@@ -29,6 +30,10 @@ class PasteMediaManager
             sprintf('%s.%s', Str::random(12), $extension),
             $disk,
         );
+
+        if (! is_string($path) || $path === '') {
+            throw new RuntimeException('Unable to store uploaded image.');
+        }
 
         [$width, $height] = $this->imageDimensions($file);
 

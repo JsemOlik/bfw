@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Throwable;
 
 class PasteController extends Controller
 {
@@ -42,22 +43,32 @@ class PasteController extends Controller
     public function store(StorePasteRequest $request, PasteMediaManager $pasteMediaManager): RedirectResponse
     {
         if ($request->pasteType() === 'image') {
-            $storedImage = $pasteMediaManager->storeUploadedImage($request->file('image'));
+            try {
+                $storedImage = $pasteMediaManager->storeUploadedImage($request->file('image'));
 
-            $paste = Paste::create([
-                'type' => 'image',
-                'content' => null,
-                'syntax' => null,
-                'slug' => $request->slug,
-                'user_id' => Auth::id(),
-                'storage_disk' => $storedImage['disk'],
-                'storage_path' => $storedImage['path'],
-                'original_filename' => $storedImage['original_filename'],
-                'mime_type' => $storedImage['mime_type'],
-                'size_bytes' => $storedImage['size_bytes'],
-                'image_width' => $storedImage['image_width'],
-                'image_height' => $storedImage['image_height'],
-            ]);
+                $paste = Paste::create([
+                    'type' => 'image',
+                    'content' => null,
+                    'syntax' => null,
+                    'slug' => $request->slug,
+                    'user_id' => Auth::id(),
+                    'storage_disk' => $storedImage['disk'],
+                    'storage_path' => $storedImage['path'],
+                    'original_filename' => $storedImage['original_filename'],
+                    'mime_type' => $storedImage['mime_type'],
+                    'size_bytes' => $storedImage['size_bytes'],
+                    'image_width' => $storedImage['image_width'],
+                    'image_height' => $storedImage['image_height'],
+                ]);
+            } catch (Throwable $exception) {
+                report($exception);
+
+                return back()
+                    ->withErrors([
+                        'image' => 'We could not upload that image right now. Please try again.',
+                    ])
+                    ->withInput();
+            }
         } else {
             $paste = Paste::create([
                 'type' => 'text',

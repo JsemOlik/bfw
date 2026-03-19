@@ -2,10 +2,12 @@
 
 use App\Models\Paste;
 use App\Models\User;
+use App\Support\PasteMediaManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
+use Mockery\MockInterface;
 
 uses(RefreshDatabase::class);
 
@@ -70,6 +72,24 @@ it('allows guests to create an image paste', function () {
         ->and($paste->image_height)->toBe(240);
 
     Storage::disk('paste_media')->assertExists($paste->storage_path);
+});
+
+it('does not create a broken paste record when image upload fails', function () {
+    $this->mock(PasteMediaManager::class, function (MockInterface $mock) {
+        $mock->shouldReceive('storeUploadedImage')
+            ->once()
+            ->andThrow(new RuntimeException('Upload failed.'));
+    });
+
+    $response = $this->from('/paste')->post('/paste', [
+        'type' => 'image',
+        'slug' => 'broken-image',
+        'image' => UploadedFile::fake()->image('broken.png', 320, 240),
+    ]);
+
+    $response->assertRedirect('/paste');
+    $response->assertSessionHasErrors('image');
+    $this->assertDatabaseCount('pastes', 0);
 });
 
 it('expires authenticated user pastes in two months', function () {
