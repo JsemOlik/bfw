@@ -6,6 +6,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreCompressorRequest extends FormRequest
 {
@@ -47,10 +48,15 @@ class StoreCompressorRequest extends FormRequest
                 'integer',
                 'between:10,100',
             ],
-            'target_size_mb' => [
+            'target_size_value' => [
                 'required',
                 'numeric',
-                'between:0.1,10',
+                'min:0.1',
+            ],
+            'target_size_unit' => [
+                'required',
+                'string',
+                Rule::in(['kb', 'mb']),
             ],
         ];
     }
@@ -70,10 +76,26 @@ class StoreCompressorRequest extends FormRequest
             'quality.required' => 'Please choose a quality level.',
             'quality.integer' => 'The quality level must be a whole number.',
             'quality.between' => 'Please choose a quality between 10 and 100.',
-            'target_size_mb.required' => 'Please choose a target size in MB.',
-            'target_size_mb.numeric' => 'The target size must be a number.',
-            'target_size_mb.between' => 'Please choose a target size between 0.1 MB and 10 MB.',
+            'target_size_value.required' => 'Please choose a target size.',
+            'target_size_value.numeric' => 'The target size must be a number.',
+            'target_size_value.min' => 'The target size must be greater than 0.',
+            'target_size_unit.required' => 'Please choose KB or MB for the target size.',
+            'target_size_unit.in' => 'The target size unit must be KB or MB.',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $targetSizeBytes = $this->targetSizeBytes();
+
+            if ($targetSizeBytes < 10 * 1024 || $targetSizeBytes > 10 * 1024 * 1024) {
+                $validator->errors()->add(
+                    'target_size_value',
+                    'Please choose a target size between 10 KB and 10 MB.',
+                );
+            }
+        });
     }
 
     /**
@@ -96,6 +118,10 @@ class StoreCompressorRequest extends FormRequest
 
     public function targetSizeBytes(): int
     {
-        return (int) round(((float) $this->input('target_size_mb', 1)) * 1024 * 1024);
+        $targetSizeValue = (float) $this->input('target_size_value', 1);
+        $targetSizeUnit = (string) $this->input('target_size_unit', 'mb');
+        $multiplier = $targetSizeUnit === 'kb' ? 1024 : 1024 * 1024;
+
+        return (int) round($targetSizeValue * $multiplier);
     }
 }

@@ -98,13 +98,13 @@ export default function Welcome() {
                                                 href={ConverterController.create().url}
                                                 className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-bold text-gray-900 transition-all hover:border-[#f53003] hover:text-[#f53003] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:border-[#FF4433] dark:hover:text-[#FF4433]"
                                             >
-                                                Start Converting
+                                                Convert Images
                                             </Link>
                                             <Link
                                                 href={LinkController.create().url}
                                                 className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-bold text-gray-900 transition-all hover:border-[#f53003] hover:text-[#f53003] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:border-[#FF4433] dark:hover:text-[#FF4433]"
                                             >
-                                                Start Shortening
+                                                Shorten Links
                                             </Link>
                                             <Link
                                                 href={PasteController.create().url}

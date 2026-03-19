@@ -49,7 +49,8 @@ it('compresses a single image by quality and returns a download', function () {
         'images' => [fakeCompressibleImage('jpg')],
         'compression_mode' => 'quality',
         'quality' => 45,
-        'target_size_mb' => 1,
+        'target_size_value' => 1,
+        'target_size_unit' => 'mb',
     ]);
 
     $response->assertSuccessful()
@@ -63,7 +64,23 @@ it('compresses a single image toward a target size', function () {
         'images' => [fakeCompressibleImage('jpg')],
         'compression_mode' => 'target_size',
         'quality' => 75,
-        'target_size_mb' => 0.25,
+        'target_size_value' => 250,
+        'target_size_unit' => 'kb',
+    ]);
+
+    $response->assertSuccessful()
+        ->assertDownload('sample.jpg')
+        ->assertHeader('content-type', 'image/jpeg');
+    expect($response->getContent())->not->toBeEmpty();
+});
+
+it('accepts a ten kilobyte target size', function () {
+    $response = $this->post(route('compressor.store'), [
+        'images' => [fakeCompressibleImage('jpg')],
+        'compression_mode' => 'target_size',
+        'quality' => 75,
+        'target_size_value' => 10,
+        'target_size_unit' => 'kb',
     ]);
 
     $response->assertSuccessful()
@@ -80,7 +97,8 @@ it('compresses multiple images into a zip download', function () {
         ],
         'compression_mode' => 'quality',
         'quality' => 60,
-        'target_size_mb' => 1,
+        'target_size_value' => 1,
+        'target_size_unit' => 'mb',
     ]);
 
     $response->assertSuccessful()
@@ -97,7 +115,8 @@ it('rejects unsupported compression formats', function () {
         ],
         'compression_mode' => 'quality',
         'quality' => 75,
-        'target_size_mb' => 1,
+        'target_size_value' => 1,
+        'target_size_unit' => 'mb',
     ]);
 
     $response->assertRedirect(route('compressor.create'))
@@ -112,7 +131,8 @@ it('rejects more than twenty images at once', function () {
         ),
         'compression_mode' => 'quality',
         'quality' => 75,
-        'target_size_mb' => 1,
+        'target_size_value' => 1,
+        'target_size_unit' => 'mb',
     ]);
 
     $response->assertRedirect(route('compressor.create'))
@@ -124,9 +144,23 @@ it('rejects unsupported compression modes', function () {
         'images' => [fakeCompressibleImage('png')],
         'compression_mode' => 'magic',
         'quality' => 75,
-        'target_size_mb' => 1,
+        'target_size_value' => 1,
+        'target_size_unit' => 'mb',
     ]);
 
     $response->assertRedirect(route('compressor.create'))
         ->assertSessionHasErrors('compression_mode');
+});
+
+it('rejects unsupported target size units', function () {
+    $response = $this->from(route('compressor.create'))->post(route('compressor.store'), [
+        'images' => [fakeCompressibleImage('png')],
+        'compression_mode' => 'target_size',
+        'quality' => 75,
+        'target_size_value' => 250,
+        'target_size_unit' => 'gb',
+    ]);
+
+    $response->assertRedirect(route('compressor.create'))
+        ->assertSessionHasErrors('target_size_unit');
 });

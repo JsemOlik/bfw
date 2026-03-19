@@ -25,12 +25,14 @@ type Props = {
 };
 
 type CompressionMode = 'quality' | 'target_size';
+type TargetSizeUnit = 'kb' | 'mb';
 
 type ValidationErrors = {
     images?: string | string[];
     compression_mode?: string;
     quality?: string;
-    target_size_mb?: string;
+    target_size_value?: string;
+    target_size_unit?: string;
 };
 
 type SelectedImage = {
@@ -43,7 +45,8 @@ export default function Create({ supportedFormats }: Props) {
     const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
     const [compressionMode, setCompressionMode] = useState<CompressionMode>('quality');
     const [quality, setQuality] = useState(75);
-    const [targetSizeMb, setTargetSizeMb] = useState('1');
+    const [targetSizeValue, setTargetSizeValue] = useState('1');
+    const [targetSizeUnit, setTargetSizeUnit] = useState<TargetSizeUnit>('mb');
     const [isDragging, setIsDragging] = useState(false);
     const [isImageListOpen, setIsImageListOpen] = useState(false);
     const [isClearingImages, setIsClearingImages] = useState(false);
@@ -111,8 +114,11 @@ export default function Create({ supportedFormats }: Props) {
             quality: Array.isArray(serverErrors.quality)
                 ? serverErrors.quality[0]
                 : undefined,
-            target_size_mb: Array.isArray(serverErrors.target_size_mb)
-                ? serverErrors.target_size_mb[0]
+            target_size_value: Array.isArray(serverErrors.target_size_value)
+                ? serverErrors.target_size_value[0]
+                : undefined,
+            target_size_unit: Array.isArray(serverErrors.target_size_unit)
+                ? serverErrors.target_size_unit[0]
                 : undefined,
         };
     };
@@ -234,6 +240,53 @@ export default function Create({ supportedFormats }: Props) {
         return match?.[1] ?? null;
     };
 
+    const formatBytes = (bytes: number): string => {
+        if (bytes >= 1024 * 1024) {
+            return `${(bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 1 : 2)} MB`;
+        }
+
+        if (bytes >= 1024) {
+            return `${(bytes / 1024).toFixed(bytes >= 100 * 1024 ? 0 : 1)} KB`;
+        }
+
+        return `${bytes} B`;
+    };
+
+    const totalOriginalBytes = useMemo(
+        () => selectedImages.reduce((total, image) => total + image.file.size, 0),
+        [selectedImages],
+    );
+
+    const targetSizeBytes = useMemo(() => {
+        const parsedValue = Number.parseFloat(targetSizeValue);
+
+        if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+            return 0;
+        }
+
+        return Math.round(parsedValue * (targetSizeUnit === 'kb' ? 1024 : 1024 * 1024));
+    }, [targetSizeUnit, targetSizeValue]);
+
+    const estimatedOutputBytes = useMemo(() => {
+        if (selectedImages.length === 0) {
+            return 0;
+        }
+
+        if (compressionMode === 'target_size') {
+            return Math.min(totalOriginalBytes, targetSizeBytes * selectedImages.length);
+        }
+
+        return selectedImages.reduce((total, image) => {
+            const extension = image.file.name.split('.').pop()?.toLowerCase();
+            const isLossyFormat = extension === 'jpg' || extension === 'jpeg' || extension === 'webp';
+            const reductionRatio = isLossyFormat
+                ? 0.18 + (quality / 100) * 0.82
+                : 0.32 + (quality / 100) * 0.58;
+
+            return total + Math.min(image.file.size, Math.round(image.file.size * reductionRatio));
+        }, 0);
+    }, [compressionMode, quality, selectedImages, targetSizeBytes, totalOriginalBytes]);
+
     const imageErrorMessage = Array.isArray(errors.images)
         ? errors.images[0]
         : errors.images;
@@ -286,7 +339,8 @@ export default function Create({ supportedFormats }: Props) {
 
         formData.append('compression_mode', compressionMode);
         formData.append('quality', quality.toString());
-        formData.append('target_size_mb', targetSizeMb);
+        formData.append('target_size_value', targetSizeValue);
+        formData.append('target_size_unit', targetSizeUnit);
 
         const csrfToken = document
             .querySelector('meta[name="csrf-token"]')
@@ -562,7 +616,7 @@ export default function Create({ supportedFormats }: Props) {
                                     ))}
                                 </div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    Quality gives you a simple slider. Target size keeps shrinking until it gets as close as possible to your chosen MB value.
+                                    Quality gives you a simple slider. Target size keeps shrinking until it gets as close as possible to your chosen size.
                                 </p>
                                 {errors.compression_mode && (
                                     <p className="mt-1 text-xs text-red-500">
@@ -607,31 +661,75 @@ export default function Create({ supportedFormats }: Props) {
                                     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                                         Target Size
                                     </label>
-                                    <div className="flex items-center overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-[#3E3E3A] dark:bg-[#0a0a0a]">
-                                        <input
-                                            type="number"
-                                            min="0.1"
-                                            max="10"
-                                            step="0.1"
-                                            value={targetSizeMb}
-                                            onChange={(event) => {
-                                                setTargetSizeMb(event.target.value);
-                                                setSuccessMessage(null);
-                                            }}
-                                            className="flex-1 border-none bg-transparent px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-inset dark:text-[#EDEDEC] dark:focus:ring-blue-400"
-                                        />
-                                        <span className="border-l border-gray-200 bg-gray-100/60 px-4 py-3 text-sm font-semibold text-gray-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400">
-                                            MB
-                                        </span>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex min-w-0 flex-1 items-center overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-[#3E3E3A] dark:bg-[#0a0a0a]">
+                                            <input
+                                                type="number"
+                                                min={targetSizeUnit === 'kb' ? '10' : '0.1'}
+                                                max={targetSizeUnit === 'kb' ? '10240' : '10'}
+                                                step={targetSizeUnit === 'kb' ? '10' : '0.1'}
+                                                value={targetSizeValue}
+                                                onChange={(event) => {
+                                                    setTargetSizeValue(event.target.value);
+                                                    setSuccessMessage(null);
+                                                }}
+                                                className="w-full border-none bg-transparent px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-inset dark:text-[#EDEDEC] dark:focus:ring-blue-400"
+                                            />
+                                        </div>
+                                        <div className="relative grid shrink-0 grid-cols-2 rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-[#3E3E3A] dark:bg-[#0a0a0a]">
+                                            <span
+                                                aria-hidden="true"
+                                                className={`pointer-events-none absolute top-1 bottom-1 w-[calc(50%-0.25rem)] rounded-lg bg-[#f53003] shadow-sm transition-[left,transform] duration-200 ease-in-out dark:bg-[#FF4433] ${
+                                                    targetSizeUnit === 'kb'
+                                                        ? 'left-1 scale-100'
+                                                        : 'left-[calc(50%)] scale-100'
+                                                }`}
+                                            />
+                                            {(['kb', 'mb'] as TargetSizeUnit[]).map((unit) => (
+                                                <button
+                                                    key={unit}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setTargetSizeUnit(unit);
+                                                        setSuccessMessage(null);
+                                                    }}
+                                                    className={`relative z-10 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 ease-in-out active:scale-95 ${
+                                                        targetSizeUnit === unit
+                                                            ? 'scale-100 text-white'
+                                                            : 'text-gray-600 hover:scale-[1.03] hover:text-[#f53003] dark:text-gray-400 dark:hover:text-[#FF8A7D]'
+                                                    }`}
+                                                >
+                                                    {unit.toUpperCase()}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        Best for when you need images under a specific upload limit.
+                                        Best for when you need each image under a specific upload limit.
                                     </p>
-                                    {errors.target_size_mb && (
+                                    {(errors.target_size_value || errors.target_size_unit) && (
                                         <p className="mt-1 text-xs text-red-500">
-                                            {errors.target_size_mb}
+                                            {errors.target_size_value ?? errors.target_size_unit}
                                         </p>
                                     )}
+                                </div>
+                            )}
+
+                            {selectedImages.length > 0 && compressionMode === 'quality' && (
+                                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 dark:border-[#2b2b28] dark:bg-[#0f0f0f] dark:text-gray-400">
+                                    <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                Estimated Output Size
+                                            </p>
+                                            <p className="mt-1 text-2xl font-bold tracking-tight text-[#f53003] dark:text-[#FF8A7D]">
+                                                ~{formatBytes(estimatedOutputBytes)}
+                                            </p>
+                                        </div>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            From {formatBytes(totalOriginalBytes)} total
+                                        </p>
+                                    </div>
                                 </div>
                             )}
 
