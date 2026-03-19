@@ -1,5 +1,5 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { useEffect, useState, type ChangeEvent, type DragEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import DeleteConfirmModal from '@/components/delete-confirm-modal';
 import PasteController from '@/actions/App/Http/Controllers/PasteController';
 import AppLayout from '@/layouts/app-layout';
@@ -38,6 +38,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
     const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
     const [isDraggingVideo, setIsDraggingVideo] = useState(false);
     const [videoSelectionError, setVideoSelectionError] = useState<string | null>(null);
+    const dashboardRef = useRef<HTMLDivElement | null>(null);
 
     const { delete: destroy, processing: deleting } = useForm();
 
@@ -62,15 +63,15 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
         ? `Create a ${currentPasteLabel}. Admin pastes never expire ;).`
         : auth.user
           ? data.type === 'text'
-            ? 'Write a text paste. Expires in 2 months.'
+            ? 'Paste text, your code, or even logs. Expires in 2 months.'
             : data.type === 'image'
-              ? 'Upload an image paste. Expires in 2 weeks.'
-              : 'Upload a video paste. Expires in 2 weeks.'
+              ? 'Upload your cat, dog, or any other image. Expires in 2 weeks.'
+              : 'Upload your birthday party, or any other video. Expires in 2 weeks.'
           : data.type === 'text'
-            ? 'Create a text paste. Expires in 24 hours.'
+            ? 'Paste text, your code, or even logs. Expires in 24 hours.'
             : data.type === 'image'
-              ? 'Upload an image paste. Expires in 24 hours.'
-              : 'Upload a video paste. Expires in 24 hours.';
+              ? 'Upload your cat, dog, or any other image. Expires in 24 hours.'
+              : 'Upload your birthday party, or any other video. Expires in 24 hours.';
     const successExpiryNote = isAdmin
         ? '* Admin pastes do not expire. You can still manage them from My Pastes below.'
         : auth.user
@@ -87,6 +88,21 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
             return () => clearTimeout(timeout);
         }
     }, [copied]);
+
+    useEffect(() => {
+        if (! isDashboardOpen) {
+            return;
+        }
+
+        const animationFrame = requestAnimationFrame(() => {
+            dashboardRef.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
+        });
+
+        return () => cancelAnimationFrame(animationFrame);
+    }, [isDashboardOpen]);
 
     useEffect(() => {
         if (! data.image) {
@@ -343,7 +359,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                 : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-gray-300'
                                         }`}
                                     >
-                                        Text Paste
+                                        Text
                                     </button>
                                     <button
                                         type="button"
@@ -354,7 +370,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                 : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-gray-300'
                                         }`}
                                     >
-                                        Image Paste
+                                        Image
                                     </button>
                                     <button
                                         type="button"
@@ -365,7 +381,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                 : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-gray-300'
                                         }`}
                                     >
-                                        Video Paste
+                                        Video
                                     </button>
                                 </div>
                             </div>
@@ -623,12 +639,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                     className="w-full rounded-xl bg-[#f53003] px-6 py-4 text-sm font-bold text-white shadow-lg shadow-red-500/20 transition-all hover:bg-[#e22c02] active:scale-[0.98] disabled:opacity-50 dark:bg-[#FF4433] dark:shadow-red-900/20 dark:hover:bg-[#f63d2d]"
                                 >
                                     {processing
-                                        ? 'Saving Paste...'
-                                        : data.type === 'image'
-                                          ? 'Create Image Paste'
-                                          : data.type === 'video'
-                                            ? 'Create Video Paste'
-                                          : 'Create Paste'}
+                                        ? 'Saving Paste...' : 'Create Paste'}
                                 </button>
                             </div>
                         </form>
@@ -747,7 +758,10 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                         </div>
 
                         {isDashboardOpen && (
-                            <div className="w-full max-w-2xl animate-in duration-300 fade-in slide-in-from-top-4">
+                            <div
+                                ref={dashboardRef}
+                                className="w-full max-w-2xl animate-in duration-300 fade-in slide-in-from-top-4"
+                            >
                                 <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white/50 shadow-xl backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
                                     {!auth.user ? (
                                         <div className="p-8 text-center text-sm text-gray-500">

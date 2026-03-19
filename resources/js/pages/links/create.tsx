@@ -1,6 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useForm } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import LinkController from '@/actions/App/Http/Controllers/LinkController';
 import AppLayout from '@/layouts/app-layout';
 import DeleteConfirmModal from '@/components/delete-confirm-modal';
@@ -15,6 +15,7 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
     const [isDashboardOpen, setIsDashboardOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [linkToDelete, setLinkToDelete] = useState<number | null>(null);
+    const dashboardRef = useRef<HTMLDivElement | null>(null);
 
     const { delete: destroy, processing: deleting } = useForm();
 
@@ -38,6 +39,21 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
         }
     }, [copied]);
 
+    useEffect(() => {
+        if (! isDashboardOpen) {
+            return;
+        }
+
+        const animationFrame = requestAnimationFrame(() => {
+            dashboardRef.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
+        });
+
+        return () => cancelAnimationFrame(animationFrame);
+    }, [isDashboardOpen]);
+
     const handleDelete = (id: number) => {
         setLinkToDelete(id);
         setIsModalOpen(true);
@@ -58,7 +74,7 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
     return (
         <AppLayout>
             <Head title="Shorten a Link" />
-            <div className="flex min-h-[calc(100vh-14rem)] flex-col items-center justify-center">
+            <div className="flex min-h-[calc(100vh-14rem)] flex-col items-center justify-start py-10">
                 <div className="flex w-full max-w-2xl flex-col items-center gap-8">
                     <div className="text-center">
                         <h1 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl dark:text-white">
@@ -307,7 +323,10 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
 
                         {/* My Links Dropdown Content */}
                         {isDashboardOpen && (
-                            <div className="w-full max-w-2xl animate-in duration-300 fade-in slide-in-from-top-4">
+                            <div
+                                ref={dashboardRef}
+                                className="w-full max-w-2xl animate-in duration-300 fade-in slide-in-from-top-4"
+                            >
                                 <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white/50 shadow-xl backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
                                     {!auth.user ? (
                                         <div className="p-8 text-center text-sm text-gray-500">
