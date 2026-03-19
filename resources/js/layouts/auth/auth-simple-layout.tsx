@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import MarketingFooter from '@/components/marketing-footer';
+import MarketingNavbar from '@/components/marketing-navbar';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 
@@ -10,8 +11,9 @@ export default function AuthSimpleLayout({
     description,
 }: AuthLayoutProps) {
     return (
-        <div className="min-h-svh bg-background">
-            <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 pb-32 md:p-10 md:pb-36">
+        <div className="flex min-h-svh flex-col bg-background">
+            <MarketingNavbar />
+            <div className="flex flex-1 flex-col items-center justify-center gap-6 p-6 pt-28 pb-12 md:p-10 md:pt-32">
                 <div className="w-full max-w-sm">
                     <div className="flex flex-col gap-8">
                         <div className="flex flex-col items-center gap-4">

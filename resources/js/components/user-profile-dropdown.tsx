@@ -9,7 +9,11 @@ import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { Button } from '@/components/ui/button';
 
-export function UserProfileDropdown() {
+export function UserProfileDropdown({
+    variant = 'default',
+}: {
+    variant?: 'default' | 'avatar';
+}) {
     const { auth } = usePage().props;
 
     if (!auth.user) {
@@ -22,10 +26,16 @@ export function UserProfileDropdown() {
                 <Button
                     variant="ghost"
                     size="lg"
-                    className="flex items-center gap-2 px-2 hover:bg-black/5 dark:hover:bg-white/5 data-[state=open]:bg-black/5 dark:data-[state=open]:bg-white/5"
+                    className={`hover:bg-black/5 dark:hover:bg-white/5 data-[state=open]:bg-black/5 dark:data-[state=open]:bg-white/5 ${
+                        variant === 'avatar'
+                            ? 'h-10 w-10 rounded-full p-0'
+                            : 'flex items-center gap-2 px-2'
+                    }`}
                 >
-                    <UserInfo user={auth.user} />
-                    <ChevronsUpDown className="ml-auto size-4 opacity-50" />
+                    <UserInfo user={auth.user} variant={variant} />
+                    {variant === 'default' && (
+                        <ChevronsUpDown className="ml-auto size-4 opacity-50" />
+                    )}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent

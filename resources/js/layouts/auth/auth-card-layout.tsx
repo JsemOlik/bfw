@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import MarketingFooter from '@/components/marketing-footer';
+import MarketingNavbar from '@/components/marketing-navbar';
 import {
     Card,
     CardContent,
@@ -21,8 +22,9 @@ export default function AuthCardLayout({
     description?: string;
 }>) {
     return (
-        <div className="min-h-svh bg-muted">
-            <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 pb-32 md:p-10 md:pb-36">
+        <div className="flex min-h-svh flex-col bg-muted">
+            <MarketingNavbar />
+            <div className="flex flex-1 flex-col items-center justify-center gap-6 p-6 pt-28 pb-12 md:p-10 md:pt-32">
                 <div className="flex w-full max-w-md flex-col gap-6">
                     <Link
                         href={home()}

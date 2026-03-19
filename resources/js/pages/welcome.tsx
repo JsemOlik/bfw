@@ -14,12 +14,12 @@ export default function Welcome() {
                     rel="stylesheet"
                 />
             </Head>
-            <div className="relative flex min-h-screen flex-col items-center overflow-hidden bg-[#FDFDFC] px-6 pt-32 pb-32 text-[#1b1b18] lg:px-8 dark:bg-[#0a0a0a]">
+            <div className="relative flex min-h-screen flex-col items-center overflow-hidden bg-[#FDFDFC] px-6 pt-32 pb-6 text-[#1b1b18] lg:px-8 dark:bg-[#0a0a0a]">
                 <div className="pointer-events-none absolute inset-x-0 top-24 flex justify-center">
                     <div className="h-64 w-64 rounded-full bg-[#f53003]/10 blur-3xl dark:bg-[#ff4433]/10"></div>
                 </div>
                 <MarketingNavbar />
-                <div className="flex w-full items-center justify-center opacity-100 transition-opacity duration-750 lg:grow starting:opacity-0">
+                <div className="flex w-full flex-1 items-center justify-center opacity-100 transition-opacity duration-750 starting:opacity-0">
                     <main className="w-full max-w-6xl">
                         <section className="relative overflow-hidden rounded-[2rem] border border-black/8 bg-white/92 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.08)] backdrop-blur xl:p-10 dark:border-white/10 dark:bg-[#161615]/96 dark:shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
                             <div className="grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center">
@@ -54,7 +54,7 @@ export default function Welcome() {
                                         </div>
                                     </div>
 
-                                    <div className="grid gap-4 sm:grid-cols-3">
+                                    <div className="grid gap-4 sm:grid-cols-2">
                                         <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-[#111111]">
                                             <p className="text-sm font-semibold text-gray-900 dark:text-white">
                                                 Free to use
@@ -69,14 +69,6 @@ export default function Welcome() {
                                             </p>
                                             <p className="mt-1 text-sm leading-6 text-gray-600 dark:text-gray-400">
                                                 Great for messages, docs, issues, and demos.
-                                            </p>
-                                        </div>
-                                        <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-[#111111]">
-                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                Responsive by default
-                                            </p>
-                                            <p className="mt-1 text-sm leading-6 text-gray-600 dark:text-gray-400">
-                                                Smooth on phones, tablets, and desktops.
                                             </p>
                                         </div>
                                     </div>
@@ -109,7 +101,7 @@ export default function Welcome() {
                                             Paste Tool
                                         </h2>
                                         <p className="mt-3 text-sm leading-7 text-gray-600 dark:text-gray-400">
-                                            Share text, code, images, and videos with quick raw access when tools need it.
+                                            Share text, code, images, and videos with quick raw access when you need it.
                                         </p>
                                         <Link
                                             href={PasteController.create().url}
