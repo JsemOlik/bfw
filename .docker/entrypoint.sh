@@ -7,6 +7,9 @@ mkdir -p bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 
+# Prevent Vite from trying to use a dev server in production
+rm -f public/hot
+
 # Generate APP_KEY if it's missing from both environment and .env
 if [ -z "$APP_KEY" ]; then
     if [ -f .env ]; then
