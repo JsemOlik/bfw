@@ -6,6 +6,7 @@ use App\Http\Requests\StoreLinkRequest;
 use App\Models\Link;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -90,7 +91,7 @@ class LinkController extends Controller
     /**
      * Remove the specified link from storage.
      */
-    public function destroy(Link $link): RedirectResponse
+    public function destroy(Request $request, Link $link): RedirectResponse
     {
         if (! Auth::check() || $link->user_id !== Auth::id()) {
             abort(403);
@@ -98,6 +99,21 @@ class LinkController extends Controller
 
         $link->delete();
 
+        if ($this->isStatusReferrer($request, route('link.status', $link->slug))) {
+            return redirect()->route('link.create')
+                ->with('message', 'Link deleted successfully.');
+        }
+
         return back()->with('message', 'Link deleted successfully.');
+    }
+
+    protected function isStatusReferrer(Request $request, string $statusUrl): bool
+    {
+        $referrerPath = parse_url((string) $request->headers->get('referer'), PHP_URL_PATH);
+        $statusPath = parse_url($statusUrl, PHP_URL_PATH);
+
+        return is_string($referrerPath)
+            && is_string($statusPath)
+            && $referrerPath === $statusPath;
     }
 }

@@ -8,6 +8,7 @@ use App\Support\PasteHighlighter;
 use App\Support\PasteMediaManager;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -174,7 +175,7 @@ class PasteController extends Controller
     /**
      * Remove the specified paste from storage.
      */
-    public function destroy(Paste $paste, PasteMediaManager $pasteMediaManager): RedirectResponse
+    public function destroy(Request $request, Paste $paste, PasteMediaManager $pasteMediaManager): RedirectResponse
     {
         if (! Auth::check() || $paste->user_id !== Auth::id()) {
             abort(403);
@@ -183,7 +184,22 @@ class PasteController extends Controller
         $pasteMediaManager->delete($paste);
         $paste->delete();
 
+        if ($this->isStatusReferrer($request, route('paste.status', $paste->slug))) {
+            return redirect()->route('paste.create')
+                ->with('message', 'Paste deleted successfully.');
+        }
+
         return back()->with('message', 'Paste deleted successfully.');
+    }
+
+    protected function isStatusReferrer(Request $request, string $statusUrl): bool
+    {
+        $referrerPath = parse_url((string) $request->headers->get('referer'), PHP_URL_PATH);
+        $statusPath = parse_url($statusUrl, PHP_URL_PATH);
+
+        return is_string($referrerPath)
+            && is_string($statusPath)
+            && $referrerPath === $statusPath;
     }
 
     /**

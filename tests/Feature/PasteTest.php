@@ -262,6 +262,36 @@ it('allows owners to delete their paste', function () {
     $this->assertDatabaseMissing('pastes', ['id' => $paste->id]);
 });
 
+it('deletes stored image files when owners delete image pastes', function () {
+    $user = User::factory()->create();
+    Storage::disk('paste_media')->put('pastes/images/test/example.png', 'image-bytes');
+
+    $paste = Paste::factory()->image()->create([
+        'user_id' => $user->id,
+    ]);
+
+    $response = $this->actingAs($user)->delete(route('paste.destroy', $paste));
+
+    $response->assertRedirect();
+    $this->assertDatabaseMissing('pastes', ['id' => $paste->id]);
+    Storage::disk('paste_media')->assertMissing('pastes/images/test/example.png');
+});
+
+it('redirects owners to the create page after deleting from a paste status page', function () {
+    $user = User::factory()->create();
+    $paste = Paste::factory()->create([
+        'user_id' => $user->id,
+        'slug' => 'status-delete-paste',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->from(route('paste.status', $paste->slug))
+        ->delete(route('paste.destroy', $paste));
+
+    $response->assertRedirect(route('paste.create'));
+    $this->assertDatabaseMissing('pastes', ['id' => $paste->id]);
+});
+
 it('prevents guests from deleting pastes', function () {
     $paste = Paste::factory()->create();
 

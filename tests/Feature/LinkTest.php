@@ -123,16 +123,28 @@ it('returns 404 for expired links', function () {
     $response->assertStatus(404);
 });
 
-it('can view the links list', function () {
-    Link::create(['original_url' => 'https://a.com', 'slug' => 'a', 'expires_at' => now()->addDay()]);
-    Link::create(['original_url' => 'https://b.com', 'slug' => 'b', 'expires_at' => now()->addDay()]);
+it('shows authenticated users their links on the create page', function () {
+    $user = User::factory()->create();
 
-    $response = $this->get(route('link.index'));
+    Link::create([
+        'original_url' => 'https://a.com',
+        'slug' => 'a',
+        'user_id' => $user->id,
+        'expires_at' => now()->addDay(),
+    ]);
+    Link::create([
+        'original_url' => 'https://b.com',
+        'slug' => 'b',
+        'user_id' => $user->id,
+        'expires_at' => now()->addDay(),
+    ]);
+
+    $response = $this->actingAs($user)->get(route('link.create'));
 
     $response->assertStatus(200)
         ->assertInertia(fn ($page) => $page
-            ->component('links/index')
-            ->has('links', 2)
+            ->component('links/create')
+            ->has('userLinks', 2)
         );
 });
 
@@ -196,6 +208,23 @@ it('allows owners to delete their links', function () {
     $response = $this->actingAs($user)->delete(route('link.destroy', $link));
 
     $response->assertRedirect();
+    $this->assertDatabaseMissing('links', ['id' => $link->id]);
+});
+
+it('redirects owners to the create page after deleting from a link status page', function () {
+    $user = User::factory()->create();
+    $link = Link::create([
+        'original_url' => 'https://delete-me.com',
+        'slug' => 'status-delete-link',
+        'user_id' => $user->id,
+        'expires_at' => now()->addDay(),
+    ]);
+
+    $response = $this->actingAs($user)
+        ->from(route('link.status', $link->slug))
+        ->delete(route('link.destroy', $link));
+
+    $response->assertRedirect(route('link.create'));
     $this->assertDatabaseMissing('links', ['id' => $link->id]);
 });
 
