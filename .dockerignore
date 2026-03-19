@@ -1,0 +1,44 @@
+# Local dependencies
+node_modules
+vendor
+
+# Environment-specific files
+.env
+.env.backup
+.env.production
+.env.local
+.env.testing
+
+# Git files
+.git
+.gitignore
+.github
+
+# Build artifacts
+public/build
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+bootstrap/cache/*
+
+# IDE configs
+.idea
+.vscode
+.cursor
+.claude
+.gemini
+.agents
+.codex
+
+# Docker files
+Dockerfile
+docker-compose*.yml
+.docker
+
+# Others
+tests
+readme.md
+composer.phar
+.php-cs-fixer.cache
+phpunit.result.cache

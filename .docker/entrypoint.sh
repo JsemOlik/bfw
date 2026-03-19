@@ -31,9 +31,15 @@ php artisan migrate --force
 
 # Clear stale caches (Must happen AFTER migrations if using 'database' driver)
 echo "Clearing application caches..."
-php artisan optimize:clear
+if [ "$APP_ENV" = "production" ]; then
+    echo "Running production optimizations..."
+    php artisan optimize
+else
+    php artisan optimize:clear
+fi
 
-# Generate Wayfinder actions/routes for the frontend
+# Generate Wayfinder actions/routes
+# In dev, we always want new ones. In prod, they should be baked, but a refresh doesn't hurt.
 echo "Generating Wayfinder types..."
 php artisan wayfinder:generate --with-form
 

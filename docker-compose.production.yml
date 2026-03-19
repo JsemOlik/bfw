@@ -1,0 +1,52 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            args:
+                - APP_ENV=production
+        container_name: bfw-app-prod
+        restart: unless-stopped
+        ports:
+            - "80:80"
+        # No volumes for app in production (code is baked in)
+        environment:
+            - APP_ENV=production
+            - APP_DEBUG=false
+            - DB_CONNECTION=pgsql
+            - DB_HOST=db
+            - DB_PORT=5432
+            - DB_DATABASE=${DB_DATABASE:-bfw}
+            - DB_USERNAME=${DB_USERNAME:-bfw}
+            - DB_PASSWORD=${DB_PASSWORD:-password}
+        depends_on:
+            db:
+                condition: service_healthy
+
+    db:
+        image: postgres:17-alpine
+        container_name: bfw-db-prod
+        restart: unless-stopped
+        environment:
+            - POSTGRES_DB=${DB_DATABASE:-bfw}
+            - POSTGRES_USER=${DB_USERNAME:-bfw}
+            - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+        volumes:
+            - bfw-db-prod-data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-bfw} -d ${DB_DATABASE:-bfw}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    dbgate:
+        image: dbgate/dbgate
+        container_name: bfw-dbgate-prod
+        restart: unless-stopped
+        ports:
+            - "3000:3000"
+        depends_on:
+            - db
+
+volumes:
+    bfw-db-prod-data:

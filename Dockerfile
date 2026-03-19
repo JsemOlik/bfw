@@ -1,68 +1,85 @@
-# Stage 0: Pre-install frontend dependencies
-FROM oven/bun:alpine AS frontend
+# Use ARGs to toggle between development and production
+ARG APP_ENV=production
+
+# --- Stage 1: Frontend Builder (Production Only) ---
+FROM oven/bun:alpine AS frontend-builder
 WORKDIR /app
 COPY package.json bun.lock ./
-RUN bun install
-# No build here because Wayfinder requires PHP which isn't in this image
+RUN bun install --frozen-lockfile
+COPY . .
+# Only run build if we are in production
+RUN bun run build
 
-# Stage 1: Build the final PHP application
-FROM php:8.4-fpm-alpine
+# --- Stage 2: PHP Base ---
+FROM php:8.4-fpm-alpine AS base
+WORKDIR /var/www/html
 
-# Install system dependencies
-RUN apk add --no-cache \
-    nginx \
-    supervisor \
+# Build-time dependencies
+RUN apk add --no-cache --virtual .build-deps \
     postgresql-dev \
+    libpng-dev \
     libzip-dev \
+    libxml2-dev \
     icu-dev \
-    bash \
-    curl \
-    git \
-    unzip \
-    nodejs \
-    npm
-
-# Install PHP extensions
-RUN docker-php-ext-install \
+    $PHPIZE_DEPS \
+    && docker-php-ext-install \
     pdo_pgsql \
     intl \
     zip \
-    pcntl
+    pcntl \
+    opcache \
+    && apk del .build-deps \
+    && apk add --no-cache \
+    postgresql-client \
+    libpng \
+    libzip \
+    libxml2 \
+    icu-libs \
+    nginx \
+    supervisor \
+    bash \
+    curl
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Create system user for Laravel
+RUN set -x ; \
+    addgroup -g 1000 -S www-data || true ; \
+    adduser -u 1000 -D -S -G www-data www-data || true
 
-# Install Bun (for those who need it in development)
-RUN curl -fsSL https://bun.sh/install | bash
-ENV PATH="/root/.bun/bin:${PATH}"
-
-# Set workspace
-WORKDIR /var/www/html
-
-# Copy application code
+# --- Stage 3: Code & Vendor Builder (Production Only) ---
+FROM base AS php-builder
+COPY composer.json composer.lock ./
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN composer install --no-interaction --no-dev --optimize-autoloader --no-scripts
 COPY . .
+RUN composer dump-autoload --optimize --no-dev
 
-# Copy pre-installed node_modules to speed up first start
-COPY --from=frontend /app/node_modules ./node_modules
+# --- Stage 4: Final Image ---
+FROM base
+ARG APP_ENV
+ENV APP_ENV=${APP_ENV}
 
-# Pre-install Composer dependencies
-RUN composer install --no-interaction --optimize-autoloader
+# Copy code based on environment
+# In production, we copy everything from builders. In dev, we mount locally.
+COPY --from=php-builder --chown=www-data:www-data /var/www/html /var/www/html
+COPY --from=frontend-builder --chown=www-data:www-data /app/public/build /var/www/html/public/build
 
-# Setup Nginx, PHP, and Supervisord configs
+# If dev, we might still want node_modules/vendor for first-time use if not mounted
+# But for prod, we keep it clean.
+RUN if [ "$APP_ENV" = "production" ]; then \
+    rm -rf node_modules ; \
+    fi
+
+# Setup configs
 COPY .docker/nginx.conf /etc/nginx/http.d/default.conf
 COPY .docker/supervisord.conf /etc/supervisord.conf
 COPY .docker/php.ini /usr/local/etc/php/conf.d/bfw-optimized.ini
 
-# Expose ports
+# Fix permissions
+RUN mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
 EXPOSE 80 5173
 
-# Permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
-
-# Entrypoint
-RUN chmod +x .docker/entrypoint.sh
 ENTRYPOINT [".docker/entrypoint.sh"]
-
-# Start Supervisord
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
