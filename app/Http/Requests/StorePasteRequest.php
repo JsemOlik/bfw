@@ -42,7 +42,7 @@ class StorePasteRequest extends FormRequest
                 Rule::requiredIf($this->pasteType() === 'image'),
                 'nullable',
                 'file',
-                'image',
+                'mimes:png,jpg,jpeg,gif,webp,svg,ico',
                 'max:10240',
             ],
         ];
@@ -53,7 +53,7 @@ class StorePasteRequest extends FormRequest
         return [
             'content.required' => 'Please provide text content for the paste.',
             'image.required' => 'Please choose an image to upload.',
-            'image.image' => 'The uploaded file must be a valid image.',
+            'image.mimes' => 'Please upload a PNG, JPG, GIF, WebP, SVG, or ICO image.',
             'image.max' => 'Images must be 10 MB or smaller.',
             'type.in' => 'The selected paste type is invalid.',
         ];

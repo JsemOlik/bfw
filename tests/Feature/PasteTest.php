@@ -20,6 +20,27 @@ beforeEach(function () {
     Storage::fake('paste_media');
 });
 
+function fakeSvgUpload(string $name = 'diagram.svg'): UploadedFile
+{
+    return UploadedFile::fake()
+        ->createWithContent(
+            $name,
+            <<<'SVG'
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <rect width="24" height="24" fill="#f53003"/>
+</svg>
+SVG
+        )
+        ->mimeType('image/svg+xml');
+}
+
+function fakeIcoUpload(string $name = 'favicon.ico'): UploadedFile
+{
+    return UploadedFile::fake()
+        ->createWithContent($name, 'ico-placeholder')
+        ->mimeType('image/x-icon');
+}
+
 it('allows guests to create a paste', function () {
     $response = $this->from('/paste')->post('/paste', [
         'content' => 'Hello World!',
@@ -77,6 +98,56 @@ it('allows guests to create an image paste', function () {
         ->and($paste->mime_type)->toContain('image/')
         ->and($paste->image_width)->toBe(320)
         ->and($paste->image_height)->toBe(240);
+
+    Storage::disk('paste_media')->assertExists($paste->storage_path);
+    expect(Storage::disk('paste_media')->get($paste->storage_path))->toBe($originalContents);
+});
+
+it('allows guests to create an svg image paste', function () {
+    $image = fakeSvgUpload();
+    $originalContents = file_get_contents($image->getRealPath());
+
+    expect($originalContents)->toBeString();
+
+    $response = $this->from('/paste')->post('/paste', [
+        'type' => 'image',
+        'slug' => 'vector-shot',
+        'image' => $image,
+    ]);
+
+    $paste = Paste::first();
+
+    $response->assertRedirect('/paste');
+    $response->assertSessionHas('shortened_link', url('/paste/vector-shot'));
+    expect($paste->type)
+        ->toBe('image')
+        ->and($paste->original_filename)->toBe('diagram.svg')
+        ->and($paste->mime_type)->toBe('image/svg+xml');
+
+    Storage::disk('paste_media')->assertExists($paste->storage_path);
+    expect(Storage::disk('paste_media')->get($paste->storage_path))->toBe($originalContents);
+});
+
+it('allows guests to create an ico image paste', function () {
+    $image = fakeIcoUpload();
+    $originalContents = file_get_contents($image->getRealPath());
+
+    expect($originalContents)->toBeString();
+
+    $response = $this->from('/paste')->post('/paste', [
+        'type' => 'image',
+        'slug' => 'favicon-shot',
+        'image' => $image,
+    ]);
+
+    $paste = Paste::first();
+
+    $response->assertRedirect('/paste');
+    $response->assertSessionHas('shortened_link', url('/paste/favicon-shot'));
+    expect($paste->type)
+        ->toBe('image')
+        ->and($paste->original_filename)->toBe('favicon.ico')
+        ->and($paste->mime_type)->toBe('image/x-icon');
 
     Storage::disk('paste_media')->assertExists($paste->storage_path);
     expect(Storage::disk('paste_media')->get($paste->storage_path))->toBe($originalContents);

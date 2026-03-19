@@ -1,5 +1,5 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ChangeEvent, type DragEvent } from 'react';
 import DeleteConfirmModal from '@/components/delete-confirm-modal';
 import PasteController from '@/actions/App/Http/Controllers/PasteController';
 import AppLayout from '@/layouts/app-layout';
@@ -32,6 +32,8 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [pasteToDelete, setPasteToDelete] = useState<number | null>(null);
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+    const [isDraggingImage, setIsDraggingImage] = useState(false);
+    const [imageSelectionError, setImageSelectionError] = useState<string | null>(null);
 
     const { delete: destroy, processing: deleting } = useForm();
 
@@ -96,6 +98,70 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
 
     const switchType = (type: 'text' | 'image'): void => {
         setData('type', type);
+    };
+
+    const supportedImageTypes = new Set([
+        'image/png',
+        'image/jpeg',
+        'image/gif',
+        'image/webp',
+        'image/svg+xml',
+        'image/x-icon',
+        'image/vnd.microsoft.icon',
+    ]);
+    const supportedImageExtensions = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico']);
+
+    const isSupportedImageFile = (file: File): boolean => {
+        if (supportedImageTypes.has(file.type)) {
+            return true;
+        }
+
+        const extension = file.name.split('.').pop()?.toLowerCase();
+
+        return extension ? supportedImageExtensions.has(extension) : false;
+    };
+
+    const setSelectedImage = (file: File | null): void => {
+        if (! file) {
+            setImageSelectionError(null);
+            setData('image', null);
+            return;
+        }
+
+        if (isSupportedImageFile(file)) {
+            setImageSelectionError(null);
+            setData('image', file);
+            return;
+        }
+
+        setImageSelectionError("Woops, you can't upload this format!");
+        setData('image', null);
+    };
+
+    const handleImageChange = (event: ChangeEvent<HTMLInputElement>): void => {
+        const file = event.target.files?.[0] ?? null;
+
+        setSelectedImage(file);
+
+        if (file && ! isSupportedImageFile(file)) {
+            event.target.value = '';
+        }
+    };
+
+    const handleImageDragOver = (event: DragEvent<HTMLLabelElement>): void => {
+        event.preventDefault();
+        setIsDraggingImage(true);
+    };
+
+    const handleImageDragLeave = (event: DragEvent<HTMLLabelElement>): void => {
+        event.preventDefault();
+        setIsDraggingImage(false);
+    };
+
+    const handleImageDrop = (event: DragEvent<HTMLLabelElement>): void => {
+        event.preventDefault();
+        setIsDraggingImage(false);
+        setSelectedImage(event.dataTransfer.files?.[0] ?? null);
     };
 
     return (
@@ -269,7 +335,16 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                                                 Image File
                                             </label>
-                                            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-10 text-center transition-all hover:border-[#f53003] hover:bg-red-50/30 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:hover:border-[#FF4433] dark:hover:bg-red-950/20">
+                                            <label
+                                                onDragOver={handleImageDragOver}
+                                                onDragLeave={handleImageDragLeave}
+                                                onDrop={handleImageDrop}
+                                                className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-10 text-center transition-all ${
+                                                    isDraggingImage
+                                                        ? 'border-[#f53003] bg-red-50/60 dark:border-[#FF4433] dark:bg-red-950/30'
+                                                        : 'border-gray-300 bg-gray-50 hover:border-[#f53003] hover:bg-red-50/30 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:hover:border-[#FF4433] dark:hover:bg-red-950/20'
+                                                }`}
+                                            >
                                                 {imagePreviewUrl && (
                                                     <img
                                                         src={imagePreviewUrl}
@@ -305,23 +380,20 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                         : 'Choose an image to upload'}
                                                 </span>
                                                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                    PNG, JPG, GIF or WebP up to 10 MB
+                                                    {isDraggingImage
+                                                        ? 'Drop your image here'
+                                                        : 'PNG, JPG, GIF, WebP, SVG or ICO up to 10 MB'}
                                                 </span>
                                                 <input
                                                     type="file"
-                                                    accept="image/png,image/jpeg,image/gif,image/webp"
+                                                    accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon,.svg,.ico"
                                                     className="hidden"
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'image',
-                                                            e.target.files?.[0] ?? null,
-                                                        )
-                                                    }
+                                                    onChange={handleImageChange}
                                                 />
                                             </label>
-                                            {errors.image && (
+                                            {(imageSelectionError || errors.image) && (
                                                 <p className="mt-1 text-xs text-red-500">
-                                                    {errors.image}
+                                                    {imageSelectionError ?? errors.image}
                                                 </p>
                                             )}
                                         </div>
