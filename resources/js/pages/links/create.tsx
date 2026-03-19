@@ -257,14 +257,7 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
                                         </button>
                                     </div>
                                     <p className="px-1 text-[11px] font-medium text-green-700/70 italic dark:text-green-400/50">
-                                        * Link expires in 24 hours. Go to{' '}
-                                        <Link
-                                            href={LinkController.index().url}
-                                            className="underline"
-                                        >
-                                            All Links
-                                        </Link>{' '}
-                                        to see its status.
+                                        * Link expires in 24 hours. You can see its status in the My Links dashboard below.
                                     </p>
                                 </div>
                             </div>
