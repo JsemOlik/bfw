@@ -4,7 +4,9 @@ use App\Models\Paste;
 use App\Models\User;
 use App\Support\PasteMediaManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Mockery\MockInterface;
@@ -90,6 +92,17 @@ it('does not create a broken paste record when image upload fails', function () 
     $response->assertRedirect('/paste');
     $response->assertSessionHasErrors('image');
     $this->assertDatabaseCount('pastes', 0);
+});
+
+it('shows a friendly error when an upload exceeds the server limit', function () {
+    Route::middleware('web')->post('/test-post-too-large', function () {
+        throw new PostTooLargeException;
+    });
+
+    $response = $this->from('/paste')->post('/test-post-too-large');
+
+    $response->assertRedirect('/paste');
+    $response->assertSessionHasErrors('image');
 });
 
 it('expires authenticated user pastes in two months', function () {

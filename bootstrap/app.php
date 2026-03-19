@@ -5,6 +5,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -24,5 +25,21 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (PostTooLargeException $exception, $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Images must be 10 MB or smaller.',
+                    'errors' => [
+                        'image' => ['Images must be 10 MB or smaller.'],
+                    ],
+                ], 413);
+            }
+
+            return redirect()
+                ->back()
+                ->withErrors([
+                    'image' => 'Images must be 10 MB or smaller.',
+                ])
+                ->withInput();
+        });
     })->create();
