@@ -1,20 +1,7 @@
 # Use ARGs to toggle between development and production
 ARG APP_ENV=production
 
-# --- Stage 1: Frontend Builder (Production Only) ---
-FROM oven/bun:alpine AS frontend-builder
-WORKDIR /app
-
-# Install PHP for Wayfinder type generation (required by vite build)
-RUN apk add --no-cache php84 php84-phar php84-mbstring php84-openssl php84-tokenizer \
-    && ln -s /usr/bin/php84 /usr/bin/php
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
-COPY . .
-# Only run build if we are in production
-RUN bun run build
-
-# --- Stage 2: PHP Base ---
+# --- Stage 1: PHP Base ---
 FROM php:8.4-fpm-alpine AS base
 WORKDIR /var/www/html
 
@@ -49,23 +36,38 @@ RUN set -x ; \
     addgroup -g 1000 -S www-data || true ; \
     adduser -u 1000 -D -S -G www-data www-data || true
 
-# --- Stage 3: Code & Vendor Builder (Production Only) ---
-FROM base AS php-builder
-COPY composer.json composer.lock ./
+# --- Stage 2: Unified Builder (Production Only) ---
+FROM base AS builder
+
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash \
+    && mv /root/.bun/bin/bun /usr/local/bin/bun
+
+# Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Copy only dependency files for caching
+COPY composer.json composer.lock package.json bun.lock ./
+
+# Install all dependencies
 RUN composer install --no-interaction --no-dev --optimize-autoloader --no-scripts
+RUN bun install --frozen-lockfile
+
+# Copy the rest of the code
 COPY . .
+
+# Run production builds
+# Note: wayfinder:generate will now work because 'vendor/' exists
+RUN bun run build
 RUN composer dump-autoload --optimize --no-dev
 
-# --- Stage 4: Final Image ---
+# --- Stage 3: Final Image ---
 FROM base
 ARG APP_ENV
 ENV APP_ENV=${APP_ENV}
 
-# Copy code based on environment
-# In production, we copy everything from builders. In dev, we mount locally.
-COPY --from=php-builder --chown=www-data:www-data /var/www/html /var/www/html
-COPY --from=frontend-builder --chown=www-data:www-data /app/public/build /var/www/html/public/build
+# Copy code and built assets from builder
+COPY --from=builder --chown=www-data:www-data /var/www/html /var/www/html
 
 # If dev, we might still want node_modules/vendor for first-time use if not mounted
 # But for prod, we keep it clean.
