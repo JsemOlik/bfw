@@ -41,8 +41,14 @@ export default function Welcome() {
                                         </div>
                                         <div className="flex flex-col gap-3 sm:flex-row">
                                             <Link
-                                                href={LinkController.create().url}
+                                                href={ConverterController.create().url}
                                                 className="inline-flex items-center justify-center rounded-xl bg-[#f53003] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-red-500/20 transition-all hover:bg-[#e22c02] dark:bg-[#FF4433] dark:shadow-red-900/20 dark:hover:bg-[#f63d2d]"
+                                            >
+                                                Start Converting
+                                            </Link>
+                                            <Link
+                                                href={LinkController.create().url}
+                                                className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-bold text-gray-900 transition-all hover:border-[#f53003] hover:text-[#f53003] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:border-[#FF4433] dark:hover:text-[#FF4433]"
                                             >
                                                 Start Shortening
                                             </Link>
@@ -73,62 +79,6 @@ export default function Welcome() {
                                             </p>
                                         </div>
                                     </div>
-                                </div>
-
-                                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-                                    <section className="rounded-3xl border border-gray-200/80 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#111111] dark:shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
-                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f53003]/8 text-2xl shadow-sm dark:bg-[#ff4433]/12">
-                                            🪄
-                                        </div>
-                                        <h2 className="text-xl font-semibold text-gray-950 dark:text-white">
-                                            Image Converter
-                                        </h2>
-                                        <p className="mt-3 text-sm leading-7 text-gray-600 dark:text-gray-400">
-                                            Convert raster images between PNG, JPG, GIF, WebP, and ICO in a quick clean flow.
-                                        </p>
-                                        <Link
-                                            href={ConverterController.create().url}
-                                            className="mt-5 inline-flex items-center text-sm font-semibold text-[#f53003] hover:underline dark:text-[#FF4433]"
-                                        >
-                                            Open converter
-                                        </Link>
-                                    </section>
-
-                                    <section className="rounded-3xl border border-gray-200/80 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#111111] dark:shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
-                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f53003]/8 text-2xl shadow-sm dark:bg-[#ff4433]/12">
-                                            🚀
-                                        </div>
-                                        <h2 className="text-xl font-semibold text-gray-950 dark:text-white">
-                                            Link Shortener
-                                        </h2>
-                                        <p className="mt-3 text-sm leading-7 text-gray-600 dark:text-gray-400">
-                                            Turn long URLs into clean, memorable links that are easy to share anywhere.
-                                        </p>
-                                        <Link
-                                            href={LinkController.create().url}
-                                            className="mt-5 inline-flex items-center text-sm font-semibold text-[#f53003] hover:underline dark:text-[#FF4433]"
-                                        >
-                                            Open link shortener
-                                        </Link>
-                                    </section>
-
-                                    <section className="rounded-3xl border border-gray-200/80 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#111111] dark:shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
-                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f53003]/8 text-2xl shadow-sm dark:bg-[#ff4433]/12">
-                                            📝
-                                        </div>
-                                        <h2 className="text-xl font-semibold text-gray-950 dark:text-white">
-                                            Paste Tool
-                                        </h2>
-                                        <p className="mt-3 text-sm leading-7 text-gray-600 dark:text-gray-400">
-                                            Share text, code, images, and videos with quick raw access when you need it.
-                                        </p>
-                                        <Link
-                                            href={PasteController.create().url}
-                                            className="mt-5 inline-flex items-center text-sm font-semibold text-[#f53003] hover:underline dark:text-[#FF4433]"
-                                        >
-                                            Open paste tool
-                                        </Link>
-                                    </section>
                                 </div>
                             </div>
                         </section>

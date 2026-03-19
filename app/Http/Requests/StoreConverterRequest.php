@@ -30,6 +30,7 @@ class StoreConverterRequest extends FormRequest
                 'required',
                 'array',
                 'min:1',
+                'max:20',
             ],
             'images.*' => [
                 'required',
@@ -51,6 +52,7 @@ class StoreConverterRequest extends FormRequest
             'images.required' => 'Please choose at least one image to convert.',
             'images.array' => 'Please choose valid images to convert.',
             'images.min' => 'Please choose at least one image to convert.',
+            'images.max' => 'You can convert up to 20 images at a time.',
             'images.*.required' => 'Each selected image is required.',
             'images.*.mimes' => 'Please upload PNG, JPG, GIF, WebP, or ICO images only.',
             'images.*.max' => 'Each image must be 10 MB or smaller.',

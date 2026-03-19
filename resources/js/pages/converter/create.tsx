@@ -21,6 +21,7 @@ const supportedMimeTypes = new Set([
 ]);
 
 const supportedExtensions = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'ico']);
+const maximumImageCount = 20;
 
 type Props = {
     supportedFormats: string[];
@@ -144,6 +145,13 @@ export default function Create({ supportedFormats }: Props) {
         if (unsupportedFiles.length > 0) {
             setErrors({
                 images: "Woops, you can't convert one of those formats!",
+            });
+            return;
+        }
+
+        if (selectedImagesRef.current.length + nextFiles.length > maximumImageCount) {
+            setErrors({
+                images: `You can convert up to ${maximumImageCount} images at a time.`,
             });
             return;
         }
@@ -448,7 +456,7 @@ export default function Create({ supportedFormats }: Props) {
                                     <span className="text-xs text-gray-500 dark:text-gray-400">
                                         {isDragging
                                             ? 'Drop your images here'
-                                            : 'PNG, JPG, GIF, WebP, or ICO — up to 10 MB each'}
+                                            : `PNG, JPG, GIF, WebP, or ICO — up to ${maximumImageCount} images, 10 MB each`}
                                     </span>
                                     <input
                                         type="file"

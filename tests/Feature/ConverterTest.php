@@ -103,3 +103,16 @@ it('rejects svg as an output format', function () {
     $response->assertRedirect(route('converter.create'))
         ->assertSessionHasErrors('output_format');
 });
+
+it('rejects more than twenty images at once', function () {
+    $response = $this->from(route('converter.create'))->post(route('converter.store'), [
+        'images' => array_map(
+            fn (int $index) => fakeConvertibleImage('png', "sample-$index.png"),
+            range(1, 21),
+        ),
+        'output_format' => 'jpg',
+    ]);
+
+    $response->assertRedirect(route('converter.create'))
+        ->assertSessionHasErrors('images');
+});
