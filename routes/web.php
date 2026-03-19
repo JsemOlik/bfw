@@ -4,9 +4,7 @@ use App\Http\Controllers\LinkController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
-Route::inertia('/', 'welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-])->name('home');
+Route::inertia('/', 'welcome')->name('home');
 
 // Link routes
 Route::get('link', [LinkController::class, 'create'])->name('link.create');

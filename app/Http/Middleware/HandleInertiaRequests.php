@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
                 'shortened_link' => $request->session()->get('shortened_link'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'canRegister' => \Laravel\Fortify\Features::enabled(\Laravel\Fortify\Features::registration()),
         ];
     }
 }
