@@ -113,13 +113,6 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                     </div>
 
                     <div className="w-full rounded-2xl bg-white p-8 shadow-xl ring-1 shadow-black/5 ring-gray-200 dark:bg-[#161615] dark:ring-[#fffaed2d]">
-                        {isAdmin && (
-                            <div className="mb-8 rounded-lg border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-900/20 dark:bg-emerald-900/10">
-                                <p className="text-sm font-medium text-emerald-900 dark:text-emerald-400">
-                                    Oh wow, an admin, enjoy without expiry!
-                                </p>
-                            </div>
-                        )}
                         {!auth.user && (
                             <div className="mb-8 rounded-lg border border-amber-100 bg-amber-50 p-4 dark:border-amber-900/20 dark:bg-amber-900/10">
                                 <div className="flex items-center gap-3 text-amber-900 dark:text-amber-400">
