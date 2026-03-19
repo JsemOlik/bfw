@@ -38,7 +38,7 @@ export function UserMenuContent({ user }: Props) {
                         className="block w-full cursor-pointer"
                         href={PasteController.create().url}
                     >
-                        Text Paste
+                        Pastes
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

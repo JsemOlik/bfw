@@ -19,7 +19,7 @@ interface Props {
 
 export default function Status({ paste }: Props) {
     const { auth } = usePage<any>().props;
-    const shortUrl = `${window.location.origin}/text/${paste.slug}`;
+    const shortUrl = `${window.location.origin}/paste/${paste.slug}`;
     const [copied, setCopied] = useState(false);
 
     const { delete: destroy, processing } = useForm();
@@ -59,7 +59,7 @@ export default function Status({ paste }: Props) {
                         <p className="text-sm text-white/80">
                             Status for{' '}
                             <span className="rounded bg-black/10 px-2 py-0.5 font-mono italic">
-                                /text/{paste.slug}
+                                /paste/{paste.slug}
                             </span>
                         </p>
                     </div>

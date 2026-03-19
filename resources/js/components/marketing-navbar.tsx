@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import LinkController from '@/actions/App/Http/Controllers/LinkController';
+import PasteController from '@/actions/App/Http/Controllers/PasteController';
 import { login, register } from '@/routes/index';
 import { UserProfileDropdown } from '@/components/user-profile-dropdown';
 
@@ -37,7 +38,7 @@ export default function MarketingNavbar() {
                         href={PasteController.create().url}
                         className="text-sm font-semibold text-gray-600 transition-colors hover:text-[#f53003] dark:text-gray-400 dark:hover:text-[#ff4433]"
                     >
-                        Text Paste
+                        Pastes
                     </Link>
                 </div>
 

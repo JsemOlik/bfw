@@ -169,7 +169,7 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                                     </label>
                                     <div className="flex items-stretch overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-[#3E3E3A] dark:bg-[#0a0a0a]">
                                         <div className="flex items-center border-r border-gray-200 bg-gray-100/50 px-4 font-mono text-sm text-gray-400 select-none dark:border-white/10 dark:bg-white/5 dark:text-gray-500">
-                                            {window.location.host}/text/
+                                            {window.location.host}/paste/
                                         </div>
                                         <input
                                             type="text"
@@ -285,7 +285,7 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                                     </div>
                                     <p className="px-1 text-[11px] font-medium text-green-700/70 italic dark:text-green-400/50">
                                         * Paste expires in 24 hours. You can see
-                                        its status in the My Texts dropdown
+                                        its status in the My Pastes dropdown
                                         below.
                                     </p>
                                 </div>
@@ -301,7 +301,7 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                                 }
                                 className="flex items-center gap-2 text-gray-600 transition-colors hover:text-black dark:text-gray-400 dark:hover:text-white"
                             >
-                                <span className="font-semibold">My Texts</span>
+                                <span className="font-semibold">My Pastes</span>
                                 <svg
                                     width="14"
                                     height="14"
@@ -318,7 +318,7 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                             </button>
                         </div>
 
-                        {/* My Texts Dropdown Content */}
+                        {/* My Pastes Dropdown Content */}
                         {isDashboardOpen && (
                             <div className="w-full max-w-2xl animate-in duration-300 fade-in slide-in-from-top-4">
                                 <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white/50 shadow-xl backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
@@ -347,7 +347,7 @@ export default function Create({ userPastes = [] }: { userPastes?: any[] }) {
                                                     <div className="flex-1 space-y-1">
                                                         <div className="flex items-center gap-2">
                                                             <a
-                                                                href={`/text/${paste.slug}`}
+                                                                href={`/paste/${paste.slug}`}
                                                                 target="_blank"
                                                                 className="group flex items-center gap-1.5 font-mono text-sm font-bold text-gray-900 underline decoration-gray-300 decoration-2 underline-offset-4 transition-all hover:text-[#f53003] hover:decoration-[#f53003] dark:text-white dark:decoration-white/10 dark:hover:text-[#FF4433] dark:hover:decoration-[#FF4433]"
                                                             >

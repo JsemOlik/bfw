@@ -11,14 +11,15 @@ beforeEach(function () {
 });
 
 it('allows guests to create a paste', function () {
-    $response = $this->post('/text', [
+    $response = $this->from('/paste')->post('/paste', [
         'content' => 'Hello World!',
         'syntax' => 'plaintext',
     ]);
 
     $paste = Paste::first();
 
-    $response->assertRedirect('/text/' . $paste->slug);
+    $response->assertRedirect('/paste');
+    $response->assertSessionHas('shortened_link', url('/paste/'.$paste->slug));
     $this->assertDatabaseHas('pastes', [
         'content' => 'Hello World!',
         'syntax' => 'plaintext',
@@ -29,12 +30,13 @@ it('allows guests to create a paste', function () {
 it('allows authenticated users to create a paste', function () {
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->post('/text', [
+    $response = $this->actingAs($user)->from('/paste')->post('/paste', [
         'content' => 'Auth Hello World!',
         'slug' => 'auth-paste',
     ]);
 
-    $response->assertRedirect('/text/auth-paste');
+    $response->assertRedirect('/paste');
+    $response->assertSessionHas('shortened_link', url('/paste/auth-paste'));
     $this->assertDatabaseHas('pastes', [
         'content' => 'Auth Hello World!',
         'slug' => 'auth-paste',
@@ -43,7 +45,7 @@ it('allows authenticated users to create a paste', function () {
 });
 
 it('validates paste creation requests', function () {
-    $response = $this->post('/text', [
+    $response = $this->post('/paste', [
         'content' => '', // Required
     ]);
 
@@ -54,7 +56,7 @@ it('validates paste creation requests', function () {
 it('shows the raw text of a paste', function () {
     $paste = Paste::factory()->create(['content' => 'Raw text content']);
 
-    $response = $this->get('/text/' . $paste->slug);
+    $response = $this->get('/paste/'.$paste->slug);
 
     $response->assertStatus(200);
     $response->assertSee('Raw text content');
@@ -65,7 +67,7 @@ it('does not show expired pastes', function () {
         'expires_at' => now()->subDay(),
     ]);
 
-    $response = $this->get('/text/' . $paste->slug);
+    $response = $this->get('/paste/'.$paste->slug);
 
     $response->assertStatus(404);
 });
@@ -74,7 +76,7 @@ it('allows owners to delete their paste', function () {
     $user = User::factory()->create();
     $paste = Paste::factory()->create(['user_id' => $user->id]);
 
-    $response = $this->actingAs($user)->delete('/text/' . $paste->id);
+    $response = $this->actingAs($user)->delete('/paste/'.$paste->id);
 
     $response->assertRedirect();
     $this->assertDatabaseMissing('pastes', ['id' => $paste->id]);
@@ -83,7 +85,7 @@ it('allows owners to delete their paste', function () {
 it('prevents guests from deleting pastes', function () {
     $paste = Paste::factory()->create();
 
-    $response = $this->delete('/text/' . $paste->id);
+    $response = $this->delete('/paste/'.$paste->id);
 
     $response->assertStatus(403);
     $this->assertDatabaseHas('pastes', ['id' => $paste->id]);
@@ -94,7 +96,7 @@ it('prevents users from deleting others pastes', function () {
     $otherUser = User::factory()->create();
     $paste = Paste::factory()->create(['user_id' => $owner->id]);
 
-    $response = $this->actingAs($otherUser)->delete('/text/' . $paste->id);
+    $response = $this->actingAs($otherUser)->delete('/paste/'.$paste->id);
 
     $response->assertStatus(403);
     $this->assertDatabaseHas('pastes', ['id' => $paste->id]);
