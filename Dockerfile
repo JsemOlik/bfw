@@ -4,6 +4,10 @@ ARG APP_ENV=production
 # --- Stage 1: Frontend Builder (Production Only) ---
 FROM oven/bun:alpine AS frontend-builder
 WORKDIR /app
+
+# Install PHP for Wayfinder type generation (required by vite build)
+RUN apk add --no-cache php84 php84-phar php84-mbstring php84-openssl php84-tokenizer \
+    && ln -s /usr/bin/php84 /usr/bin/php
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 COPY . .

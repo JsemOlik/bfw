@@ -1,5 +1,6 @@
 services:
     app:
+        image: ghcr.io/jsemolik/bfw:latest
         build:
             context: .
             dockerfile: Dockerfile
