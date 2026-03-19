@@ -7,15 +7,19 @@ mkdir -p bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 
-# Generate APP_KEY if it's missing or empty in .env
-if [ -f .env ]; then
-    if ! grep -q "APP_KEY=base64:" .env || [ -z "$(grep "APP_KEY=" .env | cut -d'=' -f2)" ]; then
-        echo "Generating application encryption key..."
-        php artisan key:generate --force
+# Generate APP_KEY if it's missing from both environment and .env
+if [ -z "$APP_KEY" ]; then
+    if [ -f .env ]; then
+        if ! grep -q "APP_KEY=base64:" .env || [ -z "$(grep "APP_KEY=" .env | cut -d'=' -f2)" ]; then
+            echo "Generating application encryption key into .env..."
+            php artisan key:generate --force
+        fi
+    else
+        echo "WARNING: .env not found and APP_KEY not set in environment. Generating a temporary key for this session..."
+        # We don't exit 1 anymore, we just warn.
+        # But we should probably have a key for Laravel to boot.
+        export APP_KEY=$(php artisan key:generate --show --force)
     fi
-else
-    echo ".env file not found. Please ensure it exists."
-    exit 1
 fi
 
 # Run migrations if DB is up
