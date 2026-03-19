@@ -3,6 +3,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
+            target: dev
         container_name: bfw-app
         restart: unless-stopped
         ports:

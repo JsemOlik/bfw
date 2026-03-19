@@ -36,8 +36,10 @@ RUN set -x ; \
     addgroup -g 1000 -S www-data || true ; \
     adduser -u 1000 -D -S -G www-data www-data || true
 
-# --- Stage 2: Unified Builder (Production Only) ---
-FROM base AS builder
+# --- Stage 2: Development / Base Builder ---
+FROM base AS dev
+ARG APP_ENV=local
+ENV APP_ENV=${APP_ENV}
 
 # Install Bun
 RUN curl -fsSL https://bun.sh/install | bash \
@@ -49,28 +51,50 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Copy only dependency files for caching
 COPY composer.json composer.lock package.json bun.lock ./
 
-# Install all dependencies
-RUN composer install --no-interaction --no-dev --optimize-autoloader --no-scripts
+# Install ALL dependencies (including dev)
+RUN composer install --no-interaction --optimize-autoloader --no-scripts
 RUN bun install --frozen-lockfile
 
-# Copy the rest of the code
+# Copy the rest
 COPY . .
 
+# Setup configs and entrypoint for dev container
+COPY .docker/nginx.conf /etc/nginx/http.d/default.conf
+COPY .docker/supervisord.conf /etc/supervisord.conf
+COPY .docker/php.ini /usr/local/etc/php/conf.d/bfw-optimized.ini
+RUN sed -i 's/\r$//' .docker/entrypoint.sh \
+    && chmod +x .docker/entrypoint.sh
+
+# Fix permissions
+RUN mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+EXPOSE 80 5173
+
+ENTRYPOINT [".docker/entrypoint.sh"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+
+# --- Stage 3: Builder (Production Only) ---
+FROM dev AS builder
+ARG APP_ENV=production
+ENV APP_ENV=${APP_ENV}
+
 # Run production builds
-# Note: wayfinder:generate will now work because 'vendor/' exists
 RUN bun run build
+# Optimize composer and remove dev dependencies
+RUN composer install --no-interaction --no-dev --optimize-autoloader --no-scripts
 RUN composer dump-autoload --optimize --no-dev
 
-# --- Stage 3: Final Image ---
+# --- Stage 4: Final Image ---
 FROM base
-ARG APP_ENV
+ARG APP_ENV=production
 ENV APP_ENV=${APP_ENV}
 
 # Copy code and built assets from builder
 COPY --from=builder --chown=www-data:www-data /var/www/html /var/www/html
 
-# If dev, we might still want node_modules/vendor for first-time use if not mounted
-# But for prod, we keep it clean.
+# Clean up dev tools if strictly production
 RUN if [ "$APP_ENV" = "production" ]; then \
     rm -rf node_modules ; \
     fi

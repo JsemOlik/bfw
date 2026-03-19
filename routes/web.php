@@ -19,4 +19,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::redirect('dashboard', 'link')->name('dashboard');
 });
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';
