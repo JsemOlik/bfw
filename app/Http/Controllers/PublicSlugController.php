@@ -1,0 +1,96 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Link;
+use App\Models\Paste;
+use App\Models\SlugRegistry;
+use App\Support\PasteHighlighter;
+use App\Support\PasteMediaManager;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class PublicSlugController extends Controller
+{
+    public function show(
+        SlugRegistry $slugRegistry,
+        PasteHighlighter $pasteHighlighter,
+        PasteMediaManager $pasteMediaManager,
+    ): RedirectResponse|Response {
+        $sluggable = $slugRegistry->sluggable;
+
+        if ($sluggable instanceof Link) {
+            abort_if($sluggable->expires_at?->isPast() ?? false, 404);
+
+            return redirect()->away($sluggable->original_url);
+        }
+
+        abort_unless($sluggable instanceof Paste, 404);
+        abort_if($sluggable->expires_at?->isPast() ?? false, 404);
+
+        return Inertia::render('pastes/show', [
+            'paste' => [
+                'type' => $sluggable->type,
+                'content' => $sluggable->content,
+                'syntax' => $sluggable->syntax,
+                'slug' => $sluggable->slug,
+                'public_url' => $sluggable->publicUrl(),
+                'raw_url' => route('paste.raw', $sluggable->slug),
+                'media_url' => $sluggable->isMedia() ? $pasteMediaManager->url($sluggable) : null,
+                'original_filename' => $sluggable->original_filename,
+                'mime_type' => $sluggable->mime_type,
+                'size_bytes' => $sluggable->size_bytes,
+                'image_width' => $sluggable->image_width,
+                'image_height' => $sluggable->image_height,
+                'created_at' => $sluggable->created_at->toDateTimeString(),
+                'highlighted_lines' => $sluggable->isText()
+                    ? $pasteHighlighter->highlight($sluggable->content ?? '', $sluggable->syntax ?? 'plaintext')
+                    : [],
+            ],
+        ]);
+    }
+
+    public function status(SlugRegistry $slugRegistry, PasteMediaManager $pasteMediaManager): Response
+    {
+        $sluggable = $slugRegistry->sluggable;
+
+        if ($sluggable instanceof Link) {
+            return Inertia::render('links/status', [
+                'link' => [
+                    'id' => $sluggable->id,
+                    'user_id' => $sluggable->user_id,
+                    'original_url' => $sluggable->original_url,
+                    'slug' => $sluggable->slug,
+                    'public_url' => $sluggable->publicUrl(),
+                    'created_at' => $sluggable->created_at->toDateTimeString(),
+                    'expires_at' => $sluggable->expires_at?->toDateTimeString(),
+                    'is_expired' => $sluggable->expires_at?->isPast() ?? false,
+                ],
+            ]);
+        }
+
+        abort_unless($sluggable instanceof Paste, 404);
+
+        return Inertia::render('pastes/status', [
+            'paste' => [
+                'id' => $sluggable->id,
+                'user_id' => $sluggable->user_id,
+                'type' => $sluggable->type,
+                'slug' => $sluggable->slug,
+                'public_url' => $sluggable->publicUrl(),
+                'syntax' => $sluggable->syntax,
+                'snippet' => $sluggable->isText()
+                    ? Str::limit($sluggable->content ?? '', 100)
+                    : ($sluggable->original_filename ?? Str::headline($sluggable->type).' paste'),
+                'media_url' => $sluggable->isMedia() ? $pasteMediaManager->url($sluggable) : null,
+                'original_filename' => $sluggable->original_filename,
+                'mime_type' => $sluggable->mime_type,
+                'created_at' => $sluggable->created_at->toDateTimeString(),
+                'expires_at' => $sluggable->expires_at?->toDateTimeString(),
+                'is_expired' => $sluggable->expires_at?->isPast() ?? false,
+            ],
+        ]);
+    }
+}

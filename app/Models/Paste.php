@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasSlugRegistry;
 use App\Support\ExpirationResolver;
 use Database\Factories\PasteFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -10,7 +11,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Str;
 
 #[Fillable([
     'user_id',
@@ -30,7 +30,7 @@ use Illuminate\Support\Str;
 class Paste extends Model
 {
     /** @use HasFactory<PasteFactory> */
-    use HasFactory, Prunable;
+    use HasFactory, HasSlugRegistry, Prunable;
 
     /**
      * Get the attributes that should be cast.
@@ -91,10 +91,6 @@ class Paste extends Model
     protected static function booted(): void
     {
         static::creating(function (Paste $paste) {
-            if (! $paste->slug) {
-                $paste->slug = Str::random(6);
-            }
-
             if (! $paste->isDirty('expires_at')) {
                 $paste->expires_at = app(ExpirationResolver::class)->resolveForUserId(
                     $paste->user_id,

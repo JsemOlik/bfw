@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Link;
+use App\Models\SlugRegistry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -37,6 +38,15 @@ it('associates a link with the authenticated user', function () {
     $this->assertDatabaseHas('links', [
         'original_url' => 'https://google.com',
         'user_id' => $user->id,
+    ]);
+
+    $link = Link::first();
+
+    expect($link->publicUrl())->toBe(url('/'.$link->slug));
+    $this->assertDatabaseHas('slug_registries', [
+        'slug' => $link->slug,
+        'sluggable_type' => 'link',
+        'sluggable_id' => $link->id,
     ]);
 });
 
@@ -99,6 +109,16 @@ it('can shorten a link with a custom slug', function () {
     ]);
 });
 
+it('rejects reserved slugs for links', function () {
+    $response = $this->from(route('link.create'))->post(route('link.store'), [
+        'url' => 'https://laravel.com',
+        'slug' => 'login',
+    ]);
+
+    $response->assertRedirect(route('link.create'));
+    $response->assertSessionHasErrors('slug');
+});
+
 it('redirects to the original url', function () {
     $link = Link::create([
         'original_url' => 'https://github.com',
@@ -109,6 +129,22 @@ it('redirects to the original url', function () {
     $response = $this->get(route('link.show', $link->slug));
 
     $response->assertRedirect('https://github.com');
+});
+
+it('deletes the slug registry entry when a link is deleted', function () {
+    $user = User::factory()->create();
+    $link = Link::create([
+        'original_url' => 'https://delete-registry.com',
+        'slug' => 'delete-registry-link',
+        'user_id' => $user->id,
+        'expires_at' => now()->addDay(),
+    ]);
+
+    expect(SlugRegistry::where('slug', $link->slug)->exists())->toBeTrue();
+
+    $this->actingAs($user)->delete(route('link.destroy', $link));
+
+    expect(SlugRegistry::where('slug', $link->slug)->exists())->toBeFalse();
 });
 
 it('returns 404 for expired links', function () {

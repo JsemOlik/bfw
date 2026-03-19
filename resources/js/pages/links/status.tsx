@@ -10,6 +10,7 @@ interface Props {
         user_id: number | null;
         original_url: string;
         slug: string;
+        public_url: string;
         created_at: string;
         expires_at: string | null;
         is_expired: boolean;
@@ -18,7 +19,7 @@ interface Props {
 
 export default function Status({ link }: Props) {
     const { auth } = usePage<any>().props;
-    const shortUrl = `${window.location.origin}/link/${link.slug}`;
+    const shortUrl = link.public_url;
     const expiresAtText = link.expires_at
         ? new Date(link.expires_at).toLocaleString()
         : 'Never';
@@ -61,7 +62,7 @@ export default function Status({ link }: Props) {
                         <p className="text-sm text-white/80">
                             Status for{' '}
                             <span className="rounded bg-black/10 px-2 py-0.5 font-mono italic">
-                                /link/{link.slug}
+                                /{link.slug}
                             </span>
                         </p>
                     </div>

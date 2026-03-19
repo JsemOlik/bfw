@@ -120,6 +120,11 @@ class PasteMediaManager
             ->delete($paste->storage_path);
     }
 
+    public function deleteFile(string $disk, string $path): void
+    {
+        Storage::disk($disk)->delete($path);
+    }
+
     protected function storeContents(string $disk, string $path, string $contents, UploadedFile $file): bool
     {
         $filesystem = Storage::disk($disk);

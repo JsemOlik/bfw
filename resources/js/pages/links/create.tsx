@@ -5,7 +5,17 @@ import LinkController from '@/actions/App/Http/Controllers/LinkController';
 import AppLayout from '@/layouts/app-layout';
 import DeleteConfirmModal from '@/components/delete-confirm-modal';
 
-export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
+interface UserLink {
+    id: number;
+    original_url: string;
+    slug: string;
+    public_url: string;
+    status_url: string;
+    expires_at: string | null;
+    is_expired: boolean;
+}
+
+export default function Create({ userLinks = [] }: { userLinks?: UserLink[] }) {
     const { auth, flash } = usePage<{
         auth: any;
         flash: { shortened_link?: string };
@@ -172,7 +182,7 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
                                     </label>
                                     <div className="flex items-stretch overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-[#3E3E3A] dark:bg-[#0a0a0a]">
                                         <div className="flex items-center border-r border-gray-200 bg-gray-100/50 px-4 font-mono text-sm text-black select-none dark:border-white/10 dark:bg-white/5 dark:text-gray-500">
-                                            {window.location.host}/link/
+                                            {window.location.host}/
                                         </div>
                                         <input
                                             type="text"
@@ -353,8 +363,9 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
                                                     <div className="flex-1 space-y-1">
                                                         <div className="flex items-center gap-2">
                                                             <a
-                                                                href={`/link/${link.slug}`}
+                                                                href={link.public_url}
                                                                 target="_blank"
+                                                                rel="noreferrer"
                                                                 className="group flex items-center gap-1.5 font-mono text-sm font-bold text-gray-900 underline decoration-gray-300 decoration-2 underline-offset-4 transition-all hover:text-[#f53003] hover:decoration-[#f53003] dark:text-white dark:decoration-white/10 dark:hover:text-[#FF4433] dark:hover:decoration-[#FF4433]"
                                                             >
                                                                 <span>
@@ -393,11 +404,7 @@ export default function Create({ userLinks = [] }: { userLinks?: any[] }) {
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         <Link
-                                                            href={
-                                                                LinkController.status(
-                                                                    link.slug,
-                                                                ).url
-                                                            }
+                                                            href={link.status_url}
                                                             className="rounded-lg bg-gray-100 p-2 text-gray-500 transition-all hover:bg-gray-900 hover:text-white dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white dark:hover:text-black"
                                                         >
                                                             <svg

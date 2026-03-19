@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\SlugUnavailableException;
 use App\Http\Requests\StoreLinkRequest;
 use App\Models\Link;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -29,6 +31,8 @@ class LinkController extends Controller
                     'id' => $link->id,
                     'original_url' => $link->original_url,
                     'slug' => $link->slug,
+                    'public_url' => $link->publicUrl(),
+                    'status_url' => $link->statusUrl(),
                     'expires_at' => $link->expires_at?->toDateTimeString(),
                     'is_expired' => $link->expires_at?->isPast() ?? false,
                 ]);
@@ -44,13 +48,21 @@ class LinkController extends Controller
      */
     public function store(StoreLinkRequest $request): RedirectResponse
     {
-        $link = Link::create([
-            'original_url' => $request->url,
-            'slug' => $request->slug,
-            'user_id' => Auth::id(),
-        ]);
+        try {
+            $link = DB::transaction(fn (): Link => Link::create([
+                'original_url' => $request->url,
+                'slug' => $request->slug,
+                'user_id' => Auth::id(),
+            ]));
+        } catch (SlugUnavailableException) {
+            return back()
+                ->withErrors([
+                    'slug' => 'That slug is already taken.',
+                ])
+                ->withInput();
+        }
 
-        return back()->with('shortened_link', route('link.show', $link->slug));
+        return back()->with('shortened_link', $link->publicUrl());
     }
 
     /**
@@ -81,6 +93,7 @@ class LinkController extends Controller
                 'user_id' => $link->user_id,
                 'original_url' => $link->original_url,
                 'slug' => $link->slug,
+                'public_url' => $link->publicUrl(),
                 'created_at' => $link->created_at->toDateTimeString(),
                 'expires_at' => $link->expires_at?->toDateTimeString(),
                 'is_expired' => $link->expires_at?->isPast() ?? false,
@@ -99,7 +112,7 @@ class LinkController extends Controller
 
         $link->delete();
 
-        if ($this->isStatusReferrer($request, route('link.status', $link->slug))) {
+        if ($this->isStatusReferrer($request, route('link.status', $link->slug), $link->statusUrl())) {
             return redirect()->route('link.create')
                 ->with('message', 'Link deleted successfully.');
         }
@@ -107,13 +120,17 @@ class LinkController extends Controller
         return back()->with('message', 'Link deleted successfully.');
     }
 
-    protected function isStatusReferrer(Request $request, string $statusUrl): bool
+    protected function isStatusReferrer(Request $request, string ...$statusUrls): bool
     {
         $referrerPath = parse_url((string) $request->headers->get('referer'), PHP_URL_PATH);
-        $statusPath = parse_url($statusUrl, PHP_URL_PATH);
 
-        return is_string($referrerPath)
-            && is_string($statusPath)
-            && $referrerPath === $statusPath;
+        if (! is_string($referrerPath)) {
+            return false;
+        }
+
+        return collect($statusUrls)
+            ->map(fn (string $statusUrl) => parse_url($statusUrl, PHP_URL_PATH))
+            ->filter(fn ($statusPath) => is_string($statusPath))
+            ->contains($referrerPath);
     }
 }

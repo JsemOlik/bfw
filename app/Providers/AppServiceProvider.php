@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Link;
+use App\Models\Paste;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
@@ -34,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->configureDefaults();
+        $this->configureMorphMap();
         $this->configureFeatureRateLimiting();
     }
 
@@ -57,6 +61,14 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null,
         );
+    }
+
+    protected function configureMorphMap(): void
+    {
+        Relation::enforceMorphMap([
+            'link' => Link::class,
+            'paste' => Paste::class,
+        ]);
     }
 
     protected function configureFeatureRateLimiting(): void

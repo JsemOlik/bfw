@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\SlugUnavailableException;
 use App\Http\Requests\StorePasteRequest;
 use App\Models\Paste;
 use App\Support\PasteHighlighter;
@@ -10,6 +11,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -43,6 +45,8 @@ class PasteController extends Controller
      */
     public function store(StorePasteRequest $request, PasteMediaManager $pasteMediaManager): RedirectResponse
     {
+        $storedMedia = null;
+
         if (in_array($request->pasteType(), ['image', 'video'], true)) {
             $pasteType = $request->pasteType();
             $uploadField = $pasteType;
@@ -52,7 +56,7 @@ class PasteController extends Controller
                     ? $pasteMediaManager->storeUploadedImage($request->file('image'))
                     : $pasteMediaManager->storeUploadedVideo($request->file('video'));
 
-                $paste = Paste::create([
+                $paste = DB::transaction(fn (): Paste => Paste::create([
                     'type' => $pasteType,
                     'content' => null,
                     'syntax' => null,
@@ -65,8 +69,22 @@ class PasteController extends Controller
                     'size_bytes' => $storedMedia['size_bytes'],
                     'image_width' => $storedMedia['image_width'],
                     'image_height' => $storedMedia['image_height'],
-                ]);
+                ]));
+            } catch (SlugUnavailableException) {
+                if ($storedMedia !== null) {
+                    $pasteMediaManager->deleteFile($storedMedia['disk'], $storedMedia['path']);
+                }
+
+                return back()
+                    ->withErrors([
+                        'slug' => 'That slug is already taken.',
+                    ])
+                    ->withInput();
             } catch (Throwable $exception) {
+                if ($storedMedia !== null) {
+                    $pasteMediaManager->deleteFile($storedMedia['disk'], $storedMedia['path']);
+                }
+
                 report($exception);
 
                 return back()
@@ -79,16 +97,24 @@ class PasteController extends Controller
                     ->withInput();
             }
         } else {
-            $paste = Paste::create([
-                'type' => 'text',
-                'content' => $request->content,
-                'slug' => $request->slug,
-                'syntax' => $request->syntax ?? 'plaintext',
-                'user_id' => Auth::id(),
-            ]);
+            try {
+                $paste = DB::transaction(fn (): Paste => Paste::create([
+                    'type' => 'text',
+                    'content' => $request->content,
+                    'slug' => $request->slug,
+                    'syntax' => $request->syntax ?? 'plaintext',
+                    'user_id' => Auth::id(),
+                ]));
+            } catch (SlugUnavailableException) {
+                return back()
+                    ->withErrors([
+                        'slug' => 'That slug is already taken.',
+                    ])
+                    ->withInput();
+            }
         }
 
-        return back()->with('shortened_link', route('paste.show', $paste->slug));
+        return back()->with('shortened_link', $paste->publicUrl());
     }
 
     /**
@@ -112,6 +138,7 @@ class PasteController extends Controller
                 'content' => $paste->content,
                 'syntax' => $paste->syntax,
                 'slug' => $paste->slug,
+                'public_url' => $paste->publicUrl(),
                 'raw_url' => route('paste.raw', $paste->slug),
                 'media_url' => $paste->isMedia() ? $pasteMediaManager->url($paste) : null,
                 'original_filename' => $paste->original_filename,
@@ -167,6 +194,7 @@ class PasteController extends Controller
                 'user_id' => $paste->user_id,
                 'type' => $paste->type,
                 'slug' => $paste->slug,
+                'public_url' => $paste->publicUrl(),
                 'syntax' => $paste->syntax,
                 'snippet' => $paste->isText()
                     ? Str::limit($paste->content ?? '', 100)
@@ -193,7 +221,7 @@ class PasteController extends Controller
         $pasteMediaManager->delete($paste);
         $paste->delete();
 
-        if ($this->isStatusReferrer($request, route('paste.status', $paste->slug))) {
+        if ($this->isStatusReferrer($request, route('paste.status', $paste->slug), $paste->statusUrl())) {
             return redirect()->route('paste.create')
                 ->with('message', 'Paste deleted successfully.');
         }
@@ -201,14 +229,18 @@ class PasteController extends Controller
         return back()->with('message', 'Paste deleted successfully.');
     }
 
-    protected function isStatusReferrer(Request $request, string $statusUrl): bool
+    protected function isStatusReferrer(Request $request, string ...$statusUrls): bool
     {
         $referrerPath = parse_url((string) $request->headers->get('referer'), PHP_URL_PATH);
-        $statusPath = parse_url($statusUrl, PHP_URL_PATH);
 
-        return is_string($referrerPath)
-            && is_string($statusPath)
-            && $referrerPath === $statusPath;
+        if (! is_string($referrerPath)) {
+            return false;
+        }
+
+        return collect($statusUrls)
+            ->map(fn (string $statusUrl) => parse_url($statusUrl, PHP_URL_PATH))
+            ->filter(fn ($statusPath) => is_string($statusPath))
+            ->contains($referrerPath);
     }
 
     /**
@@ -220,6 +252,8 @@ class PasteController extends Controller
             'id' => $paste->id,
             'type' => $paste->type,
             'slug' => $paste->slug,
+            'public_url' => $paste->publicUrl(),
+            'status_url' => $paste->statusUrl(),
             'syntax' => $paste->isText() ? ($paste->syntax ?? 'plaintext') : $paste->type,
             'expires_at' => $paste->expires_at?->toDateTimeString(),
             'is_expired' => $paste->expires_at?->isPast() ?? false,

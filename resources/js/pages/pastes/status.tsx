@@ -10,6 +10,7 @@ interface Props {
         user_id: number | null;
         type: 'text' | 'image' | 'video';
         slug: string;
+        public_url: string;
         syntax: string | null;
         snippet: string;
         media_url: string | null;
@@ -23,7 +24,7 @@ interface Props {
 
 export default function Status({ paste }: Props) {
     const { auth } = usePage<{ auth: { user?: { id: number } | null } }>().props;
-    const shortUrl = `${window.location.origin}/paste/${paste.slug}`;
+    const shortUrl = paste.public_url;
     const expiresAtText = paste.expires_at
         ? new Date(paste.expires_at).toLocaleString()
         : 'Never';
@@ -68,7 +69,7 @@ export default function Status({ paste }: Props) {
                         <p className="text-sm text-white/80">
                             Status for{' '}
                             <span className="rounded bg-black/10 px-2 py-0.5 font-mono italic">
-                                /paste/{paste.slug}
+                                /{paste.slug}
                             </span>
                         </p>
                     </div>

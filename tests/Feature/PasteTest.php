@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Paste;
+use App\Models\SlugRegistry;
 use App\Models\User;
 use App\Support\PasteMediaManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -65,11 +66,17 @@ it('allows guests to create a paste', function () {
     $paste = Paste::first();
 
     $response->assertRedirect('/paste');
-    $response->assertSessionHas('shortened_link', url('/paste/'.$paste->slug));
+    $response->assertSessionHas('shortened_link', url('/'.$paste->slug));
     $this->assertDatabaseHas('pastes', [
         'content' => 'Hello World!',
         'syntax' => 'plaintext',
         'user_id' => null,
+    ]);
+
+    $this->assertDatabaseHas('slug_registries', [
+        'slug' => $paste->slug,
+        'sluggable_type' => 'paste',
+        'sluggable_id' => $paste->id,
     ]);
 });
 
@@ -82,7 +89,7 @@ it('allows authenticated users to create a paste', function () {
     ]);
 
     $response->assertRedirect('/paste');
-    $response->assertSessionHas('shortened_link', url('/paste/auth-paste'));
+    $response->assertSessionHas('shortened_link', url('/auth-paste'));
     $this->assertDatabaseHas('pastes', [
         'content' => 'Auth Hello World!',
         'slug' => 'auth-paste',
@@ -105,7 +112,7 @@ it('allows guests to create an image paste', function () {
     $paste = Paste::first();
 
     $response->assertRedirect('/paste');
-    $response->assertSessionHas('shortened_link', url('/paste/kitten-shot'));
+    $response->assertSessionHas('shortened_link', url('/kitten-shot'));
     expect($paste->type)
         ->toBe('image')
         ->and($paste->content)->toBeNull()
@@ -133,7 +140,7 @@ it('allows guests to create an svg image paste', function () {
     $paste = Paste::first();
 
     $response->assertRedirect('/paste');
-    $response->assertSessionHas('shortened_link', url('/paste/vector-shot'));
+    $response->assertSessionHas('shortened_link', url('/vector-shot'));
     expect($paste->type)
         ->toBe('image')
         ->and($paste->original_filename)->toBe('diagram.svg')
@@ -158,7 +165,7 @@ it('allows guests to create an ico image paste', function () {
     $paste = Paste::first();
 
     $response->assertRedirect('/paste');
-    $response->assertSessionHas('shortened_link', url('/paste/favicon-shot'));
+    $response->assertSessionHas('shortened_link', url('/favicon-shot'));
     expect($paste->type)
         ->toBe('image')
         ->and($paste->original_filename)->toBe('favicon.ico')
@@ -183,7 +190,7 @@ it('allows guests to create a video paste', function () {
     $paste = Paste::first();
 
     $response->assertRedirect('/paste');
-    $response->assertSessionHas('shortened_link', url('/paste/clip-shot'));
+    $response->assertSessionHas('shortened_link', url('/clip-shot'));
     expect($paste->type)
         ->toBe('video')
         ->and($paste->content)->toBeNull()
@@ -486,6 +493,20 @@ it('deletes stored video files when owners delete video pastes', function () {
     $response->assertRedirect();
     $this->assertDatabaseMissing('pastes', ['id' => $paste->id]);
     Storage::disk('paste_media')->assertMissing('pastes/videos/test/example.mp4');
+});
+
+it('deletes the slug registry entry when a paste is deleted', function () {
+    $user = User::factory()->create();
+    $paste = Paste::factory()->create([
+        'user_id' => $user->id,
+        'slug' => 'delete-registry-paste',
+    ]);
+
+    expect(SlugRegistry::where('slug', $paste->slug)->exists())->toBeTrue();
+
+    $this->actingAs($user)->delete(route('paste.destroy', $paste));
+
+    expect(SlugRegistry::where('slug', $paste->slug)->exists())->toBeFalse();
 });
 
 it('redirects owners to the create page after deleting from a paste status page', function () {

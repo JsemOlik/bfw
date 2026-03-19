@@ -4,6 +4,7 @@ use App\Http\Controllers\CompressorController;
 use App\Http\Controllers\ConverterController;
 use App\Http\Controllers\LinkController;
 use App\Http\Controllers\PasteController;
+use App\Http\Controllers\PublicSlugController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -44,3 +45,6 @@ Route::delete('paste/{paste}', [PasteController::class, 'destroy'])->name('paste
 Route::get('paste/{slug}', [PasteController::class, 'show'])->name('paste.show');
 
 require __DIR__.'/settings.php';
+
+Route::get('{slugRegistry:slug}/status', [PublicSlugController::class, 'status'])->name('slug.status');
+Route::get('{slugRegistry:slug}', [PublicSlugController::class, 'show'])->name('slug.show');

@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Support\SlugRegistryManager;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreLinkRequest extends FormRequest
 {
@@ -18,13 +20,27 @@ class StoreLinkRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
             'url' => ['required', 'url'],
-            'slug' => ['nullable', 'alpha_dash', 'unique:links,slug', 'max:20'],
+            'slug' => [
+                'nullable',
+                'alpha_dash',
+                'max:20',
+                Rule::notIn(app(SlugRegistryManager::class)->reservedSlugs()),
+                Rule::unique('slug_registries', 'slug'),
+            ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'slug.not_in' => 'That slug is reserved by the app.',
+            'slug.unique' => 'That slug is already taken.',
         ];
     }
 }

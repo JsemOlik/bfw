@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\SlugRegistryManager;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -31,7 +32,14 @@ class StorePasteRequest extends FormRequest
                 'string',
                 'max:16777215',
             ],
-            'slug' => ['nullable', 'string', 'max:50', 'alpha_dash', 'unique:pastes,slug'],
+            'slug' => [
+                'nullable',
+                'string',
+                'max:50',
+                'alpha_dash',
+                Rule::notIn(app(SlugRegistryManager::class)->reservedSlugs()),
+                Rule::unique('slug_registries', 'slug'),
+            ],
             'syntax' => [
                 Rule::requiredIf($this->pasteType() === 'text'),
                 'nullable',
@@ -66,6 +74,8 @@ class StorePasteRequest extends FormRequest
             'video.mimes' => 'Please upload an MP4, WebM, OGG, MOV, or MKV video.',
             'video.max' => 'Videos must be 25 MB or smaller.',
             'type.in' => 'The selected paste type is invalid.',
+            'slug.not_in' => 'That slug is reserved by the app.',
+            'slug.unique' => 'That slug is already taken.',
         ];
     }
 
