@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import CompressorController from '@/actions/App/Http/Controllers/CompressorController';
 import ConverterController from '@/actions/App/Http/Controllers/ConverterController';
 import LinkController from '@/actions/App/Http/Controllers/LinkController';
 import PasteController from '@/actions/App/Http/Controllers/PasteController';
@@ -31,6 +32,12 @@ export default function MarketingNavbar() {
                     </div>
 
                     <div className="hidden items-center gap-8 md:flex">
+                        <Link
+                            href={CompressorController.create().url}
+                            className="text-sm font-semibold text-gray-600 transition-colors hover:text-[#f53003] dark:text-gray-400 dark:hover:text-[#ff4433]"
+                        >
+                            Compressor
+                        </Link>
                         <Link
                             href={ConverterController.create().url}
                             className="text-sm font-semibold text-gray-600 transition-colors hover:text-[#f53003] dark:text-gray-400 dark:hover:text-[#ff4433]"
@@ -98,6 +105,12 @@ export default function MarketingNavbar() {
                 >
                     <div className="overflow-hidden">
                         <div className="space-y-3 rounded-2xl border border-white/20 bg-white/80 p-3 shadow-lg ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-black/60 dark:ring-white/10">
+                            <Link
+                                href={CompressorController.create().url}
+                                className="block rounded-xl px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-black/5 hover:text-[#f53003] dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-[#ff4433]"
+                            >
+                                Compressor
+                            </Link>
                             <Link
                                 href={ConverterController.create().url}
                                 className="block rounded-xl px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-black/5 hover:text-[#f53003] dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-[#ff4433]"

@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
+import CompressorController from '@/actions/App/Http/Controllers/CompressorController';
 import ConverterController from '@/actions/App/Http/Controllers/ConverterController';
 import LinkController from '@/actions/App/Http/Controllers/LinkController';
 import PasteController from '@/actions/App/Http/Controllers/PasteController';
@@ -10,6 +11,13 @@ import MarketingNavbar from '@/components/marketing-navbar';
 export default function Welcome() {
     const featureSlides = useMemo(
         () => [
+            {
+                key: 'compressor',
+                badge: 'Compressor',
+                title: 'Shrink images without overthinking the settings.',
+                description:
+                    'Compress batches by quality or by target size and get lighter images back right away.',
+            },
             {
                 key: 'converter',
                 badge: 'Converter',
@@ -39,7 +47,7 @@ export default function Welcome() {
     useEffect(() => {
         const intervalId = window.setInterval(() => {
             setActiveSlide((currentSlide) => (currentSlide + 1) % featureSlides.length);
-        }, 5000);
+        }, 4000);
 
         return () => {
             window.clearInterval(intervalId);
@@ -75,14 +83,20 @@ export default function Welcome() {
                                             </h1>
                                             <p className="max-w-2xl text-base leading-7 text-gray-600 sm:text-lg dark:text-[#A1A09A]">
                                                 bfw.cz keeps the useful stuff simple: short links when you need them,
-                                                clean pastes when you want them, and a fast flow that feels good on both
-                                                desktop and mobile.
+                                                clean pastes when you want them, lightweight image tools when you need
+                                                them, and a fast flow that feels good on both desktop and mobile.
                                             </p>
                                         </div>
-                                        <div className="flex flex-col gap-3 sm:flex-row">
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                                            <Link
+                                                href={CompressorController.create().url}
+                                                className="inline-flex items-center justify-center rounded-xl bg-[#f53003] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-red-500/20 transition-all hover:bg-[#e22c02] dark:bg-[#FF4433] dark:shadow-red-900/20 dark:hover:bg-[#f63d2d]"
+                                            >
+                                                Compress Images
+                                            </Link>
                                             <Link
                                                 href={ConverterController.create().url}
-                                                className="inline-flex items-center justify-center rounded-xl bg-[#f53003] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-red-500/20 transition-all hover:bg-[#e22c02] dark:bg-[#FF4433] dark:shadow-red-900/20 dark:hover:bg-[#f63d2d]"
+                                                className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-bold text-gray-900 transition-all hover:border-[#f53003] hover:text-[#f53003] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:border-[#FF4433] dark:hover:text-[#FF4433]"
                                             >
                                                 Start Converting
                                             </Link>
@@ -141,7 +155,7 @@ export default function Welcome() {
                                                             </span>
                                                         </div>
                                                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                            Links, pastes, converter
+                                                            Links, pastes, converter, compressor
                                                         </p>
                                                     </div>
                                                 </div>
@@ -174,6 +188,43 @@ export default function Welcome() {
                                                                 </div>
 
                                                                 <div className="rounded-[1.75rem] border border-gray-200/80 bg-gray-50/90 p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+                                                                    {slide.key === 'compressor' ? (
+                                                                        <div className="space-y-4">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                                                    Batch Compressor
+                                                                                </span>
+                                                                                <span className="rounded-full bg-[#f53003]/10 px-2.5 py-1 text-[11px] font-semibold text-[#f53003] dark:bg-[#ff4433]/12 dark:text-[#ff7b6d]">
+                                                                                    Quality or MB target
+                                                                                </span>
+                                                                            </div>
+                                                                            <div className="grid gap-3 sm:grid-cols-[0.95fr_1.05fr]">
+                                                                                <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-[#181818]">
+                                                                                    <div className="space-y-3">
+                                                                                        <div className="flex items-center justify-between text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">
+                                                                                            <span>Quality</span>
+                                                                                            <span>75%</span>
+                                                                                        </div>
+                                                                                        <div className="h-2 rounded-full bg-gray-200 dark:bg-white/10">
+                                                                                            <div className="h-2 w-3/4 rounded-full bg-[#f53003] dark:bg-[#ff4433]"></div>
+                                                                                        </div>
+                                                                                        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                                                                            <span>Original</span>
+                                                                                            <span>Compressed</span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-[#181818]">
+                                                                                    <div className="grid h-full grid-cols-2 gap-2">
+                                                                                        <div className="rounded-xl bg-gray-200 dark:bg-white/10"></div>
+                                                                                        <div className="rounded-xl bg-[#f53003]/18 dark:bg-[#ff4433]/20"></div>
+                                                                                        <div className="col-span-2 rounded-xl border border-dashed border-[#f53003]/25 bg-[#f53003]/8 dark:border-[#ff4433]/25 dark:bg-[#ff4433]/10"></div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : null}
+
                                                                     {slide.key === 'converter' ? (
                                                                         <div className="space-y-4">
                                                                             <div className="flex items-center justify-between">

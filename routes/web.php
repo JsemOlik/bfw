@@ -1,11 +1,16 @@
 <?php
 
+use App\Http\Controllers\CompressorController;
 use App\Http\Controllers\ConverterController;
 use App\Http\Controllers\LinkController;
 use App\Http\Controllers\PasteController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
+
+// Compressor routes
+Route::get('compressor', [CompressorController::class, 'create'])->name('compressor.create');
+Route::post('compressor', [CompressorController::class, 'store'])->name('compressor.store');
 
 // Converter routes
 Route::get('converter', [ConverterController::class, 'create'])->name('converter.create');
