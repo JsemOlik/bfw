@@ -62,7 +62,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
           ? 'image paste'
           : 'video paste';
     const expiryDescription = isAdmin
-        ? `Create a ${currentPasteLabel}. Admin pastes never expire ;).`
+        ? `Create a ${currentPasteLabel}. Admin pastes never expire ;)`
         : auth.user
           ? data.type === 'text'
             ? 'Paste text, your code, or even logs. Expires in 3 months.'
