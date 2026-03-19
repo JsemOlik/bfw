@@ -1,12 +1,51 @@
 import { Head, Link } from '@inertiajs/react';
+import { useEffect, useMemo, useState } from 'react';
 import ConverterController from '@/actions/App/Http/Controllers/ConverterController';
-import AppLogoIcon from '@/components/app-logo-icon';
-import MarketingFooter from '@/components/marketing-footer';
 import LinkController from '@/actions/App/Http/Controllers/LinkController';
 import PasteController from '@/actions/App/Http/Controllers/PasteController';
+import AppLogoIcon from '@/components/app-logo-icon';
+import MarketingFooter from '@/components/marketing-footer';
 import MarketingNavbar from '@/components/marketing-navbar';
 
 export default function Welcome() {
+    const featureSlides = useMemo(
+        () => [
+            {
+                key: 'converter',
+                badge: 'Converter',
+                title: 'Convert image batches in one clean flow.',
+                description:
+                    'Drop up to 20 images, pick one format, and download the converted files right away.',
+            },
+            {
+                key: 'links',
+                badge: 'Link Shortener',
+                title: 'Shorten links without extra ceremony.',
+                description:
+                    'Create tidy share links in seconds and keep your most recent ones close at hand.',
+            },
+            {
+                key: 'pastes',
+                badge: 'Pastes',
+                title: 'Share text, images, and videos your way.',
+                description:
+                    'Post snippets, screenshots, and clips with a clean status page and raw access when it matters.',
+            },
+        ],
+        [],
+    );
+    const [activeSlide, setActiveSlide] = useState(0);
+
+    useEffect(() => {
+        const intervalId = window.setInterval(() => {
+            setActiveSlide((currentSlide) => (currentSlide + 1) % featureSlides.length);
+        }, 5000);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
+    }, [featureSlides.length]);
+
     return (
         <>
             <Head title="Welcome to bfw">
@@ -86,109 +125,167 @@ export default function Welcome() {
                                     <div className="absolute inset-x-10 top-8 h-48 rounded-full bg-[#f53003]/8 blur-3xl dark:bg-[#ff4433]/10"></div>
 
                                     <div className="relative w-full max-w-md">
-                                        <div className="absolute -top-9 left-2 z-10 w-44 rounded-3xl border border-gray-200/80 bg-white/95 p-4 shadow-[0_18px_48px_rgba(15,23,42,0.10)] backdrop-blur transition-transform duration-500 ease-out hover:-translate-y-4 hover:rotate-[-3deg] dark:border-white/10 dark:bg-[#121212]/95 dark:shadow-[0_18px_48px_rgba(0,0,0,0.28)]">
-                                            <div className="mb-3 flex items-center gap-2">
-                                                <div className="flex size-9 items-center justify-center rounded-2xl bg-[#f53003]/10 text-[#f53003] dark:bg-[#ff4433]/12 dark:text-[#ff7b6d]">
-                                                    🔗
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-semibold text-gray-950 dark:text-white">
-                                                        Short links
-                                                    </p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                        Clean + shareable
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-300">
-                                                bfw.cz/link/demo
-                                            </div>
-                                        </div>
-
-                                        <div className="relative z-20 rounded-[2rem] border border-gray-200/80 bg-white/98 p-6 shadow-[0_28px_80px_rgba(15,23,42,0.12)] backdrop-blur dark:border-white/10 dark:bg-[#121212]/98 dark:shadow-[0_28px_80px_rgba(0,0,0,0.32)]">
-                                            <div className="mb-5 flex items-center justify-between">
+                                        <div className="relative z-20 overflow-hidden rounded-[2rem] border border-gray-200/80 bg-white/98 p-6 shadow-[0_28px_80px_rgba(15,23,42,0.12)] backdrop-blur dark:border-white/10 dark:bg-[#121212]/98 dark:shadow-[0_28px_80px_rgba(0,0,0,0.32)]">
+                                            <div className="mb-6 flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex size-12 items-center justify-center rounded-2xl bg-[#f53003] text-white shadow-lg shadow-red-500/20 dark:bg-[#FF4433]">
                                                         <AppLogoIcon className="size-6 fill-current" />
                                                     </div>
-                                                    <div>
-                                                        <p className="text-sm font-semibold text-gray-950 dark:text-white">
-                                                            bfw<span className="text-[#f53003] dark:text-[#ff4433]">.cz</span>
-                                                        </p>
+                                                    <div className="space-y-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="text-sm font-semibold text-gray-950 dark:text-white">
+                                                                bfw<span className="text-[#f53003] dark:text-[#ff4433]">.cz</span>
+                                                            </p>
+                                                            <span className="rounded-full border border-[#f53003]/15 bg-[#f53003]/8 px-2.5 py-1 text-[10px] font-semibold tracking-[0.16em] text-[#f53003] uppercase dark:border-[#ff4433]/20 dark:bg-[#ff4433]/10 dark:text-[#ff7b6d]">
+                                                                {featureSlides[activeSlide]?.badge}
+                                                            </span>
+                                                        </div>
                                                         <p className="text-xs text-gray-500 dark:text-gray-400">
                                                             Links, pastes, converter
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className="flex gap-1.5">
-                                                    <span className="size-2.5 rounded-full bg-[#f53003]/80"></span>
-                                                    <span className="size-2.5 rounded-full bg-gray-300 dark:bg-white/15"></span>
-                                                    <span className="size-2.5 rounded-full bg-gray-300 dark:bg-white/15"></span>
-                                                </div>
                                             </div>
 
-                                            <div className="space-y-3">
-                                                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5">
-                                                    <div className="mb-3 flex items-center justify-between">
-                                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                            Image converter
-                                                        </p>
-                                                        <span className="rounded-full bg-[#f53003]/10 px-2.5 py-1 text-[11px] font-semibold text-[#f53003] dark:bg-[#ff4433]/12 dark:text-[#ff7b6d]">
-                                                            Instant
-                                                        </span>
-                                                    </div>
-                                                    <div className="grid grid-cols-3 gap-2">
-                                                        <div className="aspect-[4/3] rounded-xl bg-linear-to-br from-gray-200 to-gray-100 dark:from-white/10 dark:to-white/5"></div>
-                                                        <div className="aspect-[4/3] rounded-xl bg-linear-to-br from-[#f53003]/15 to-orange-100 dark:from-[#ff4433]/16 dark:to-orange-950/20"></div>
-                                                        <div className="aspect-[4/3] rounded-xl bg-linear-to-br from-gray-200 to-gray-100 dark:from-white/10 dark:to-white/5"></div>
-                                                    </div>
-                                                </div>
+                                            <div className="relative min-h-[24rem]">
+                                                {featureSlides.map((slide, index) => {
+                                                    const isActive = index === activeSlide;
 
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5">
-                                                        <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
-                                                            Paste
-                                                        </p>
-                                                        <div className="mt-3 space-y-2">
-                                                            <div className="h-2 rounded-full bg-gray-300 dark:bg-white/15"></div>
-                                                            <div className="h-2 w-4/5 rounded-full bg-gray-300 dark:bg-white/15"></div>
-                                                            <div className="h-2 w-2/3 rounded-full bg-[#f53003]/35 dark:bg-[#ff4433]/35"></div>
+                                                    return (
+                                                        <div
+                                                            key={slide.key}
+                                                            className={`absolute inset-0 flex flex-col justify-between transition-all duration-700 ease-out ${
+                                                                isActive
+                                                                    ? 'translate-y-0 opacity-100'
+                                                                    : 'pointer-events-none translate-y-4 opacity-0'
+                                                            }`}
+                                                            aria-hidden={!isActive}
+                                                        >
+                                                            <div className="space-y-5">
+                                                                <div className="space-y-3">
+                                                                    <div className="space-y-2">
+                                                                        <h2 className="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white">
+                                                                            {slide.title}
+                                                                        </h2>
+                                                                        <p className="text-sm leading-6 text-gray-600 dark:text-gray-400">
+                                                                            {slide.description}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="rounded-[1.75rem] border border-gray-200/80 bg-gray-50/90 p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+                                                                    {slide.key === 'converter' ? (
+                                                                        <div className="space-y-4">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                                                    Batch Converter
+                                                                                </span>
+                                                                                <span className="rounded-full bg-[#f53003]/10 px-2.5 py-1 text-[11px] font-semibold text-[#f53003] dark:bg-[#ff4433]/12 dark:text-[#ff7b6d]">
+                                                                                    Up to 20 images
+                                                                                </span>
+                                                                            </div>
+                                                                            <div className="relative flex h-36 items-center justify-center">
+                                                                                <div className="absolute left-8 top-5 h-24 w-28 -rotate-6 rounded-2xl border border-gray-200 bg-white shadow-md dark:border-white/10 dark:bg-[#181818]"></div>
+                                                                                <div className="absolute h-28 w-32 rounded-2xl border border-[#f53003]/15 bg-white shadow-lg dark:border-[#ff4433]/20 dark:bg-[#171717]">
+                                                                                    <div className="grid h-full grid-cols-2 gap-2 p-3">
+                                                                                        <div className="rounded-xl bg-gray-200 dark:bg-white/10"></div>
+                                                                                        <div className="rounded-xl bg-[#f53003]/18 dark:bg-[#ff4433]/20"></div>
+                                                                                        <div className="rounded-xl bg-gray-200 dark:bg-white/10"></div>
+                                                                                        <div className="rounded-xl bg-gray-200 dark:bg-white/10"></div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="absolute right-8 top-6 h-24 w-28 rotate-6 rounded-2xl border border-gray-200 bg-white shadow-md dark:border-white/10 dark:bg-[#181818]"></div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : null}
+
+                                                                    {slide.key === 'links' ? (
+                                                                        <div className="space-y-4">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                                                    Share-ready links
+                                                                                </span>
+                                                                                <span className="rounded-full bg-[#f53003]/10 px-2.5 py-1 text-[11px] font-semibold text-[#f53003] dark:bg-[#ff4433]/12 dark:text-[#ff7b6d]">
+                                                                                    Instant
+                                                                                </span>
+                                                                            </div>
+                                                                            <div className="space-y-3">
+                                                                                <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#181818]">
+                                                                                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                                                        Long URL
+                                                                                    </div>
+                                                                                    <div className="mt-2 truncate rounded-xl bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:bg-white/5 dark:text-gray-300">
+                                                                                        https://example.com/docs/team/update
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="rounded-2xl border border-[#f53003]/12 bg-white p-3 shadow-sm dark:border-[#ff4433]/18 dark:bg-[#181818]">
+                                                                                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                                                        Short link
+                                                                                    </div>
+                                                                                    <div className="mt-2 flex items-center justify-between rounded-xl bg-[#f53003]/8 px-3 py-2 text-sm font-semibold text-[#f53003] dark:bg-[#ff4433]/10 dark:text-[#ff7b6d]">
+                                                                                        <span>bfw.cz/r/demo</span>
+                                                                                        <span className="text-[11px] tracking-[0.16em] uppercase">
+                                                                                            Ready
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : null}
+
+                                                                    {slide.key === 'pastes' ? (
+                                                                        <div className="space-y-4">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                                                    Flexible pastes
+                                                                                </span>
+                                                                                <span className="rounded-full bg-[#f53003]/10 px-2.5 py-1 text-[11px] font-semibold text-[#f53003] dark:bg-[#ff4433]/12 dark:text-[#ff7b6d]">
+                                                                                    Text, image, video
+                                                                                </span>
+                                                                            </div>
+                                                                            <div className="grid gap-3 sm:grid-cols-[1.1fr_0.9fr]">
+                                                                                <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-[#181818]">
+                                                                                    <div className="space-y-2">
+                                                                                        <div className="h-2 rounded-full bg-gray-300 dark:bg-white/15"></div>
+                                                                                        <div className="h-2 w-4/5 rounded-full bg-gray-300 dark:bg-white/15"></div>
+                                                                                        <div className="h-2 w-2/3 rounded-full bg-[#f53003]/35 dark:bg-[#ff4433]/35"></div>
+                                                                                        <div className="h-2 w-5/6 rounded-full bg-gray-300 dark:bg-white/15"></div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-[#181818]">
+                                                                                    <div className="grid h-full grid-cols-2 gap-2">
+                                                                                        <div className="rounded-xl bg-gray-200 dark:bg-white/10"></div>
+                                                                                        <div className="rounded-xl bg-[#f53003]/18 dark:bg-[#ff4433]/20"></div>
+                                                                                        <div className="col-span-2 rounded-xl bg-gray-200 dark:bg-white/10"></div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : null}
+                                                                </div>
+
+                                                            </div>
                                                         </div>
-                                                    </div>
-
-                                                    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5">
-                                                        <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
-                                                            Share
-                                                        </p>
-                                                        <div className="mt-3 flex items-center gap-2">
-                                                            <div className="size-8 rounded-full bg-gray-300 dark:bg-white/15"></div>
-                                                            <div className="size-8 rounded-full bg-[#f53003]/35 dark:bg-[#ff4433]/35"></div>
-                                                            <div className="size-8 rounded-full bg-gray-300 dark:bg-white/15"></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                    );
+                                                })}
                                             </div>
-                                        </div>
 
-                                        <div className="absolute right-0 bottom-4 z-10 w-48 rounded-3xl border border-gray-200/80 bg-white/95 p-4 shadow-[0_18px_48px_rgba(15,23,42,0.10)] backdrop-blur transition-transform duration-500 ease-out hover:-translate-y-1 hover:rotate-[1deg] dark:border-white/10 dark:bg-[#121212]/95 dark:shadow-[0_18px_48px_rgba(0,0,0,0.28)]">
-                                            <div className="mb-3 flex items-center gap-2">
-                                                <div className="flex size-9 items-center justify-center rounded-2xl bg-[#f53003]/10 text-[#f53003] dark:bg-[#ff4433]/12 dark:text-[#ff7b6d]">
-                                                    📝
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-semibold text-gray-950 dark:text-white">
-                                                        Smart pastes
-                                                    </p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                        Text, image, video
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3 dark:border-white/10 dark:bg-white/5">
-                                                <div className="space-y-1.5">
-                                                    <div className="h-2 rounded-full bg-gray-300 dark:bg-white/15"></div>
-                                                    <div className="h-2 w-5/6 rounded-full bg-gray-300 dark:bg-white/15"></div>
-                                                    <div className="h-2 w-2/3 rounded-full bg-[#f53003]/35 dark:bg-[#ff4433]/35"></div>
+                                            <div className="mt-6 flex items-center justify-between gap-4 pt-4">
+                                                <div className="flex items-center gap-2">
+                                                    {featureSlides.map((slide, index) => (
+                                                        <button
+                                                            key={slide.key}
+                                                            type="button"
+                                                            onClick={() => setActiveSlide(index)}
+                                                            className={`h-2.5 rounded-full transition-all ${
+                                                                index === activeSlide
+                                                                    ? 'w-8 bg-[#f53003] dark:bg-[#ff4433]'
+                                                                    : 'w-2.5 bg-gray-300 hover:bg-gray-400 dark:bg-white/15 dark:hover:bg-white/25'
+                                                            }`}
+                                                            aria-label={`Show ${slide.badge} slide`}
+                                                            aria-pressed={index === activeSlide}
+                                                        />
+                                                    ))}
                                                 </div>
                                             </div>
                                         </div>
