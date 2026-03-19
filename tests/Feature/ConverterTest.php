@@ -10,7 +10,7 @@ beforeEach(function () {
     $this->withoutVite();
 });
 
-function fakeConvertibleImage(string $extension): UploadedFile
+function fakeConvertibleImage(string $extension, ?string $name = null): UploadedFile
 {
     $normalizedExtension = strtolower($extension);
     $imagickFormat = in_array($normalizedExtension, ['jpg', 'jpeg'], true) ? 'jpeg' : $normalizedExtension;
@@ -32,7 +32,7 @@ function fakeConvertibleImage(string $extension): UploadedFile
     }
 
     return UploadedFile::fake()
-        ->createWithContent("sample.$normalizedExtension", $image->getImageBlob())
+        ->createWithContent($name ?? "sample.$normalizedExtension", $image->getImageBlob())
         ->mimeType($mimeType);
 }
 
@@ -48,7 +48,7 @@ it('can see the converter page', function () {
 
 it('converts raster images and returns a download', function (string $sourceExtension, string $outputFormat, string $expectedMimeType, string $expectedDownloadName) {
     $response = $this->post(route('converter.store'), [
-        'image' => fakeConvertibleImage($sourceExtension),
+        'images' => [fakeConvertibleImage($sourceExtension)],
         'output_format' => $outputFormat,
     ]);
 
@@ -66,19 +66,37 @@ it('converts raster images and returns a download', function (string $sourceExte
     'ico to png' => ['ico', 'png', 'image/png', 'sample.png'],
 ]);
 
+it('converts multiple raster images into a zip download', function () {
+    $response = $this->post(route('converter.store'), [
+        'images' => [
+            fakeConvertibleImage('png'),
+            fakeConvertibleImage('jpeg', 'holiday.jpeg'),
+        ],
+        'output_format' => 'webp',
+    ]);
+
+    $response->assertSuccessful()
+        ->assertDownload('converted-images-webp.zip')
+        ->assertHeader('content-type', 'application/zip');
+
+    expect($response->baseResponse->getFile()->getSize())->toBeGreaterThan(0);
+});
+
 it('rejects unsupported formats', function () {
     $response = $this->from(route('converter.create'))->post(route('converter.store'), [
-        'image' => UploadedFile::fake()->create('vector.svg', 10, 'image/svg+xml'),
+        'images' => [
+            UploadedFile::fake()->create('vector.svg', 10, 'image/svg+xml'),
+        ],
         'output_format' => 'png',
     ]);
 
     $response->assertRedirect(route('converter.create'))
-        ->assertSessionHasErrors('image');
+        ->assertSessionHasErrors('images.0');
 });
 
 it('rejects svg as an output format', function () {
     $response = $this->from(route('converter.create'))->post(route('converter.store'), [
-        'image' => fakeConvertibleImage('png'),
+        'images' => [fakeConvertibleImage('png')],
         'output_format' => 'svg',
     ]);
 

@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Support\ImageConverter;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class StoreConverterRequest extends FormRequest
@@ -25,7 +26,12 @@ class StoreConverterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'image' => [
+            'images' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+            'images.*' => [
                 'required',
                 'file',
                 'mimes:png,jpg,jpeg,gif,webp,ico',
@@ -42,12 +48,23 @@ class StoreConverterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'image.required' => 'Please choose an image to convert.',
-            'image.mimes' => 'Please upload a PNG, JPG, GIF, WebP, or ICO image.',
-            'image.max' => 'Images must be 10 MB or smaller.',
+            'images.required' => 'Please choose at least one image to convert.',
+            'images.array' => 'Please choose valid images to convert.',
+            'images.min' => 'Please choose at least one image to convert.',
+            'images.*.required' => 'Each selected image is required.',
+            'images.*.mimes' => 'Please upload PNG, JPG, GIF, WebP, or ICO images only.',
+            'images.*.max' => 'Each image must be 10 MB or smaller.',
             'output_format.required' => 'Please choose the format you want to convert to.',
             'output_format.in' => 'That output format is not supported.',
         ];
+    }
+
+    /**
+     * @return list<UploadedFile>
+     */
+    public function images(): array
+    {
+        return array_values($this->file('images', []));
     }
 
     public function outputFormat(): string
