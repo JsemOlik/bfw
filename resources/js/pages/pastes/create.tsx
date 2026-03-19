@@ -31,6 +31,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
     const [isDashboardOpen, setIsDashboardOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [pasteToDelete, setPasteToDelete] = useState<number | null>(null);
+    const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
     const { delete: destroy, processing: deleting } = useForm();
 
@@ -46,7 +47,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
     const shortenedLink = flash?.shortened_link;
     const isAdmin = auth.user?.role === 'admin';
     const expiryDescription = isAdmin
-        ? 'Paste text or upload an image. Admin pastes never expire.'
+        ? 'Paste text or upload an image. Admin pastes never expire ;).'
         : auth.user
           ? 'Paste text or upload an image. Expiring in 2 months.'
           : 'Paste text or upload an image. Expiring in 24 hours.';
@@ -62,6 +63,19 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
             return () => clearTimeout(timeout);
         }
     }, [copied]);
+
+    useEffect(() => {
+        if (! data.image) {
+            setImagePreviewUrl(null);
+            return;
+        }
+
+        const previewUrl = URL.createObjectURL(data.image);
+
+        setImagePreviewUrl(previewUrl);
+
+        return () => URL.revokeObjectURL(previewUrl);
+    }, [data.image]);
 
     const handleDelete = (id: number): void => {
         setPasteToDelete(id);
@@ -243,6 +257,13 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                         Image File
                                     </label>
                                     <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-10 text-center transition-all hover:border-[#f53003] hover:bg-red-50/30 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:hover:border-[#FF4433] dark:hover:bg-red-950/20">
+                                        {imagePreviewUrl && (
+                                            <img
+                                                src={imagePreviewUrl}
+                                                alt="Selected image preview"
+                                                className="max-h-48 w-auto rounded-lg border border-gray-200 object-contain shadow-sm dark:border-[#3E3E3A]"
+                                            />
+                                        )}
                                         <svg
                                             width="24"
                                             height="24"
