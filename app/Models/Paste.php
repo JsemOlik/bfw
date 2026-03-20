@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\HasSlugRegistry;
 use App\Support\ExpirationResolver;
+use App\Support\PasteMediaManager;
 use Database\Factories\PasteFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -98,5 +99,10 @@ class Paste extends Model
                 );
             }
         });
+    }
+
+    protected function pruning(): void
+    {
+        app(PasteMediaManager::class)->delete($this);
     }
 }

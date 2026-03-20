@@ -4,6 +4,8 @@ use App\Models\Paste;
 use App\Models\SlugRegistry;
 use App\Models\User;
 use App\Support\PasteMediaManager;
+use Aws\S3\S3Client;
+use Illuminate\Filesystem\AwsS3V3Adapter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\UploadedFile;
@@ -495,6 +497,60 @@ it('deletes stored video files when owners delete video pastes', function () {
     Storage::disk('paste_media')->assertMissing('pastes/videos/test/example.mp4');
 });
 
+it('permanently deletes all backblaze object versions for media files', function () {
+    config()->set('filesystems.disks.b2.bucket', 'bfw-pastes');
+    config()->set('filesystems.disks.b2.endpoint', 'https://s3.eu-central-003.backblazeb2.com');
+
+    $client = mock(S3Client::class);
+    $disk = mock(AwsS3V3Adapter::class);
+
+    $disk->shouldReceive('getClient')
+        ->once()
+        ->andReturn($client);
+
+    $disk->shouldNotReceive('delete');
+
+    Storage::shouldReceive('disk')
+        ->once()
+        ->with('b2')
+        ->andReturn($disk);
+
+    $client->shouldReceive('getPaginator')
+        ->once()
+        ->with('ListObjectVersions', [
+            'Bucket' => 'bfw-pastes',
+            'Prefix' => 'pastes/images/test/example.png',
+        ])
+        ->andReturn([[
+            'Versions' => [
+                ['Key' => 'pastes/images/test/example.png', 'VersionId' => 'live-version'],
+            ],
+            'DeleteMarkers' => [
+                ['Key' => 'pastes/images/test/example.png', 'VersionId' => 'hidden-version'],
+            ],
+        ]]);
+
+    $client->shouldReceive('deleteObject')
+        ->once()
+        ->ordered()
+        ->with([
+            'Bucket' => 'bfw-pastes',
+            'Key' => 'pastes/images/test/example.png',
+            'VersionId' => 'live-version',
+        ]);
+
+    $client->shouldReceive('deleteObject')
+        ->once()
+        ->ordered()
+        ->with([
+            'Bucket' => 'bfw-pastes',
+            'Key' => 'pastes/images/test/example.png',
+            'VersionId' => 'hidden-version',
+        ]);
+
+    app(PasteMediaManager::class)->deleteFile('b2', 'pastes/images/test/example.png');
+});
+
 it('deletes the slug registry entry when a paste is deleted', function () {
     $user = User::factory()->create();
     $paste = Paste::factory()->create([
@@ -522,6 +578,36 @@ it('redirects owners to the create page after deleting from a paste status page'
 
     $response->assertRedirect(route('paste.create'));
     $this->assertDatabaseMissing('pastes', ['id' => $paste->id]);
+});
+
+it('prunes expired media pastes and removes their stored files', function () {
+    Storage::disk('paste_media')->put('pastes/images/test/prune-me.png', 'image-bytes');
+
+    $expiredPaste = Paste::factory()->image()->create([
+        'slug' => 'prune-image-paste',
+        'storage_disk' => 'paste_media',
+        'storage_path' => 'pastes/images/test/prune-me.png',
+        'expires_at' => now()->subDay(),
+    ]);
+
+    $activePaste = Paste::factory()->image()->create([
+        'slug' => 'keep-image-paste',
+        'storage_disk' => 'paste_media',
+        'storage_path' => 'pastes/images/test/keep-me.png',
+        'expires_at' => now()->addDay(),
+    ]);
+
+    Storage::disk('paste_media')->put('pastes/images/test/keep-me.png', 'still-here');
+
+    expect(SlugRegistry::where('slug', $expiredPaste->slug)->exists())->toBeTrue();
+
+    expect((new Paste)->pruneAll())->toBe(1);
+
+    $this->assertDatabaseMissing('pastes', ['id' => $expiredPaste->id]);
+    $this->assertDatabaseHas('pastes', ['id' => $activePaste->id]);
+    Storage::disk('paste_media')->assertMissing('pastes/images/test/prune-me.png');
+    Storage::disk('paste_media')->assertExists('pastes/images/test/keep-me.png');
+    expect(SlugRegistry::where('slug', $expiredPaste->slug)->exists())->toBeFalse();
 });
 
 it('prevents guests from deleting pastes', function () {

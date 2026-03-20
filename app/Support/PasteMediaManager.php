@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Paste;
+use Illuminate\Filesystem\AwsS3V3Adapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -116,12 +117,24 @@ class PasteMediaManager
             return;
         }
 
-        Storage::disk($paste->storage_disk ?: config('filesystems.default_media_disk', 'public'))
-            ->delete($paste->storage_path);
+        $this->deleteFile(
+            $paste->storage_disk ?: config('filesystems.default_media_disk', 'public'),
+            $paste->storage_path,
+        );
     }
 
     public function deleteFile(string $disk, string $path): void
     {
+        $path = ltrim($path, '/');
+
+        if ($path === '') {
+            return;
+        }
+
+        if ($this->permanentlyDeleteBackblazeObject($disk, $path)) {
+            return;
+        }
+
         Storage::disk($disk)->delete($path);
     }
 
@@ -149,5 +162,49 @@ class PasteMediaManager
         }
 
         return [$dimensions[0] ?? null, $dimensions[1] ?? null];
+    }
+
+    protected function permanentlyDeleteBackblazeObject(string $disk, string $path): bool
+    {
+        $filesystem = Storage::disk($disk);
+        $endpoint = (string) config("filesystems.disks.{$disk}.endpoint", '');
+
+        if (! $filesystem instanceof AwsS3V3Adapter || ! str_contains($endpoint, 'backblazeb2.com')) {
+            return false;
+        }
+
+        $bucket = (string) config("filesystems.disks.{$disk}.bucket", '');
+
+        if ($bucket === '') {
+            return false;
+        }
+
+        $client = $filesystem->getClient();
+        $versionIds = [];
+
+        foreach ($client->getPaginator('ListObjectVersions', [
+            'Bucket' => $bucket,
+            'Prefix' => $path,
+        ]) as $page) {
+            foreach (['Versions', 'DeleteMarkers'] as $entryKey) {
+                foreach ($page[$entryKey] ?? [] as $entry) {
+                    if (($entry['Key'] ?? null) !== $path || ! is_string($entry['VersionId'] ?? null)) {
+                        continue;
+                    }
+
+                    $versionIds[] = $entry['VersionId'];
+                }
+            }
+        }
+
+        foreach (array_unique($versionIds) as $versionId) {
+            $client->deleteObject([
+                'Bucket' => $bucket,
+                'Key' => $path,
+                'VersionId' => $versionId,
+            ]);
+        }
+
+        return true;
     }
 }
