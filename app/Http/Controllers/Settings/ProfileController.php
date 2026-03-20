@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -47,10 +50,28 @@ class ProfileController extends Controller
     public function destroy(ProfileDeleteRequest $request): RedirectResponse
     {
         $user = $request->user();
+        $deletionMoment = now();
+        $expiresAt = $deletionMoment->copy()->addDay();
+
+        DB::transaction(function () use ($deletionMoment, $user, $expiresAt): void {
+            $user->links()
+                ->where(function (Builder $query) use ($deletionMoment): void {
+                    $query->whereNull('expires_at')
+                        ->orWhere('expires_at', '>', $deletionMoment);
+                })
+                ->update(['expires_at' => $expiresAt]);
+
+            $user->pastes()
+                ->where(function (Builder $query) use ($deletionMoment): void {
+                    $query->whereNull('expires_at')
+                        ->orWhere('expires_at', '>', $deletionMoment);
+                })
+                ->update(['expires_at' => $expiresAt]);
+
+            User::query()->whereKey($user->getKey())->delete();
+        });
 
         Auth::logout();
-
-        $user->delete();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

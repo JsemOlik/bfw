@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Link;
+use App\Models\Paste;
 use App\Models\User;
 
 test('profile page is displayed', function () {
@@ -51,7 +53,25 @@ test('email verification status is unchanged when the email address is unchanged
 });
 
 test('user can delete their account', function () {
+    $this->travelTo(now()->startOfSecond());
+
     $user = User::factory()->create();
+    $activeLink = Link::create([
+        'original_url' => 'https://example.com/active-link',
+        'slug' => 'active-link',
+        'user_id' => $user->id,
+        'expires_at' => now()->addMonthsNoOverflow(3),
+    ]);
+    $activePaste = Paste::factory()->create([
+        'user_id' => $user->id,
+        'expires_at' => now()->addDays(14),
+    ]);
+    $expiredLink = Link::create([
+        'original_url' => 'https://example.com/expired-link',
+        'slug' => 'expired-link',
+        'user_id' => $user->id,
+        'expires_at' => now()->subHour(),
+    ]);
 
     $response = $this
         ->actingAs($user)
@@ -65,6 +85,15 @@ test('user can delete their account', function () {
 
     $this->assertGuest();
     expect($user->fresh())->toBeNull();
+    expect($activeLink->fresh()?->user_id)->toBeNull();
+    expect($activeLink->fresh()?->expires_at?->toDateTimeString())
+        ->toBe(now()->addDay()->toDateTimeString());
+    expect($activePaste->fresh()?->user_id)->toBeNull();
+    expect($activePaste->fresh()?->expires_at?->toDateTimeString())
+        ->toBe(now()->addDay()->toDateTimeString());
+    expect($expiredLink->fresh()?->user_id)->toBeNull();
+    expect($expiredLink->fresh()?->expires_at?->toDateTimeString())
+        ->toBe(now()->subHour()->toDateTimeString());
 });
 
 test('correct password must be provided to delete account', function () {
