@@ -22,14 +22,3 @@ it('renders the custom 403 page with shared app chrome', function () {
             ->etc()
         );
 });
-
-it('renders the custom 404 page with shared app chrome', function () {
-    $response = $this->get('/definitely-missing-page');
-
-    $response->assertNotFound()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('errors/not-found')
-            ->where('status', 404)
-            ->etc()
-        );
-});

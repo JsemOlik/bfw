@@ -35,16 +35,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (HttpExceptionInterface $exception, Request $request) {
             $status = $exception->getStatusCode();
 
-            if (! in_array($status, [403, 404], true)) {
+            if ($status !== 403) {
                 return null;
             }
 
-            $component = match ($status) {
-                403 => 'errors/forbidden',
-                404 => 'errors/not-found',
-            };
-
-            return Inertia::render($component, [
+            return Inertia::render('errors/forbidden', [
                 'status' => $status,
             ])->toResponse($request)->setStatusCode($status);
         });
