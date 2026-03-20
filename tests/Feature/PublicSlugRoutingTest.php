@@ -4,6 +4,7 @@ use App\Models\Link;
 use App\Models\Paste;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
@@ -23,6 +24,11 @@ it('resolves root link slugs to their destination', function () {
 
     $response->assertRedirect($link->original_url);
     expect($link->fresh()->open_count)->toBe(1);
+    $this->assertDatabaseHas('link_daily_opens', [
+        'link_id' => $link->id,
+        'opened_on' => today()->toDateString(),
+        'open_count' => 1,
+    ]);
 });
 
 it('renders root paste slugs', function () {
@@ -41,6 +47,13 @@ it('renders root paste slugs', function () {
             ->where('paste.public_url', url('/'.$paste->slug))
             ->etc()
         );
+
+    expect($paste->fresh()->view_count)->toBe(1);
+    $this->assertDatabaseHas('paste_daily_views', [
+        'paste_id' => $paste->id,
+        'viewed_on' => today()->toDateString(),
+        'view_count' => 1,
+    ]);
 });
 
 it('renders root link status pages', function () {
@@ -50,6 +63,11 @@ it('renders root link status pages', function () {
         'expires_at' => now()->addDay(),
     ]);
     $link->forceFill(['open_count' => 3])->save();
+    DB::table('link_daily_opens')->insert([
+        'link_id' => $link->id,
+        'opened_on' => today()->toDateString(),
+        'open_count' => 2,
+    ]);
 
     $response = $this->get('/'.$link->slug.'/status');
 
@@ -59,6 +77,7 @@ it('renders root link status pages', function () {
             ->where('link.slug', $link->slug)
             ->where('link.public_url', url('/'.$link->slug))
             ->where('link.open_count', 3)
+            ->where('link.today_open_count', 2)
             ->etc()
         );
 });
@@ -68,6 +87,12 @@ it('renders root paste status pages', function () {
         'slug' => 'root-status-paste',
         'content' => 'Status me.',
     ]);
+    $paste->forceFill(['view_count' => 5])->save();
+    DB::table('paste_daily_views')->insert([
+        'paste_id' => $paste->id,
+        'viewed_on' => today()->toDateString(),
+        'view_count' => 4,
+    ]);
 
     $response = $this->get('/'.$paste->slug.'/status');
 
@@ -76,6 +101,8 @@ it('renders root paste status pages', function () {
             ->component('pastes/status')
             ->where('paste.slug', $paste->slug)
             ->where('paste.public_url', url('/'.$paste->slug))
+            ->where('paste.view_count', 5)
+            ->where('paste.today_view_count', 4)
             ->etc()
         );
 });
@@ -92,6 +119,7 @@ it('returns raw content for root paste raw urls', function () {
         ->assertHeader('content-type', 'text/plain; charset=UTF-8');
 
     expect($response->getContent())->toBe('Root raw content');
+    expect($paste->fresh()->view_count)->toBe(1);
 });
 
 it('prevents pastes from reusing link slugs', function () {

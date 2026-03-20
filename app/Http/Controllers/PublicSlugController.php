@@ -25,13 +25,15 @@ class PublicSlugController extends Controller
         if ($sluggable instanceof Link) {
             abort_if($sluggable->expires_at?->isPast() ?? false, 404);
 
-            $sluggable->increment('open_count');
+            $sluggable->recordOpen();
 
             return redirect()->away($sluggable->original_url);
         }
 
         abort_unless($sluggable instanceof Paste, 404);
         abort_if($sluggable->expires_at?->isPast() ?? false, 404);
+
+        $sluggable->recordView();
 
         return Inertia::render('pastes/show', [
             'paste' => [
@@ -68,6 +70,7 @@ class PublicSlugController extends Controller
                     'slug' => $sluggable->slug,
                     'public_url' => $sluggable->publicUrl(),
                     'open_count' => $sluggable->open_count,
+                    'today_open_count' => $sluggable->openedTodayCount(),
                     'created_at' => $sluggable->created_at->toDateTimeString(),
                     'expires_at' => $sluggable->expires_at?->toDateTimeString(),
                     'is_expired' => $sluggable->expires_at?->isPast() ?? false,
@@ -88,6 +91,8 @@ class PublicSlugController extends Controller
                 'snippet' => $sluggable->isText()
                     ? Str::limit($sluggable->content ?? '', 100)
                     : ($sluggable->original_filename ?? Str::headline($sluggable->type).' paste'),
+                'view_count' => $sluggable->view_count,
+                'today_view_count' => $sluggable->viewedTodayCount(),
                 'media_url' => $sluggable->isMedia() ? $pasteMediaManager->url($sluggable) : null,
                 'original_filename' => $sluggable->original_filename,
                 'mime_type' => $sluggable->mime_type,
@@ -104,6 +109,8 @@ class PublicSlugController extends Controller
 
         abort_unless($sluggable instanceof Paste, 404);
         abort_if($sluggable->expires_at?->isPast() ?? false, 404);
+
+        $sluggable->recordView();
 
         if ($sluggable->isMedia()) {
             $url = $pasteMediaManager->url($sluggable);

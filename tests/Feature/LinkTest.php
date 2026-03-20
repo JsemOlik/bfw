@@ -4,6 +4,7 @@ use App\Models\Link;
 use App\Models\SlugRegistry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -130,6 +131,11 @@ it('redirects to the original url', function () {
 
     $response->assertRedirect('https://github.com');
     expect($link->fresh()->open_count)->toBe(1);
+    $this->assertDatabaseHas('link_daily_opens', [
+        'link_id' => $link->id,
+        'opened_on' => today()->toDateString(),
+        'open_count' => 1,
+    ]);
 });
 
 it('deletes the slug registry entry when a link is deleted', function () {
@@ -201,6 +207,7 @@ it('can view the status of a link', function () {
                 ->where('slug', 'stat')
                 ->where('original_url', 'https://status.com')
                 ->where('open_count', 0)
+                ->where('today_open_count', 0)
                 ->etc()
             )
         );
@@ -213,6 +220,16 @@ it('shows the open count on a link status page', function () {
         'expires_at' => now()->addHours(24),
     ]);
     $link->forceFill(['open_count' => 7])->save();
+    DB::table('link_daily_opens')->insert([
+        'link_id' => $link->id,
+        'opened_on' => today()->subDay()->toDateString(),
+        'open_count' => 4,
+    ]);
+    DB::table('link_daily_opens')->insert([
+        'link_id' => $link->id,
+        'opened_on' => today()->toDateString(),
+        'open_count' => 3,
+    ]);
 
     $response = $this->get(route('link.status', $link->slug));
 
@@ -221,6 +238,7 @@ it('shows the open count on a link status page', function () {
             ->component('links/status')
             ->where('link.slug', 'status-count')
             ->where('link.open_count', 7)
+            ->where('link.today_open_count', 3)
             ->etc()
         );
 });

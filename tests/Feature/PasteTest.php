@@ -9,6 +9,7 @@ use Illuminate\Filesystem\AwsS3V3Adapter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -343,6 +344,13 @@ it('shows the raw text of a paste', function () {
             ->where('paste.highlighted_lines.1.2.type', 'string')
             ->etc()
         );
+
+    expect($paste->fresh()->view_count)->toBe(1);
+    $this->assertDatabaseHas('paste_daily_views', [
+        'paste_id' => $paste->id,
+        'viewed_on' => today()->toDateString(),
+        'view_count' => 1,
+    ]);
 });
 
 it('shows image pastes with a raw image url', function () {
@@ -361,6 +369,8 @@ it('shows image pastes with a raw image url', function () {
             ->where('paste.media_url', Storage::disk('paste_media')->url('pastes/images/test/example.png'))
             ->etc()
         );
+
+    expect($paste->fresh()->view_count)->toBe(1);
 });
 
 it('shows video pastes with a raw video url', function () {
@@ -379,6 +389,8 @@ it('shows video pastes with a raw video url', function () {
             ->where('paste.media_url', Storage::disk('paste_media')->url('pastes/videos/test/example.mp4'))
             ->etc()
         );
+
+    expect($paste->fresh()->view_count)->toBe(1);
 });
 
 it('highlights additional supported syntaxes', function (string $syntax, string $content) {
@@ -415,6 +427,7 @@ it('returns raw paste content without ui', function () {
     $response->assertSuccessful();
     $response->assertHeader('content-type', 'text/plain; charset=UTF-8');
     expect($response->getContent())->toBe("#!/bin/sh\necho 'hello'");
+    expect($paste->fresh()->view_count)->toBe(1);
 });
 
 it('redirects image raw requests to the stored media url', function () {
@@ -425,6 +438,7 @@ it('redirects image raw requests to the stored media url', function () {
     $response = $this->get('/'.$paste->slug.'/raw');
 
     $response->assertRedirect(Storage::disk('paste_media')->url('pastes/images/test/example.png'));
+    expect($paste->fresh()->view_count)->toBe(1);
 });
 
 it('redirects video raw requests to the stored media url', function () {
@@ -435,6 +449,37 @@ it('redirects video raw requests to the stored media url', function () {
     $response = $this->get('/'.$paste->slug.'/raw');
 
     $response->assertRedirect(Storage::disk('paste_media')->url('pastes/videos/test/example.mp4'));
+    expect($paste->fresh()->view_count)->toBe(1);
+});
+
+it('shows paste view counts on the status page', function () {
+    $paste = Paste::factory()->create([
+        'slug' => 'status-paste-views',
+        'content' => 'Track me',
+    ]);
+    $paste->forceFill(['view_count' => 7])->save();
+
+    DB::table('paste_daily_views')->insert([
+        'paste_id' => $paste->id,
+        'viewed_on' => today()->subDay()->toDateString(),
+        'view_count' => 2,
+    ]);
+    DB::table('paste_daily_views')->insert([
+        'paste_id' => $paste->id,
+        'viewed_on' => today()->toDateString(),
+        'view_count' => 3,
+    ]);
+
+    $response = $this->get(route('paste.status', $paste->slug));
+
+    $response->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('pastes/status')
+            ->where('paste.slug', 'status-paste-views')
+            ->where('paste.view_count', 7)
+            ->where('paste.today_view_count', 3)
+            ->etc()
+        );
 });
 
 it('does not show expired pastes', function () {

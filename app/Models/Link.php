@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 #[Fillable(['original_url', 'slug', 'expires_at', 'user_id'])]
 class Link extends Model
@@ -46,6 +47,36 @@ class Link extends Model
     {
         return static::whereNotNull('expires_at')
             ->where('expires_at', '<', now());
+    }
+
+    public function recordOpen(): void
+    {
+        $openedOn = today()->toDateString();
+
+        DB::transaction(function () use ($openedOn): void {
+            DB::table($this->getTable())
+                ->where('id', $this->id)
+                ->increment('open_count');
+
+            DB::table('link_daily_opens')->insertOrIgnore([
+                'link_id' => $this->id,
+                'opened_on' => $openedOn,
+                'open_count' => 0,
+            ]);
+
+            DB::table('link_daily_opens')
+                ->where('link_id', $this->id)
+                ->where('opened_on', $openedOn)
+                ->increment('open_count');
+        });
+    }
+
+    public function openedTodayCount(): int
+    {
+        return (int) (DB::table('link_daily_opens')
+            ->where('link_id', $this->id)
+            ->where('opened_on', today()->toDateString())
+            ->value('open_count') ?? 0);
     }
 
     /**

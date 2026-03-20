@@ -77,7 +77,7 @@ class LinkController extends Controller
             })
             ->firstOrFail();
 
-        $link->increment('open_count');
+        $link->recordOpen();
 
         return redirect()->away($link->original_url);
     }
@@ -97,6 +97,7 @@ class LinkController extends Controller
                 'slug' => $link->slug,
                 'public_url' => $link->publicUrl(),
                 'open_count' => $link->open_count,
+                'today_open_count' => $link->openedTodayCount(),
                 'created_at' => $link->created_at->toDateTimeString(),
                 'expires_at' => $link->expires_at?->toDateTimeString(),
                 'is_expired' => $link->expires_at?->isPast() ?? false,

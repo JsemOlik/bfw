@@ -132,6 +132,8 @@ class PasteController extends Controller
             })
             ->firstOrFail();
 
+        $paste->recordView();
+
         return Inertia::render('pastes/show', [
             'paste' => [
                 'type' => $paste->type,
@@ -166,6 +168,8 @@ class PasteController extends Controller
             })
             ->firstOrFail();
 
+        $paste->recordView();
+
         if ($paste->isMedia()) {
             $url = $pasteMediaManager->url($paste);
 
@@ -199,6 +203,8 @@ class PasteController extends Controller
                 'snippet' => $paste->isText()
                     ? Str::limit($paste->content ?? '', 100)
                     : ($paste->original_filename ?? Str::headline($paste->type).' paste'),
+                'view_count' => $paste->view_count,
+                'today_view_count' => $paste->viewedTodayCount(),
                 'media_url' => $paste->isMedia() ? $pasteMediaManager->url($paste) : null,
                 'original_filename' => $paste->original_filename,
                 'mime_type' => $paste->mime_type,

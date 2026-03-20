@@ -13,6 +13,7 @@ interface Props {
         slug: string;
         public_url: string;
         open_count: number;
+        today_open_count: number;
         created_at: string;
         expires_at: string | null;
         is_expired: boolean;
@@ -149,7 +150,7 @@ export default function Status({ link }: Props) {
                         </div>
                     </div>
 
-                    <div className="grid gap-8 border-y border-gray-100 py-6 sm:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-8 border-y border-gray-100 py-6 lg:grid-cols-4">
                         <div>
                             <label className="mb-2 block text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
                                 Created At
@@ -164,6 +165,14 @@ export default function Status({ link }: Props) {
                             </label>
                             <div className="text-sm font-medium text-gray-800">
                                 {link.open_count.toLocaleString()}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="mb-2 block text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
+                                Opened Today
+                            </label>
+                            <div className="text-sm font-medium text-gray-800">
+                                {link.today_open_count.toLocaleString()}
                             </div>
                         </div>
                         <div>

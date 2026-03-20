@@ -14,6 +14,8 @@ interface Props {
         public_url: string;
         syntax: string | null;
         snippet: string;
+        view_count: number;
+        today_view_count: number;
         media_url: string | null;
         original_filename: string | null;
         mime_type: string | null;
@@ -185,13 +187,29 @@ export default function Status({ paste }: Props) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-8 border-y border-gray-100 py-6 dark:border-[#3E3E3A]">
+                    <div className="grid grid-cols-2 gap-8 border-y border-gray-100 py-6 lg:grid-cols-4 dark:border-[#3E3E3A]">
                         <div>
                             <label className="mb-2 block text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
                                 Created At
                             </label>
                             <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
                                 {formatDateTime(paste.created_at)}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="mb-2 block text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
+                                Viewed
+                            </label>
+                            <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                {paste.view_count.toLocaleString()}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="mb-2 block text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
+                                Viewed Today
+                            </label>
+                            <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                {paste.today_view_count.toLocaleString()}
                             </div>
                         </div>
                         <div>
