@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+CONTAINER_ROLE="${CONTAINER_ROLE:-app}"
+
 # Ensure critical storage directories exist and are writable
 mkdir -p storage/framework/{sessions,views,cache}
 mkdir -p bootstrap/cache
@@ -25,6 +27,37 @@ if [ -z "$APP_KEY" ]; then
     fi
 fi
 
+if [ "$CACHE_STORE" = "redis" ] || [ "$SESSION_DRIVER" = "redis" ] || [ "$QUEUE_CONNECTION" = "redis" ]; then
+    echo "Checking Redis connection..."
+    until php -r '
+        try {
+            $redis = new Redis();
+            $host = getenv("REDIS_HOST") ?: "redis";
+            $port = (int) (getenv("REDIS_PORT") ?: 6379);
+            $password = getenv("REDIS_PASSWORD");
+
+            if (! $redis->connect($host, $port, 1.5)) {
+                exit(1);
+            }
+
+            if ($password !== false && $password !== "" && strtolower((string) $password) !== "null") {
+                if (! $redis->auth($password)) {
+                    exit(1);
+                }
+            }
+
+            $pong = $redis->ping();
+
+            exit(($pong === true || $pong === "PONG" || $pong === "+PONG") ? 0 : 1);
+        } catch (Throwable $exception) {
+            exit(1);
+        }
+    '; do
+        echo "Waiting for Redis (${REDIS_HOST:-redis}:${REDIS_PORT:-6379})..."
+        sleep 1
+    done
+fi
+
 # Run migrations if DB is up
 echo "Checking database connection..."
 if [ "$DB_CONNECTION" = "pgsql" ]; then
@@ -34,21 +67,25 @@ if [ "$DB_CONNECTION" = "pgsql" ]; then
     done
 fi
 
-php artisan migrate --force
+if [ "$CONTAINER_ROLE" = "app" ]; then
+    php artisan migrate --force
 
-# Clear stale caches (Must happen AFTER migrations if using 'database' driver)
-echo "Clearing application caches..."
-if [ "$APP_ENV" = "production" ]; then
-    echo "Running production optimizations..."
-    php artisan optimize
+    # Clear stale caches (Must happen AFTER migrations if using 'database' driver)
+    echo "Clearing application caches..."
+    if [ "$APP_ENV" = "production" ]; then
+        echo "Running production optimizations..."
+        php artisan optimize
+    else
+        php artisan optimize:clear
+    fi
+
+    # Generate Wayfinder actions/routes
+    # In dev, we always want new ones. In prod, they should be baked, but a refresh doesn't hurt.
+    echo "Generating Wayfinder types..."
+    php artisan wayfinder:generate --with-form
 else
-    php artisan optimize:clear
+    echo "Skipping app-only boot tasks for role: $CONTAINER_ROLE"
 fi
-
-# Generate Wayfinder actions/routes
-# In dev, we always want new ones. In prod, they should be baked, but a refresh doesn't hurt.
-echo "Generating Wayfinder types..."
-php artisan wayfinder:generate --with-form
 
 # Start the command (Supervisord)
 exec "$@"

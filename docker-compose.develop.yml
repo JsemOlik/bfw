@@ -14,14 +14,96 @@ services:
             - bfw-node-modules:/var/www/html/node_modules
             - bfw-vendor:/var/www/html/vendor
         environment:
+            - APP_ENV=local
+            - CONTAINER_ROLE=app
             - DB_CONNECTION=pgsql
             - DB_HOST=db
             - DB_PORT=5432
             - DB_DATABASE=${DB_DATABASE:-bfw}
             - DB_USERNAME=${DB_USERNAME:-bfw}
             - DB_PASSWORD=${DB_PASSWORD:-password}
+            - SESSION_DRIVER=${SESSION_DRIVER:-redis}
+            - SESSION_CONNECTION=${SESSION_CONNECTION:-default}
+            - QUEUE_CONNECTION=${QUEUE_CONNECTION:-redis}
+            - CACHE_STORE=${CACHE_STORE:-redis}
+            - REDIS_HOST=redis
+            - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+            - REDIS_PORT=6379
         depends_on:
             db:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/up >/dev/null || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    scheduler:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: dev
+        container_name: bfw-scheduler
+        restart: unless-stopped
+        command: php artisan schedule:work --no-interaction
+        volumes:
+            - .:/var/www/html
+            - bfw-vendor:/var/www/html/vendor
+        environment:
+            - APP_ENV=local
+            - CONTAINER_ROLE=scheduler
+            - DB_CONNECTION=pgsql
+            - DB_HOST=db
+            - DB_PORT=5432
+            - DB_DATABASE=${DB_DATABASE:-bfw}
+            - DB_USERNAME=${DB_USERNAME:-bfw}
+            - DB_PASSWORD=${DB_PASSWORD:-password}
+            - SESSION_DRIVER=${SESSION_DRIVER:-redis}
+            - SESSION_CONNECTION=${SESSION_CONNECTION:-default}
+            - QUEUE_CONNECTION=${QUEUE_CONNECTION:-redis}
+            - CACHE_STORE=${CACHE_STORE:-redis}
+            - REDIS_HOST=redis
+            - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+            - REDIS_PORT=6379
+        depends_on:
+            app:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+
+    queue:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: dev
+        container_name: bfw-queue
+        restart: unless-stopped
+        command: php artisan queue:work redis --sleep=1 --tries=1 --timeout=300 --max-time=3600 --no-interaction
+        volumes:
+            - .:/var/www/html
+            - bfw-vendor:/var/www/html/vendor
+        environment:
+            - APP_ENV=local
+            - CONTAINER_ROLE=queue
+            - DB_CONNECTION=pgsql
+            - DB_HOST=db
+            - DB_PORT=5432
+            - DB_DATABASE=${DB_DATABASE:-bfw}
+            - DB_USERNAME=${DB_USERNAME:-bfw}
+            - DB_PASSWORD=${DB_PASSWORD:-password}
+            - SESSION_DRIVER=${SESSION_DRIVER:-redis}
+            - SESSION_CONNECTION=${SESSION_CONNECTION:-default}
+            - QUEUE_CONNECTION=${QUEUE_CONNECTION:-redis}
+            - CACHE_STORE=${CACHE_STORE:-redis}
+            - REDIS_HOST=redis
+            - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+            - REDIS_PORT=6379
+        depends_on:
+            app:
+                condition: service_healthy
+            redis:
                 condition: service_healthy
 
     db:
@@ -50,7 +132,22 @@ services:
             - "3000:3000"
         depends_on:
             - db
+
+    redis:
+        image: redis:7-alpine
+        container_name: bfw-redis
+        restart: unless-stopped
+        command: redis-server --appendonly yes
+        volumes:
+            - bfw-redis-data:/data
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
 volumes:
     bfw-db-data:
+    bfw-redis-data:
     bfw-node-modules:
     bfw-vendor:

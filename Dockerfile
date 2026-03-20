@@ -16,8 +16,8 @@ RUN apk add --no-cache --virtual .build-deps \
     icu-dev \
     imagemagick-dev \
     $PHPIZE_DEPS \
-    && pecl install imagick \
-    && docker-php-ext-enable imagick \
+    && pecl install imagick redis \
+    && docker-php-ext-enable imagick redis \
     && docker-php-ext-install \
     pdo_pgsql \
     intl \
