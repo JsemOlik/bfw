@@ -77,6 +77,20 @@ it('renders root paste status pages', function () {
         );
 });
 
+it('returns raw content for root paste raw urls', function () {
+    $paste = Paste::factory()->create([
+        'slug' => 'root-raw-paste',
+        'content' => 'Root raw content',
+    ]);
+
+    $response = $this->get('/'.$paste->slug.'/raw');
+
+    $response->assertSuccessful()
+        ->assertHeader('content-type', 'text/plain; charset=UTF-8');
+
+    expect($response->getContent())->toBe('Root raw content');
+});
+
 it('prevents pastes from reusing link slugs', function () {
     Link::create([
         'original_url' => 'https://example.com/taken',

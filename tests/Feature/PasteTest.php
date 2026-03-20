@@ -338,7 +338,7 @@ it('shows the raw text of a paste', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('pastes/show')
             ->where('paste.syntax', 'php')
-            ->where('paste.raw_url', url('/paste/'.$paste->slug.'/raw'))
+            ->where('paste.raw_url', url('/'.$paste->slug.'/raw'))
             ->where('paste.highlighted_lines.0.0.type', 'keyword')
             ->where('paste.highlighted_lines.1.2.type', 'string')
             ->etc()
@@ -410,7 +410,7 @@ it('highlights additional supported syntaxes', function (string $syntax, string 
 it('returns raw paste content without ui', function () {
     $paste = Paste::factory()->create(['content' => "#!/bin/sh\necho 'hello'"]);
 
-    $response = $this->get('/paste/'.$paste->slug.'/raw');
+    $response = $this->get('/'.$paste->slug.'/raw');
 
     $response->assertSuccessful();
     $response->assertHeader('content-type', 'text/plain; charset=UTF-8');
@@ -422,7 +422,7 @@ it('redirects image raw requests to the stored media url', function () {
 
     $paste = Paste::factory()->image()->create();
 
-    $response = $this->get('/paste/'.$paste->slug.'/raw');
+    $response = $this->get('/'.$paste->slug.'/raw');
 
     $response->assertRedirect(Storage::disk('paste_media')->url('pastes/images/test/example.png'));
 });
@@ -432,7 +432,7 @@ it('redirects video raw requests to the stored media url', function () {
 
     $paste = Paste::factory()->video()->create();
 
-    $response = $this->get('/paste/'.$paste->slug.'/raw');
+    $response = $this->get('/'.$paste->slug.'/raw');
 
     $response->assertRedirect(Storage::disk('paste_media')->url('pastes/videos/test/example.mp4'));
 });
@@ -452,9 +452,17 @@ it('does not return raw content for expired pastes', function () {
         'expires_at' => now()->subDay(),
     ]);
 
-    $response = $this->get('/paste/'.$paste->slug.'/raw');
+    $response = $this->get('/'.$paste->slug.'/raw');
 
     $response->assertNotFound();
+});
+
+it('redirects legacy paste raw urls to the root raw url', function () {
+    $paste = Paste::factory()->create(['slug' => 'legacy-raw-paste']);
+
+    $response = $this->get('/paste/'.$paste->slug.'/raw');
+
+    $response->assertRedirect('/'.$paste->slug.'/raw');
 });
 
 it('allows owners to delete their paste', function () {

@@ -37,7 +37,7 @@ Route::get('paste', [PasteController::class, 'create'])->name('paste.create');
 Route::post('paste', [PasteController::class, 'store'])
     ->middleware('throttle:paste-creations')
     ->name('paste.store');
-Route::get('paste/{slug}/raw', [PasteController::class, 'raw'])->name('paste.raw');
+Route::get('paste/{slug}/raw', fn (string $slug) => redirect('/'.$slug.'/raw', 301));
 Route::get('paste/{slug}/status', [PasteController::class, 'status'])->name('paste.status');
 Route::delete('paste/{paste}', [PasteController::class, 'destroy'])->name('paste.destroy');
 
@@ -47,5 +47,6 @@ Route::get('paste/{slug}', [PasteController::class, 'show'])->name('paste.show')
 require __DIR__.'/settings.php';
 require __DIR__.'/admin.php';
 
+Route::get('{slugRegistry:slug}/raw', [PublicSlugController::class, 'raw'])->name('paste.raw');
 Route::get('{slugRegistry:slug}/status', [PublicSlugController::class, 'status'])->name('slug.status');
 Route::get('{slugRegistry:slug}', [PublicSlugController::class, 'show'])->name('slug.show');

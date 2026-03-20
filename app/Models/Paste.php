@@ -69,6 +69,11 @@ class Paste extends Model
         return $this->isImage() || $this->isVideo();
     }
 
+    public function rawUrl(): string
+    {
+        return route('paste.raw', ['slugRegistry' => $this->slug]);
+    }
+
     /**
      * Get the user that owns the paste.
      */

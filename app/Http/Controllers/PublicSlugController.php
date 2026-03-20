@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class PublicSlugController extends Controller
 {
@@ -37,7 +38,7 @@ class PublicSlugController extends Controller
                 'syntax' => $sluggable->syntax,
                 'slug' => $sluggable->slug,
                 'public_url' => $sluggable->publicUrl(),
-                'raw_url' => route('paste.raw', $sluggable->slug),
+                'raw_url' => $sluggable->rawUrl(),
                 'media_url' => $sluggable->isMedia() ? $pasteMediaManager->url($sluggable) : null,
                 'original_filename' => $sluggable->original_filename,
                 'mime_type' => $sluggable->mime_type,
@@ -91,6 +92,28 @@ class PublicSlugController extends Controller
                 'expires_at' => $sluggable->expires_at?->toDateTimeString(),
                 'is_expired' => $sluggable->expires_at?->isPast() ?? false,
             ],
+        ]);
+    }
+
+    public function raw(SlugRegistry $slugRegistry, PasteMediaManager $pasteMediaManager): SymfonyResponse
+    {
+        $sluggable = $slugRegistry->sluggable;
+
+        abort_unless($sluggable instanceof Paste, 404);
+        abort_if($sluggable->expires_at?->isPast() ?? false, 404);
+
+        if ($sluggable->isMedia()) {
+            $url = $pasteMediaManager->url($sluggable);
+
+            if (Str::startsWith($url, ['http://', 'https://'])) {
+                return redirect()->away($url);
+            }
+
+            return redirect($url);
+        }
+
+        return response($sluggable->content, 200, [
+            'Content-Type' => 'text/plain; charset=UTF-8',
         ]);
     }
 }

@@ -139,7 +139,7 @@ class PasteController extends Controller
                 'syntax' => $paste->syntax,
                 'slug' => $paste->slug,
                 'public_url' => $paste->publicUrl(),
-                'raw_url' => route('paste.raw', $paste->slug),
+                'raw_url' => $paste->rawUrl(),
                 'media_url' => $paste->isMedia() ? $pasteMediaManager->url($paste) : null,
                 'original_filename' => $paste->original_filename,
                 'mime_type' => $paste->mime_type,
