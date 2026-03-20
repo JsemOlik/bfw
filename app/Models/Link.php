@@ -27,6 +27,7 @@ class Link extends Model
     {
         return [
             'expires_at' => 'datetime',
+            'open_count' => 'integer',
         ];
     }
 

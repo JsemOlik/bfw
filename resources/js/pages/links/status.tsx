@@ -12,6 +12,7 @@ interface Props {
         original_url: string;
         slug: string;
         public_url: string;
+        open_count: number;
         created_at: string;
         expires_at: string | null;
         is_expired: boolean;
@@ -148,13 +149,21 @@ export default function Status({ link }: Props) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-8 border-y border-gray-100 py-6">
+                    <div className="grid gap-8 border-y border-gray-100 py-6 sm:grid-cols-3">
                         <div>
                             <label className="mb-2 block text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
                                 Created At
                             </label>
                             <div className="text-sm font-medium text-gray-800">
                                 {formatDateTime(link.created_at)}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="mb-2 block text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
+                                Opened
+                            </label>
+                            <div className="text-sm font-medium text-gray-800">
+                                {link.open_count.toLocaleString()}
                             </div>
                         </div>
                         <div>

@@ -25,6 +25,8 @@ class PublicSlugController extends Controller
         if ($sluggable instanceof Link) {
             abort_if($sluggable->expires_at?->isPast() ?? false, 404);
 
+            $sluggable->increment('open_count');
+
             return redirect()->away($sluggable->original_url);
         }
 
@@ -65,6 +67,7 @@ class PublicSlugController extends Controller
                     'original_url' => $sluggable->original_url,
                     'slug' => $sluggable->slug,
                     'public_url' => $sluggable->publicUrl(),
+                    'open_count' => $sluggable->open_count,
                     'created_at' => $sluggable->created_at->toDateTimeString(),
                     'expires_at' => $sluggable->expires_at?->toDateTimeString(),
                     'is_expired' => $sluggable->expires_at?->isPast() ?? false,

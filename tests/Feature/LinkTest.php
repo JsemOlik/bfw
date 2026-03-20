@@ -129,6 +129,7 @@ it('redirects to the original url', function () {
     $response = $this->get(route('link.show', $link->slug));
 
     $response->assertRedirect('https://github.com');
+    expect($link->fresh()->open_count)->toBe(1);
 });
 
 it('deletes the slug registry entry when a link is deleted', function () {
@@ -199,8 +200,28 @@ it('can view the status of a link', function () {
             ->has('link', fn ($link) => $link
                 ->where('slug', 'stat')
                 ->where('original_url', 'https://status.com')
+                ->where('open_count', 0)
                 ->etc()
             )
+        );
+});
+
+it('shows the open count on a link status page', function () {
+    $link = Link::create([
+        'original_url' => 'https://status.com',
+        'slug' => 'status-count',
+        'expires_at' => now()->addHours(24),
+    ]);
+    $link->forceFill(['open_count' => 7])->save();
+
+    $response = $this->get(route('link.status', $link->slug));
+
+    $response->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('links/status')
+            ->where('link.slug', 'status-count')
+            ->where('link.open_count', 7)
+            ->etc()
         );
 });
 

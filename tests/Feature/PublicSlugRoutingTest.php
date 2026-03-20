@@ -22,6 +22,7 @@ it('resolves root link slugs to their destination', function () {
     $response = $this->get('/'.$link->slug);
 
     $response->assertRedirect($link->original_url);
+    expect($link->fresh()->open_count)->toBe(1);
 });
 
 it('renders root paste slugs', function () {
@@ -48,6 +49,7 @@ it('renders root link status pages', function () {
         'slug' => 'root-status-link',
         'expires_at' => now()->addDay(),
     ]);
+    $link->forceFill(['open_count' => 3])->save();
 
     $response = $this->get('/'.$link->slug.'/status');
 
@@ -56,6 +58,7 @@ it('renders root link status pages', function () {
             ->component('links/status')
             ->where('link.slug', $link->slug)
             ->where('link.public_url', url('/'.$link->slug))
+            ->where('link.open_count', 3)
             ->etc()
         );
 });
