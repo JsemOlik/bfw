@@ -45,6 +45,7 @@ Route::delete('paste/{paste}', [PasteController::class, 'destroy'])->name('paste
 Route::get('paste/{slug}', [PasteController::class, 'show'])->name('paste.show');
 
 require __DIR__.'/settings.php';
+require __DIR__.'/admin.php';
 
 Route::get('{slugRegistry:slug}/status', [PublicSlugController::class, 'status'])->name('slug.status');
 Route::get('{slugRegistry:slug}', [PublicSlugController::class, 'show'])->name('slug.show');
