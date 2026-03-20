@@ -96,6 +96,7 @@ export default function Create({ userLinks = [] }: { userLinks?: UserLink[] }) {
                     </div>
 
                     <div className="w-full rounded-2xl bg-white p-8 shadow-xl ring-1 shadow-black/5 ring-gray-200 dark:bg-[#161615] dark:ring-[#fffaed2d]">
+
                         {!auth.user && (
                             <div className="mb-8 rounded-lg border border-amber-100 bg-amber-50 p-4 dark:border-amber-900/20 dark:bg-amber-900/10">
                                 <div className="flex items-center gap-3 text-amber-900 dark:text-amber-400">

@@ -51,7 +51,41 @@ services:
         depends_on:
             - db
 
+    umami:
+        image: docker.umami.is/umami-software/umami:postgresql-latest
+        container_name: bfw-umami
+        restart: unless-stopped
+        ports:
+            - "${UMAMI_PORT:-3001}:3000"
+        environment:
+            - DATABASE_URL=postgresql://${UMAMI_DB_USER:-umami}:${UMAMI_DB_PASSWORD:-umami-password}@umami-db:5432/${UMAMI_DB_NAME:-umami}
+            - APP_SECRET=${UMAMI_APP_SECRET:-change-this-umami-secret}
+            - APP_URL=${UMAMI_APP_URL:-http://localhost:3001}
+            - CLIENT_IP_HEADER=${UMAMI_CLIENT_IP_HEADER:-x-forwarded-for}
+        depends_on:
+            umami-db:
+                condition: service_healthy
+
+    umami-db:
+        image: postgres:17-alpine
+        container_name: bfw-umami-db
+        restart: unless-stopped
+        environment:
+            - POSTGRES_DB=${UMAMI_DB_NAME:-umami}
+            - POSTGRES_USER=${UMAMI_DB_USER:-umami}
+            - POSTGRES_PASSWORD=${UMAMI_DB_PASSWORD:-umami-password}
+        volumes:
+            - bfw-umami-db-data:/var/lib/postgresql/data
+        ports:
+            - "${UMAMI_DB_PORT:-5433}:5432"
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${UMAMI_DB_USER:-umami} -d ${UMAMI_DB_NAME:-umami}"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
 volumes:
     bfw-db-data:
+    bfw-umami-db-data:
     bfw-node-modules:
     bfw-vendor:

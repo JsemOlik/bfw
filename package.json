@@ -7,7 +7,7 @@
         "build:ssr": "vite build && vite build --ssr",
         "dev": "vite",
         "build:docker:dev": "docker compose -f docker-compose.develop.yml build",
-        "compose": "docker compose -f docker-compose.develop.yml up -d db dbgate",
+        "compose": "docker compose -f docker-compose.develop.yml up -d db dbgate umami umami-db",
         "dev:docker": "docker compose -f docker-compose.develop.yml up app",
         "build:docker": "docker compose -f docker-compose.production.yml build",
         "build:docker:amd64": "docker buildx build --platform linux/amd64 -t ghcr.io/jsemolik/bfw:latest --load .",
