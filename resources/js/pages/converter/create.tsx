@@ -9,7 +9,12 @@ import {
     type FormEvent,
 } from 'react';
 import ConverterController from '@/actions/App/Http/Controllers/ConverterController';
+import TransferProgressBar from '@/components/transfer-progress';
 import AppLayout from '@/layouts/app-layout';
+import {
+    downloadWithProgress,
+    type TransferProgress,
+} from '@/lib/download-with-progress';
 
 const supportedMimeTypes = new Set([
     'image/png',
@@ -45,6 +50,7 @@ export default function Create({ supportedFormats }: Props) {
     const [isImageListOpen, setIsImageListOpen] = useState(false);
     const [isClearingImages, setIsClearingImages] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [transferProgress, setTransferProgress] = useState<TransferProgress | null>(null);
     const [errors, setErrors] = useState<ValidationErrors>({});
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const selectedImagesRef = useRef<SelectedImage[]>([]);
@@ -258,6 +264,10 @@ export default function Create({ supportedFormats }: Props) {
         }
 
         setIsProcessing(true);
+        setTransferProgress({
+            phase: 'uploading',
+            percent: 0,
+        });
         setErrors({});
         setSuccessMessage(null);
 
@@ -274,28 +284,23 @@ export default function Create({ supportedFormats }: Props) {
             ?.getAttribute('content');
 
         try {
-            const response = await fetch(ConverterController.store().url, {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin',
-                headers: {
-                    Accept: 'application/json',
-                    ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
-                },
+            const result = await downloadWithProgress({
+                url: ConverterController.store().url,
+                formData,
+                csrfToken,
+                parseError: normalizeServerErrors,
+                onProgress: setTransferProgress,
             });
 
-            if (!response.ok) {
-                const payload = await response.json().catch(() => null);
-
-                setErrors(normalizeServerErrors(payload));
+            if (!result.ok) {
+                setErrors(result.errors);
 
                 return;
             }
 
-            const blob = await response.blob();
-            const objectUrl = URL.createObjectURL(blob);
+            const objectUrl = URL.createObjectURL(result.blob);
             const downloadLink = document.createElement('a');
-            const fileName = parseFileName(response.headers.get('Content-Disposition'))
+            const fileName = parseFileName(result.contentDisposition)
                 ?? (selectedImages.length > 1
                     ? `converted-images-${outputFormat}.zip`
                     : `converted-image.${outputFormat}`);
@@ -310,8 +315,13 @@ export default function Create({ supportedFormats }: Props) {
                     ? `Done — downloaded ${fileName} with ${selectedImages.length} converted images.`
                     : `Done — downloaded ${fileName}.`,
             );
+        } catch {
+            setErrors({
+                images: 'We could not convert those images right now. Please try again.',
+            });
         } finally {
             setIsProcessing(false);
+            setTransferProgress(null);
         }
     };
 
@@ -573,6 +583,15 @@ export default function Create({ supportedFormats }: Props) {
                                     </p>
                                 )}
                             </div>
+
+                            {isProcessing && transferProgress && (
+                                <TransferProgressBar
+                                    progress={transferProgress}
+                                    uploadLabel={`Uploading ${selectedImages.length} image${selectedImages.length === 1 ? '' : 's'}...`}
+                                    processingLabel={`Converting ${selectedImages.length} image${selectedImages.length === 1 ? '' : 's'}...`}
+                                    downloadLabel="Downloading result..."
+                                />
+                            )}
 
                             <button
                                 type="submit"

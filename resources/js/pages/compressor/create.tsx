@@ -9,7 +9,12 @@ import {
     type FormEvent,
 } from 'react';
 import CompressorController from '@/actions/App/Http/Controllers/CompressorController';
+import TransferProgressBar from '@/components/transfer-progress';
 import AppLayout from '@/layouts/app-layout';
+import {
+    downloadWithProgress,
+    type TransferProgress,
+} from '@/lib/download-with-progress';
 
 const supportedMimeTypes = new Set([
     'image/png',
@@ -51,6 +56,7 @@ export default function Create({ supportedFormats }: Props) {
     const [isImageListOpen, setIsImageListOpen] = useState(false);
     const [isClearingImages, setIsClearingImages] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [transferProgress, setTransferProgress] = useState<TransferProgress | null>(null);
     const [errors, setErrors] = useState<ValidationErrors>({});
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const selectedImagesRef = useRef<SelectedImage[]>([]);
@@ -328,6 +334,10 @@ export default function Create({ supportedFormats }: Props) {
         }
 
         setIsProcessing(true);
+        setTransferProgress({
+            phase: 'uploading',
+            percent: 0,
+        });
         setErrors({});
         setSuccessMessage(null);
 
@@ -347,28 +357,23 @@ export default function Create({ supportedFormats }: Props) {
             ?.getAttribute('content');
 
         try {
-            const response = await fetch(CompressorController.store().url, {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin',
-                headers: {
-                    Accept: 'application/json',
-                    ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
-                },
+            const result = await downloadWithProgress({
+                url: CompressorController.store().url,
+                formData,
+                csrfToken,
+                parseError: normalizeServerErrors,
+                onProgress: setTransferProgress,
             });
 
-            if (!response.ok) {
-                const payload = await response.json().catch(() => null);
-
-                setErrors(normalizeServerErrors(payload));
+            if (!result.ok) {
+                setErrors(result.errors);
 
                 return;
             }
 
-            const blob = await response.blob();
-            const objectUrl = URL.createObjectURL(blob);
+            const objectUrl = URL.createObjectURL(result.blob);
             const downloadLink = document.createElement('a');
-            const fileName = parseFileName(response.headers.get('Content-Disposition'))
+            const fileName = parseFileName(result.contentDisposition)
                 ?? (selectedImages.length > 1
                     ? 'compressed-images.zip'
                     : 'compressed-image');
@@ -383,8 +388,13 @@ export default function Create({ supportedFormats }: Props) {
                     ? `Done — downloaded ${fileName} with ${selectedImages.length} compressed images.`
                     : `Done — downloaded ${fileName}.`,
             );
+        } catch {
+            setErrors({
+                images: 'We could not compress those images right now. Please try again.',
+            });
         } finally {
             setIsProcessing(false);
+            setTransferProgress(null);
         }
     };
 
@@ -736,6 +746,15 @@ export default function Create({ supportedFormats }: Props) {
                             <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 dark:border-[#2b2b28] dark:bg-[#0f0f0f] dark:text-gray-400">
                                 Compression keeps the original file format and works best with {supportedFormatsLabel}.
                             </div>
+
+                            {isProcessing && transferProgress && (
+                                <TransferProgressBar
+                                    progress={transferProgress}
+                                    uploadLabel={`Uploading ${selectedImages.length} image${selectedImages.length === 1 ? '' : 's'}...`}
+                                    processingLabel={`Compressing ${selectedImages.length} image${selectedImages.length === 1 ? '' : 's'}...`}
+                                    downloadLabel="Downloading result..."
+                                />
+                            )}
 
                             <button
                                 type="submit"
