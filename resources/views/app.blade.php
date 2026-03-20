@@ -5,8 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8327290007131872"
-        crossorigin="anonymous"></script>
+    <meta name="google-adsense-account" content="ca-pub-8327290007131872">
 
     {{-- Inline script to detect system dark mode preference and apply it immediately --}}
     <script>
