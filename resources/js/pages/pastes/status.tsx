@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import DeleteConfirmModal from '@/components/delete-confirm-modal';
 import PasteController from '@/actions/App/Http/Controllers/PasteController';
 import MarketingNavbar from '@/components/marketing-navbar';
+import { formatDateTime } from '@/lib/dates';
 
 interface Props {
     paste: {
@@ -26,7 +27,7 @@ export default function Status({ paste }: Props) {
     const { auth } = usePage<{ auth: { user?: { id: number } | null } }>().props;
     const shortUrl = paste.public_url;
     const expiresAtText = paste.expires_at
-        ? new Date(paste.expires_at).toLocaleString()
+        ? formatDateTime(paste.expires_at)
         : 'Never';
     const [copied, setCopied] = useState(false);
 
@@ -190,7 +191,7 @@ export default function Status({ paste }: Props) {
                                 Created At
                             </label>
                             <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                                {new Date(paste.created_at).toLocaleString()}
+                                {formatDateTime(paste.created_at)}
                             </div>
                         </div>
                         <div>

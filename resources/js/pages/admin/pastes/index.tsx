@@ -3,10 +3,12 @@ import { Search, X } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import DeleteConfirmModal from '@/components/delete-confirm-modal';
 import Heading from '@/components/heading';
+import PaginationNav from '@/components/pagination-nav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import AdminLayout from '@/layouts/admin/layout';
+import { formatDateTime } from '@/lib/dates';
 import {
     destroy as adminPastesDestroy,
     index as adminPastesIndex,
@@ -30,6 +32,15 @@ type AdminPaste = {
     snippet: string;
 };
 
+type PaginatedPastes = {
+    data: AdminPaste[];
+    current_page: number;
+    last_page: number;
+    from: number | null;
+    to: number | null;
+    total: number;
+};
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Admin pastes',
@@ -41,7 +52,7 @@ export default function AdminPastes({
     pastes,
     filters,
 }: {
-    pastes: AdminPaste[];
+    pastes: PaginatedPastes;
     filters: {
         search: string;
     };
@@ -145,7 +156,7 @@ export default function AdminPastes({
                     </form>
 
                     <div className="overflow-hidden rounded-2xl border border-black/5 bg-white/80 shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-black/30 dark:ring-white/10">
-                        {pastes.length === 0 ? (
+                        {pastes.data.length === 0 ? (
                             <div className="px-6 py-14 text-center">
                                 <p className="text-base font-semibold text-foreground">
                                     It&apos;s pretty empty in here...
@@ -185,10 +196,10 @@ export default function AdminPastes({
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-black/5 dark:divide-white/10">
-                                        {pastes.map((paste) => (
+                                        {pastes.data.map((paste, index) => (
                                             <tr
                                                 key={paste.id}
-                                                className="transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.03]"
+                                                className={`transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.03] ${index % 2 === 1 ? 'bg-black/[0.015] dark:bg-white/[0.02]' : ''}`}
                                             >
                                                 <td className="px-4 py-4 text-sm font-semibold text-muted-foreground">
                                                     #{paste.id}
@@ -230,15 +241,9 @@ export default function AdminPastes({
                                                         </svg>
                                                     </a>
                                                 </td>
-                                                <td className="max-w-sm px-4 py-4 text-sm text-muted-foreground">
-                                                    <div className="line-clamp-3 break-words">
+                                                <td className="px-4 py-4 text-sm text-muted-foreground">
+                                                    <div className="max-w-[260px] truncate whitespace-nowrap">
                                                         {paste.snippet}
-                                                    </div>
-                                                    <div className="mt-1 text-xs">
-                                                        {paste.original_filename ??
-                                                            paste.mime_type ??
-                                                            paste.syntax ??
-                                                            'No extra metadata'}
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-4 text-sm text-muted-foreground">
@@ -250,9 +255,9 @@ export default function AdminPastes({
                                                 </td>
                                                 <td className="px-4 py-4 text-sm text-muted-foreground">
                                                     {paste.expires_at
-                                                        ? new Date(
+                                                        ? formatDateTime(
                                                               paste.expires_at,
-                                                          ).toLocaleString()
+                                                          )
                                                         : 'Never'}
                                                     {paste.is_expired ? (
                                                         <div className="text-xs font-semibold text-red-500">
@@ -294,6 +299,23 @@ export default function AdminPastes({
                                 </table>
                             </div>
                         )}
+                        <PaginationNav
+                            currentPage={pastes.current_page}
+                            lastPage={pastes.last_page}
+                            from={pastes.from}
+                            to={pastes.to}
+                            total={pastes.total}
+                            getPageHref={(page) =>
+                                adminPastesIndex.url({
+                                    query: {
+                                        ...(filters.search !== ''
+                                            ? { search: filters.search }
+                                            : {}),
+                                        page,
+                                    },
+                                })
+                            }
+                        />
                     </div>
                 </div>
             </AdminLayout>

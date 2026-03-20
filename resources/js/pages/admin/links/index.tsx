@@ -3,10 +3,12 @@ import { Search, X } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import DeleteConfirmModal from '@/components/delete-confirm-modal';
 import Heading from '@/components/heading';
+import PaginationNav from '@/components/pagination-nav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import AdminLayout from '@/layouts/admin/layout';
+import { formatDateTime } from '@/lib/dates';
 import {
     destroy as adminLinksDestroy,
     index as adminLinksIndex,
@@ -26,6 +28,15 @@ type AdminLink = {
     owner_email: string | null;
 };
 
+type PaginatedLinks = {
+    data: AdminLink[];
+    current_page: number;
+    last_page: number;
+    from: number | null;
+    to: number | null;
+    total: number;
+};
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Admin links',
@@ -37,7 +48,7 @@ export default function AdminLinks({
     links,
     filters,
 }: {
-    links: AdminLink[];
+    links: PaginatedLinks;
     filters: {
         search: string;
     };
@@ -141,7 +152,7 @@ export default function AdminLinks({
                     </form>
 
                     <div className="overflow-hidden rounded-2xl border border-black/5 bg-white/80 shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-black/30 dark:ring-white/10">
-                        {links.length === 0 ? (
+                        {links.data.length === 0 ? (
                             <div className="px-6 py-14 text-center">
                                 <p className="text-base font-semibold text-foreground">
                                     It&apos;s pretty empty in here...
@@ -181,10 +192,10 @@ export default function AdminLinks({
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-black/5 dark:divide-white/10">
-                                        {links.map((link) => (
+                                        {links.data.map((link, index) => (
                                             <tr
                                                 key={link.id}
-                                                className="transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.03]"
+                                                className={`transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.03] ${index % 2 === 1 ? 'bg-black/[0.015] dark:bg-white/[0.02]' : ''}`}
                                             >
                                                 <td className="px-4 py-4 text-sm font-semibold text-muted-foreground">
                                                     #{link.id}
@@ -221,12 +232,12 @@ export default function AdminLinks({
                                                         </svg>
                                                     </a>
                                                 </td>
-                                                <td className="max-w-sm px-4 py-4 text-sm text-muted-foreground">
+                                                <td className="px-4 py-4 text-sm text-muted-foreground">
                                                     <a
                                                         href={link.original_url}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="line-clamp-2 break-all transition-colors hover:text-[#f53003] dark:hover:text-[#ff4433]"
+                                                        className="block max-w-[260px] truncate whitespace-nowrap transition-colors hover:text-[#f53003] dark:hover:text-[#ff4433]"
                                                     >
                                                         {link.original_url}
                                                     </a>
@@ -240,9 +251,9 @@ export default function AdminLinks({
                                                 </td>
                                                 <td className="px-4 py-4 text-sm text-muted-foreground">
                                                     {link.expires_at
-                                                        ? new Date(
+                                                        ? formatDateTime(
                                                               link.expires_at,
-                                                          ).toLocaleString()
+                                                          )
                                                         : 'Never'}
                                                     {link.is_expired ? (
                                                         <div className="text-xs font-semibold text-red-500">
@@ -251,9 +262,9 @@ export default function AdminLinks({
                                                     ) : null}
                                                 </td>
                                                 <td className="px-4 py-4 text-sm text-muted-foreground">
-                                                    {new Date(
+                                                    {formatDateTime(
                                                         link.created_at,
-                                                    ).toLocaleString()}
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-4 text-right">
                                                     <Button
@@ -289,6 +300,23 @@ export default function AdminLinks({
                                 </table>
                             </div>
                         )}
+                        <PaginationNav
+                            currentPage={links.current_page}
+                            lastPage={links.last_page}
+                            from={links.from}
+                            to={links.to}
+                            total={links.total}
+                            getPageHref={(page) =>
+                                adminLinksIndex.url({
+                                    query: {
+                                        ...(filters.search !== ''
+                                            ? { search: filters.search }
+                                            : {}),
+                                        page,
+                                    },
+                                })
+                            }
+                        />
                     </div>
                 </div>
             </AdminLayout>

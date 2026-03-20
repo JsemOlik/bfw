@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import AdminLayout from '@/layouts/admin/layout';
+import { formatDate, formatDateTime } from '@/lib/dates';
 import { index as adminUsersIndex, update as adminUsersUpdate } from '@/routes/admin/users';
 import type { BreadcrumbItem } from '@/types';
 
@@ -77,21 +78,21 @@ export default function AdminUsers({
             {
                 label: 'Verified',
                 value: editingUser.email_verified_at
-                    ? `Yes — ${new Date(editingUser.email_verified_at).toLocaleString()}`
+                    ? `Yes — ${formatDateTime(editingUser.email_verified_at)}`
                     : 'No',
             },
             {
                 label: 'Joined',
-                value: new Date(editingUser.created_at).toLocaleString(),
+                value: formatDateTime(editingUser.created_at),
             },
             {
                 label: 'Last updated',
-                value: new Date(editingUser.updated_at).toLocaleString(),
+                value: formatDateTime(editingUser.updated_at),
             },
             {
                 label: 'Two-factor',
                 value: editingUser.two_factor_confirmed_at
-                    ? `Enabled — ${new Date(editingUser.two_factor_confirmed_at).toLocaleString()}`
+                    ? `Enabled — ${formatDateTime(editingUser.two_factor_confirmed_at)}`
                     : 'Not enabled',
             },
         ];
@@ -239,7 +240,7 @@ export default function AdminUsers({
                                     {users.map((user) => (
                                         <tr
                                             key={user.id}
-                                            className="transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.03]"
+                                            className="transition-colors odd:bg-transparent even:bg-black/[0.015] hover:bg-black/[0.02] dark:even:bg-white/[0.02] dark:hover:bg-white/[0.03]"
                                         >
                                             <td className="px-4 py-4 text-sm font-semibold text-muted-foreground">
                                                 #{user.id}
@@ -261,9 +262,7 @@ export default function AdminUsers({
                                                     : 'Unverified'}
                                             </td>
                                             <td className="px-4 py-4 text-sm text-muted-foreground">
-                                                {new Date(
-                                                    user.created_at,
-                                                ).toLocaleDateString()}
+                                                {formatDate(user.created_at)}
                                             </td>
                                             <td className="px-4 py-4 text-right">
                                                 <Button

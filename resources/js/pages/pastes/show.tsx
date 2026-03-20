@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import MarketingNavbar from '@/components/marketing-navbar';
+import { formatDateTime } from '@/lib/dates';
 
 interface HighlightedToken {
     content: string;
@@ -78,7 +79,7 @@ export default function Show({ paste }: Props) {
                             /{paste.slug}
                         </h1>
                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Created {new Date(paste.created_at).toLocaleString()}
+                            Created {formatDateTime(paste.created_at)}
                         </p>
                         {metadata.length > 0 && (
                             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">

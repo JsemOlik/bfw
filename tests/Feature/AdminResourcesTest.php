@@ -32,10 +32,11 @@ it('shows all shortened links to admins', function () {
     $response->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/links/index')
-            ->has('links', 1)
-            ->where('links.0.id', $link->id)
-            ->where('links.0.slug', $link->slug)
-            ->where('links.0.owner_email', $owner->email)
+            ->has('links.data', 1)
+            ->where('links.data.0.id', $link->id)
+            ->where('links.data.0.slug', $link->slug)
+            ->where('links.data.0.owner_email', $owner->email)
+            ->where('links.per_page', 20)
             ->etc()
         );
 });
@@ -74,11 +75,47 @@ it('lets admins search links by slug, url, owner, and id', function () {
             ->assertInertia(fn (Assert $page) => $page
                 ->component('admin/links/index')
                 ->where('filters.search', $search)
-                ->has('links', 1)
-                ->where('links.0.id', $matchingLink->id)
+                ->has('links.data', 1)
+                ->where('links.data.0.id', $matchingLink->id)
                 ->etc()
             );
     }
+});
+
+it('paginates admin links with twenty results per page', function () {
+    $admin = User::factory()->admin()->create();
+
+    foreach (range(1, 21) as $index) {
+        Link::create([
+            'original_url' => "https://example.com/paginated-link-{$index}",
+            'slug' => "paginated-link-{$index}",
+            'expires_at' => now()->addDay(),
+        ]);
+    }
+
+    $firstPage = $this->actingAs($admin)->get(route('admin.links.index'));
+
+    $firstPage->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/links/index')
+            ->has('links.data', 20)
+            ->where('links.current_page', 1)
+            ->where('links.last_page', 2)
+            ->where('links.per_page', 20)
+            ->etc()
+        );
+
+    $secondPage = $this->actingAs($admin)->get(route('admin.links.index', [
+        'page' => 2,
+    ]));
+
+    $secondPage->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/links/index')
+            ->has('links.data', 1)
+            ->where('links.current_page', 2)
+            ->etc()
+        );
 });
 
 it('shows all pastes to admins', function () {
@@ -101,10 +138,11 @@ it('shows all pastes to admins', function () {
     $response->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/pastes/index')
-            ->has('pastes', 1)
-            ->where('pastes.0.id', $paste->id)
-            ->where('pastes.0.slug', $paste->slug)
-            ->where('pastes.0.owner_email', $owner->email)
+            ->has('pastes.data', 1)
+            ->where('pastes.data.0.id', $paste->id)
+            ->where('pastes.data.0.slug', $paste->slug)
+            ->where('pastes.data.0.owner_email', $owner->email)
+            ->where('pastes.per_page', 20)
             ->etc()
         );
 });
@@ -146,8 +184,8 @@ it('lets admins search pastes by slug, content, file, owner, and id', function (
             ->assertInertia(fn (Assert $page) => $page
                 ->component('admin/pastes/index')
                 ->where('filters.search', $search)
-                ->has('pastes', 1)
-                ->where('pastes.0.id', $matchingPaste->id)
+                ->has('pastes.data', 1)
+                ->where('pastes.data.0.id', $matchingPaste->id)
                 ->etc()
             );
     }
@@ -160,8 +198,38 @@ it('lets admins search pastes by slug, content, file, owner, and id', function (
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/pastes/index')
             ->where('filters.search', 'holiday-photo.jpg')
-            ->has('pastes', 1)
-            ->where('pastes.0.slug', 'other-paste')
+            ->has('pastes.data', 1)
+            ->where('pastes.data.0.slug', 'other-paste')
+            ->etc()
+        );
+});
+
+it('paginates admin pastes with twenty results per page', function () {
+    $admin = User::factory()->admin()->create();
+
+    Paste::factory()->count(21)->create();
+
+    $firstPage = $this->actingAs($admin)->get(route('admin.pastes.index'));
+
+    $firstPage->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/pastes/index')
+            ->has('pastes.data', 20)
+            ->where('pastes.current_page', 1)
+            ->where('pastes.last_page', 2)
+            ->where('pastes.per_page', 20)
+            ->etc()
+        );
+
+    $secondPage = $this->actingAs($admin)->get(route('admin.pastes.index', [
+        'page' => 2,
+    ]));
+
+    $secondPage->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/pastes/index')
+            ->has('pastes.data', 1)
+            ->where('pastes.current_page', 2)
             ->etc()
         );
 });
@@ -174,7 +242,7 @@ it('shows empty admin states for links and pastes', function () {
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/links/index')
-            ->has('links', 0)
+            ->has('links.data', 0)
             ->where('filters.search', '')
         );
 
@@ -183,7 +251,7 @@ it('shows empty admin states for links and pastes', function () {
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/pastes/index')
-            ->has('pastes', 0)
+            ->has('pastes.data', 0)
             ->where('filters.search', '')
         );
 });

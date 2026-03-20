@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import LinkController from '@/actions/App/Http/Controllers/LinkController';
 import MarketingNavbar from '@/components/marketing-navbar';
 import DeleteConfirmModal from '@/components/delete-confirm-modal';
+import { formatDateTime } from '@/lib/dates';
 
 interface Props {
     link: {
@@ -21,7 +22,7 @@ export default function Status({ link }: Props) {
     const { auth } = usePage<any>().props;
     const shortUrl = link.public_url;
     const expiresAtText = link.expires_at
-        ? new Date(link.expires_at).toLocaleString()
+        ? formatDateTime(link.expires_at)
         : 'Never';
     const [copied, setCopied] = useState(false);
 
@@ -153,7 +154,7 @@ export default function Status({ link }: Props) {
                                 Created At
                             </label>
                             <div className="text-sm font-medium text-gray-800">
-                                {new Date(link.created_at).toLocaleString()}
+                                {formatDateTime(link.created_at)}
                             </div>
                         </div>
                         <div>

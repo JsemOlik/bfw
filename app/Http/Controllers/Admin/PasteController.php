@@ -16,29 +16,34 @@ class PasteController extends Controller
     public function index(Request $request): Response
     {
         $search = trim((string) $request->string('search')->value());
+        $normalizedSearch = mb_strtolower($search);
 
         $pastes = Paste::query()
             ->with('user:id,name,email')
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where(function ($nestedQuery) use ($search) {
+            ->when($search !== '', function ($query) use ($search, $normalizedSearch) {
+                $query->where(function ($nestedQuery) use ($search, $normalizedSearch) {
                     $nestedQuery
-                        ->where('slug', 'like', "%{$search}%")
-                        ->orWhere('type', 'like', "%{$search}%")
-                        ->orWhere('syntax', 'like', "%{$search}%")
-                        ->orWhere('content', 'like', "%{$search}%")
-                        ->orWhere('original_filename', 'like', "%{$search}%")
-                        ->orWhere('mime_type', 'like', "%{$search}%")
-                        ->orWhere('id', 'like', "%{$search}%")
-                        ->orWhereHas('user', function ($userQuery) use ($search) {
+                        ->whereRaw('LOWER(slug) LIKE ?', ["%{$normalizedSearch}%"])
+                        ->orWhereRaw('LOWER(type) LIKE ?', ["%{$normalizedSearch}%"])
+                        ->orWhereRaw('LOWER(syntax) LIKE ?', ["%{$normalizedSearch}%"])
+                        ->orWhereRaw('LOWER(content) LIKE ?', ["%{$normalizedSearch}%"])
+                        ->orWhereRaw('LOWER(original_filename) LIKE ?', ["%{$normalizedSearch}%"])
+                        ->orWhereRaw('LOWER(mime_type) LIKE ?', ["%{$normalizedSearch}%"])
+                        ->orWhereHas('user', function ($userQuery) use ($normalizedSearch) {
                             $userQuery
-                                ->where('name', 'like', "%{$search}%")
-                                ->orWhere('email', 'like', "%{$search}%");
+                                ->whereRaw('LOWER(name) LIKE ?', ["%{$normalizedSearch}%"])
+                                ->orWhereRaw('LOWER(email) LIKE ?', ["%{$normalizedSearch}%"]);
                         });
+
+                    if (ctype_digit($search)) {
+                        $nestedQuery->orWhere('id', (int) $search);
+                    }
                 });
             })
             ->latest()
-            ->get()
-            ->map(fn (Paste $paste) => [
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn (Paste $paste) => [
                 'id' => $paste->id,
                 'type' => $paste->type,
                 'slug' => $paste->slug,
