@@ -10,7 +10,7 @@ services:
         container_name: bfw-app-prod
         restart: unless-stopped
         ports:
-            - "80:80"
+            - "6300:80"
         volumes:
             - ./.env:/var/www/html/.env
         environment:
@@ -47,7 +47,7 @@ services:
         container_name: bfw-dbgate-prod
         restart: unless-stopped
         ports:
-            - "3000:3000"
+            - "6301:3000"
         depends_on:
             - db
 
