@@ -1,6 +1,7 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import DeleteConfirmModal from '@/components/delete-confirm-modal';
+import PasteVideoPlayer from '@/components/paste-video-player';
 import PasteController from '@/actions/App/Http/Controllers/PasteController';
 import AppLayout from '@/layouts/app-layout';
 
@@ -562,10 +563,14 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                 }`}
                                             >
                                                 {videoPreviewUrl && (
-                                                    <video
+                                                    <PasteVideoPlayer
                                                         src={videoPreviewUrl}
-                                                        controls
-                                                        className="max-h-56 w-full rounded-lg border border-gray-200 bg-black object-contain shadow-sm dark:border-[#3E3E3A]"
+                                                        title={
+                                                            data.video?.name ??
+                                                            'Video paste'
+                                                        }
+                                                        wrapperClassName="w-full"
+                                                        videoClassName="max-h-56 w-full rounded-lg border border-gray-200 bg-black object-contain shadow-sm dark:border-[#3E3E3A]"
                                                     />
                                                 )}
                                                 <svg

@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import MarketingNavbar from '@/components/marketing-navbar';
+import PasteVideoPlayer from '@/components/paste-video-player';
 import { formatDateTime } from '@/lib/dates';
 
 interface HighlightedToken {
@@ -209,10 +210,14 @@ export default function Show({ paste }: Props) {
                         ) : isVideoPaste ? (
                             <div className="flex justify-center">
                                 {paste.media_url && (
-                                    <video
+                                    <PasteVideoPlayer
                                         src={paste.media_url}
-                                        controls
-                                        className="max-h-[75vh] w-full max-w-full rounded-xl bg-black object-contain"
+                                        title={
+                                            paste.original_filename ??
+                                            'Video paste'
+                                        }
+                                        wrapperClassName="w-full max-w-full"
+                                        videoClassName="max-h-[75vh] w-full max-w-full bg-black object-contain"
                                     />
                                 )}
                             </div>

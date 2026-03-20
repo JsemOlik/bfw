@@ -1,6 +1,7 @@
 import { Head, Link as InertiaLink, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import DeleteConfirmModal from '@/components/delete-confirm-modal';
+import PasteVideoPlayer from '@/components/paste-video-player';
 import PasteController from '@/actions/App/Http/Controllers/PasteController';
 import MarketingNavbar from '@/components/marketing-navbar';
 import { formatDateTime } from '@/lib/dates';
@@ -107,14 +108,14 @@ export default function Status({ paste }: Props) {
                             </div>
                         ) : isVideoPaste && paste.media_url ? (
                             <div className="overflow-hidden rounded-xl border border-gray-100 bg-gray-50 p-3 dark:border-[#3E3E3A] dark:bg-[#0a0a0a]">
-                                <video
+                                <PasteVideoPlayer
                                     src={paste.media_url}
-                                    controls
-                                    className="max-h-80 w-full rounded-lg bg-black object-contain"
+                                    title={
+                                        paste.original_filename ??
+                                        'Video paste'
+                                    }
+                                    videoClassName="max-h-80 w-full rounded-lg bg-black object-contain"
                                 />
-                                <p className="mt-3 truncate text-xs font-medium text-gray-500 dark:text-gray-400">
-                                    {paste.original_filename ?? 'Video paste'}
-                                </p>
                             </div>
                         ) : (
                             <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 font-mono text-sm leading-snug break-all text-gray-900 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-[#EDEDEC]">

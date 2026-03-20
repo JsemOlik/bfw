@@ -143,6 +143,59 @@
 }
 
 @layer components {
+    .paste-video-player {
+        --plyr-color-main: #f53003;
+        --plyr-video-background: #000;
+        --plyr-range-fill-background: #f53003;
+        --plyr-control-spacing: 0.75rem;
+        --plyr-control-icon-size: 16px;
+        --plyr-control-radius: 0.75rem;
+        --plyr-font-family:
+            'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+        --plyr-menu-background: rgba(255, 255, 255, 0.96);
+        --plyr-menu-color: #1f2937;
+        --plyr-tooltip-background: rgba(17, 24, 39, 0.92);
+        --plyr-tooltip-color: #fff;
+    }
+
+    .paste-video-player .plyr {
+        width: 100%;
+        border-radius: 0.75rem;
+        overflow: hidden;
+    }
+
+    .paste-video-player .plyr__video-wrapper {
+        background: #000;
+    }
+
+    .paste-video-player .plyr__control--overlaid {
+        background: rgb(245 48 3 / 0.92);
+        box-shadow: 0 10px 30px rgb(245 48 3 / 0.35);
+    }
+
+    .paste-video-player .plyr__control--overlaid:hover,
+    .paste-video-player .plyr__control--overlaid:focus-visible {
+        background: rgb(226 44 2 / 1);
+    }
+
+    .paste-video-player .plyr--video .plyr__controls {
+        background:
+            linear-gradient(
+                180deg,
+                rgb(10 10 10 / 0%) 0%,
+                rgb(10 10 10 / 76%) 100%
+            );
+    }
+
+    .dark .paste-video-player {
+        --plyr-color-main: #ff4433;
+        --plyr-range-fill-background: #ff4433;
+        --plyr-menu-background: rgba(22, 22, 21, 0.98);
+        --plyr-menu-color: #ededec;
+        --plyr-tooltip-background: rgba(237, 237, 236, 0.96);
+        --plyr-tooltip-color: #0a0a0a;
+    }
+
     .paste-code .token-comment {
         color: oklch(0.6 0.05 220);
         font-style: italic;
