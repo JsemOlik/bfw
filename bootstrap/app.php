@@ -8,6 +8,9 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -29,6 +32,23 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (HttpExceptionInterface $exception, Request $request) {
+            $status = $exception->getStatusCode();
+
+            if (! in_array($status, [403, 404], true)) {
+                return null;
+            }
+
+            $component = match ($status) {
+                403 => 'errors/forbidden',
+                404 => 'errors/not-found',
+            };
+
+            return Inertia::render($component, [
+                'status' => $status,
+            ])->toResponse($request)->setStatusCode($status);
+        });
+
         $exceptions->render(function (PostTooLargeException $exception, $request) {
             if ($request->expectsJson()) {
                 return response()->json([
