@@ -5,15 +5,31 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Link;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class LinkController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $search = trim((string) $request->string('search')->value());
+
         $links = Link::query()
             ->with('user:id,name,email')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($nestedQuery) use ($search) {
+                    $nestedQuery
+                        ->where('slug', 'like', "%{$search}%")
+                        ->orWhere('original_url', 'like', "%{$search}%")
+                        ->orWhere('id', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($userQuery) use ($search) {
+                            $userQuery
+                                ->where('name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->latest()
             ->get()
             ->map(fn (Link $link) => [
@@ -31,6 +47,9 @@ class LinkController extends Controller
 
         return Inertia::render('admin/links/index', [
             'links' => $links,
+            'filters' => [
+                'search' => $search,
+            ],
         ]);
     }
 

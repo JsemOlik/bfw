@@ -40,6 +40,47 @@ it('shows all shortened links to admins', function () {
         );
 });
 
+it('lets admins search links by slug, url, owner, and id', function () {
+    $admin = User::factory()->admin()->create();
+    $owner = User::factory()->create([
+        'name' => 'Taylor Linker',
+        'email' => 'taylor-links@example.com',
+    ]);
+
+    $matchingLink = Link::create([
+        'original_url' => 'https://example.com/favorite-link',
+        'slug' => 'favorite-link',
+        'user_id' => $owner->id,
+        'expires_at' => now()->addDay(),
+    ]);
+
+    Link::create([
+        'original_url' => 'https://example.com/other-link',
+        'slug' => 'something-else',
+        'expires_at' => now()->addDay(),
+    ]);
+
+    foreach ([
+        'favorite-link',
+        'example.com/favorite-link',
+        'Taylor Linker',
+        (string) $matchingLink->id,
+    ] as $search) {
+        $response = $this->actingAs($admin)->get(route('admin.links.index', [
+            'search' => $search,
+        ]));
+
+        $response->assertSuccessful()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/links/index')
+                ->where('filters.search', $search)
+                ->has('links', 1)
+                ->where('links.0.id', $matchingLink->id)
+                ->etc()
+            );
+    }
+});
+
 it('shows all pastes to admins', function () {
     $admin = User::factory()->admin()->create();
     $owner = User::factory()->create([
@@ -65,6 +106,85 @@ it('shows all pastes to admins', function () {
             ->where('pastes.0.slug', $paste->slug)
             ->where('pastes.0.owner_email', $owner->email)
             ->etc()
+        );
+});
+
+it('lets admins search pastes by slug, content, file, owner, and id', function () {
+    $admin = User::factory()->admin()->create();
+    $owner = User::factory()->create([
+        'name' => 'Paste Owner',
+        'email' => 'paste-owner@example.com',
+    ]);
+
+    $matchingPaste = Paste::factory()->create([
+        'user_id' => $owner->id,
+        'type' => 'text',
+        'content' => 'A searchable admin paste body',
+        'slug' => 'searchable-paste',
+        'syntax' => 'plaintext',
+    ]);
+
+    Paste::factory()->create([
+        'type' => 'image',
+        'slug' => 'other-paste',
+        'original_filename' => 'holiday-photo.jpg',
+        'mime_type' => 'image/jpeg',
+        'content' => null,
+    ]);
+
+    foreach ([
+        'searchable-paste',
+        'searchable admin paste',
+        'Paste Owner',
+        (string) $matchingPaste->id,
+    ] as $search) {
+        $response = $this->actingAs($admin)->get(route('admin.pastes.index', [
+            'search' => $search,
+        ]));
+
+        $response->assertSuccessful()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/pastes/index')
+                ->where('filters.search', $search)
+                ->has('pastes', 1)
+                ->where('pastes.0.id', $matchingPaste->id)
+                ->etc()
+            );
+    }
+
+    $response = $this->actingAs($admin)->get(route('admin.pastes.index', [
+        'search' => 'holiday-photo.jpg',
+    ]));
+
+    $response->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/pastes/index')
+            ->where('filters.search', 'holiday-photo.jpg')
+            ->has('pastes', 1)
+            ->where('pastes.0.slug', 'other-paste')
+            ->etc()
+        );
+});
+
+it('shows empty admin states for links and pastes', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)
+        ->get(route('admin.links.index'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/links/index')
+            ->has('links', 0)
+            ->where('filters.search', '')
+        );
+
+    $this->actingAs($admin)
+        ->get(route('admin.pastes.index'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/pastes/index')
+            ->has('pastes', 0)
+            ->where('filters.search', '')
         );
 });
 
