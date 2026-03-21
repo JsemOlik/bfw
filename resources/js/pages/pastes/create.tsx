@@ -1,7 +1,6 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import DeleteConfirmModal from '@/components/delete-confirm-modal';
-import PasteVideoPlayer from '@/components/paste-video-player';
 import PasteController from '@/actions/App/Http/Controllers/PasteController';
 import AppLayout from '@/layouts/app-layout';
 
@@ -38,7 +37,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
     const [isDraggingImage, setIsDraggingImage] = useState(false);
     const [imageSelectionError, setImageSelectionError] = useState<string | null>(null);
-    const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+    const [videoThumbnailUrl, setVideoThumbnailUrl] = useState<string | null>(null);
     const [isDraggingVideo, setIsDraggingVideo] = useState(false);
     const [videoSelectionError, setVideoSelectionError] = useState<string | null>(null);
     const dashboardRef = useRef<HTMLDivElement | null>(null);
@@ -122,15 +121,54 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
 
     useEffect(() => {
         if (! data.video) {
-            setVideoPreviewUrl(null);
+            setVideoThumbnailUrl(null);
             return;
         }
 
         const previewUrl = URL.createObjectURL(data.video);
+        const previewVideo = document.createElement('video');
+        let isCancelled = false;
 
-        setVideoPreviewUrl(previewUrl);
+        previewVideo.preload = 'metadata';
+        previewVideo.muted = true;
+        previewVideo.playsInline = true;
+        previewVideo.src = previewUrl;
 
-        return () => URL.revokeObjectURL(previewUrl);
+        const generateThumbnail = (): void => {
+            if (isCancelled || previewVideo.videoWidth === 0 || previewVideo.videoHeight === 0) {
+                setVideoThumbnailUrl(null);
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = previewVideo.videoWidth;
+            canvas.height = previewVideo.videoHeight;
+
+            const context = canvas.getContext('2d');
+
+            if (! context) {
+                setVideoThumbnailUrl(null);
+                return;
+            }
+
+            context.drawImage(previewVideo, 0, 0, canvas.width, canvas.height);
+            setVideoThumbnailUrl(canvas.toDataURL('image/jpeg', 0.92));
+        };
+
+        previewVideo.addEventListener('loadeddata', generateThumbnail);
+        previewVideo.addEventListener('error', () => {
+            if (! isCancelled) {
+                setVideoThumbnailUrl(null);
+            }
+        });
+
+        return () => {
+            isCancelled = true;
+            previewVideo.pause();
+            previewVideo.removeAttribute('src');
+            previewVideo.load();
+            URL.revokeObjectURL(previewUrl);
+        };
     }, [data.video]);
 
     const handleDelete = (id: number): void => {
@@ -562,16 +600,20 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                         : 'border-gray-300 bg-gray-50 hover:border-[#f53003] hover:bg-red-50/30 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:hover:border-[#FF4433] dark:hover:bg-red-950/20'
                                                 }`}
                                             >
-                                                {videoPreviewUrl && (
-                                                    <PasteVideoPlayer
-                                                        src={videoPreviewUrl}
-                                                        title={
-                                                            data.video?.name ??
-                                                            'Video paste'
-                                                        }
-                                                        wrapperClassName="w-full"
-                                                        videoClassName="max-h-56 w-full rounded-lg border border-gray-200 bg-black object-contain shadow-sm dark:border-[#3E3E3A]"
-                                                    />
+                                                {videoThumbnailUrl && (
+                                                    <>
+                                                        <img
+                                                            src={videoThumbnailUrl}
+                                                            alt={
+                                                                data.video?.name ??
+                                                                'Video paste thumbnail'
+                                                            }
+                                                            className="max-h-56 w-full rounded-lg border border-gray-200 bg-black object-contain shadow-sm dark:border-[#3E3E3A]"
+                                                        />
+                                                        <span className="max-w-full truncate text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                                            {data.video?.name ?? 'Video paste'}
+                                                        </span>
+                                                    </>
                                                 )}
                                                 {!data.video && (
                                                     <>

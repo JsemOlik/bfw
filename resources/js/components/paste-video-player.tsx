@@ -23,6 +23,29 @@ export default function PasteVideoPlayer({
         playerRef.current?.togglePlay();
     };
 
+    const toggleMute = (): void => {
+        if (!videoRef.current) {
+            return;
+        }
+
+        videoRef.current.muted = !videoRef.current.muted;
+    };
+
+    const toggleFullscreen = async (): Promise<void> => {
+        const fullscreenTarget = videoRef.current?.closest('.plyr');
+
+        if (!(fullscreenTarget instanceof HTMLElement)) {
+            return;
+        }
+
+        if (document.fullscreenElement) {
+            await document.exitFullscreen();
+            return;
+        }
+
+        await fullscreenTarget.requestFullscreen();
+    };
+
     const shouldIgnoreInteraction = (target: EventTarget | null): boolean => {
         if (!(target instanceof HTMLElement)) {
             return false;
@@ -33,10 +56,25 @@ export default function PasteVideoPlayer({
         ) !== null;
     };
 
+    const shouldIgnoreHotkey = (target: EventTarget | null): boolean => {
+        if (!(target instanceof HTMLElement)) {
+            return false;
+        }
+
+        if (target.isContentEditable) {
+            return true;
+        }
+
+        return target.closest(
+            'input, textarea, select, button, a, [contenteditable="true"], .plyr__controls, .plyr__menu',
+        ) !== null;
+    };
+
     useEffect(() => {
         const videoElement = videoRef.current;
+        const wrapperElement = wrapperRef.current;
 
-        if (!videoElement) {
+        if (!videoElement || !wrapperElement) {
             return;
         }
 
@@ -66,7 +104,50 @@ export default function PasteVideoPlayer({
             },
         });
 
+        const handlePlayerClick = (event: MouseEvent): void => {
+            if (shouldIgnoreInteraction(event.target)) {
+                return;
+            }
+
+            wrapperElement.focus();
+            togglePlayback();
+        };
+
+        const handleGlobalKeyDown = (event: KeyboardEvent): void => {
+            const pressedKey = event.key.toLowerCase();
+            const isToggleKey = event.key === ' ' || pressedKey === 'k';
+            const isMuteKey = pressedKey === 'm';
+            const isFullscreenKey = pressedKey === 'f';
+
+            if (! isToggleKey && ! isMuteKey && ! isFullscreenKey) {
+                return;
+            }
+
+            if (shouldIgnoreHotkey(event.target)) {
+                return;
+            }
+
+            event.preventDefault();
+
+            if (isToggleKey) {
+                togglePlayback();
+                return;
+            }
+
+            if (isMuteKey) {
+                toggleMute();
+                return;
+            }
+
+            void toggleFullscreen();
+        };
+
+        wrapperElement.addEventListener('click', handlePlayerClick, true);
+        document.addEventListener('keydown', handleGlobalKeyDown);
+
         return () => {
+            wrapperElement.removeEventListener('click', handlePlayerClick, true);
+            document.removeEventListener('keydown', handleGlobalKeyDown);
             playerRef.current?.destroy();
             playerRef.current = null;
         };
@@ -80,26 +161,6 @@ export default function PasteVideoPlayer({
                 tabIndex={0}
                 role="button"
                 aria-label={`Toggle playback for ${title}`}
-                onPointerDown={() => wrapperRef.current?.focus()}
-                onClickCapture={(event) => {
-                    if (shouldIgnoreInteraction(event.target)) {
-                        return;
-                    }
-
-                    togglePlayback();
-                }}
-                onKeyDown={(event) => {
-                    if (event.key !== ' ' && event.key.toLowerCase() !== 'k') {
-                        return;
-                    }
-
-                    if (shouldIgnoreInteraction(event.target)) {
-                        return;
-                    }
-
-                    event.preventDefault();
-                    togglePlayback();
-                }}
             >
                 <video
                     ref={videoRef}
