@@ -573,30 +573,32 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                         videoClassName="max-h-56 w-full rounded-lg border border-gray-200 bg-black object-contain shadow-sm dark:border-[#3E3E3A]"
                                                     />
                                                 )}
-                                                <svg
-                                                    width="24"
-                                                    height="24"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    className="text-gray-400 dark:text-gray-500"
-                                                >
-                                                    <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                                                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                                                </svg>
-                                                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                                    {data.video
-                                                        ? data.video.name
-                                                        : 'Choose a video to upload'}
-                                                </span>
-                                                <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                    {isDraggingVideo
-                                                        ? 'Drop your video here'
-                                                        : 'MP4, WebM, OGG, MOV or MKV up to 25 MB'}
-                                                </span>
+                                                {!data.video && (
+                                                    <>
+                                                        <svg
+                                                            width="24"
+                                                            height="24"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            className="text-gray-400 dark:text-gray-500"
+                                                        >
+                                                            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                                                        </svg>
+                                                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                                            Choose a video to upload
+                                                        </span>
+                                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                            {isDraggingVideo
+                                                                ? 'Drop your video here'
+                                                                : 'MP4, WebM, OGG, MOV or MKV up to 25 MB'}
+                                                        </span>
+                                                    </>
+                                                )}
                                                 <input
                                                     type="file"
                                                     accept="video/mp4,video/webm,video/ogg,video/quicktime,video/x-matroska,.mp4,.webm,.ogg,.ogv,.mov,.mkv"

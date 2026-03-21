@@ -1,7 +1,12 @@
 declare module 'plyr' {
     interface PlyrOptions {
+        clickToPlay?: boolean;
         controls?: string[];
         iconUrl?: string;
+        keyboard?: {
+            focused?: boolean;
+            global?: boolean;
+        };
         fullscreen?: {
             enabled?: boolean;
             iosNative?: boolean;
@@ -15,5 +20,6 @@ declare module 'plyr' {
         );
 
         public destroy(): void;
+        public togglePlay(toggle?: boolean): void;
     }
 }

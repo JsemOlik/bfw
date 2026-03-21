@@ -15,8 +15,23 @@ export default function PasteVideoPlayer({
     wrapperClassName,
     videoClassName,
 }: PasteVideoPlayerProps) {
+    const wrapperRef = useRef<HTMLDivElement | null>(null);
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const playerRef = useRef<Plyr | null>(null);
+
+    const togglePlayback = (): void => {
+        playerRef.current?.togglePlay();
+    };
+
+    const shouldIgnoreInteraction = (target: EventTarget | null): boolean => {
+        if (!(target instanceof HTMLElement)) {
+            return false;
+        }
+
+        return target.closest(
+            '.plyr__controls, .plyr__control, .plyr__menu, .plyr__progress, input, button, a',
+        ) !== null;
+    };
 
     useEffect(() => {
         const videoElement = videoRef.current;
@@ -28,6 +43,7 @@ export default function PasteVideoPlayer({
         playerRef.current?.destroy();
 
         playerRef.current = new Plyr(videoElement, {
+            clickToPlay: true,
             controls: [
                 'play-large',
                 'play',
@@ -40,6 +56,10 @@ export default function PasteVideoPlayer({
                 'airplay',
                 'fullscreen',
             ],
+            keyboard: {
+                focused: true,
+                global: true,
+            },
             fullscreen: {
                 enabled: true,
                 iosNative: true,
@@ -54,7 +74,33 @@ export default function PasteVideoPlayer({
 
     return (
         <div className={wrapperClassName}>
-            <div className="paste-video-player overflow-hidden rounded-xl">
+            <div
+                ref={wrapperRef}
+                className="paste-video-player overflow-hidden rounded-xl"
+                tabIndex={0}
+                role="button"
+                aria-label={`Toggle playback for ${title}`}
+                onPointerDown={() => wrapperRef.current?.focus()}
+                onClickCapture={(event) => {
+                    if (shouldIgnoreInteraction(event.target)) {
+                        return;
+                    }
+
+                    togglePlayback();
+                }}
+                onKeyDown={(event) => {
+                    if (event.key !== ' ' && event.key.toLowerCase() !== 'k') {
+                        return;
+                    }
+
+                    if (shouldIgnoreInteraction(event.target)) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    togglePlayback();
+                }}
+            >
                 <video
                     ref={videoRef}
                     key={src}

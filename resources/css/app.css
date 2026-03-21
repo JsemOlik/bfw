@@ -178,6 +178,17 @@
         background: rgb(226 44 2 / 1);
     }
 
+    .paste-video-player .plyr--video .plyr__controls .plyr__control:focus-visible {
+        background: transparent;
+        color: inherit;
+    }
+
+    .paste-video-player .plyr--video .plyr__controls .plyr__control:hover,
+    .paste-video-player .plyr--video .plyr__controls .plyr__control[aria-expanded='true'] {
+        background: rgb(245 48 3 / 1);
+        color: #fff;
+    }
+
     .paste-video-player .plyr--video .plyr__controls {
         background:
             linear-gradient(
@@ -185,6 +196,21 @@
                 rgb(10 10 10 / 0%) 0%,
                 rgb(10 10 10 / 76%) 100%
             );
+    }
+
+    .paste-video-player .plyr:fullscreen video,
+    .paste-video-player .plyr:fullscreen .plyr__video-wrapper,
+    .paste-video-player .plyr--fullscreen-fallback video,
+    .paste-video-player .plyr--fullscreen-fallback .plyr__video-wrapper {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        max-height: none !important;
+    }
+
+    .paste-video-player .plyr:fullscreen video,
+    .paste-video-player .plyr--fullscreen-fallback video {
+        object-fit: contain;
     }
 
     .dark .paste-video-player {
