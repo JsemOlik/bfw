@@ -1,8 +1,19 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import DeleteConfirmModal from '@/components/delete-confirm-modal';
+import FileTypeIcon from '@/components/file-type-icon';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import PasteController from '@/actions/App/Http/Controllers/PasteController';
 import AppLayout from '@/layouts/app-layout';
+import { getFileTypePresentation, getPasteTabRecommendation, type PasteTabRecommendation } from '@/lib/file-type';
 
 interface UserPaste {
     id: number;
@@ -43,6 +54,8 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
     const [videoSelectionError, setVideoSelectionError] = useState<string | null>(null);
     const [isDraggingFile, setIsDraggingFile] = useState(false);
     const [fileSelectionError, setFileSelectionError] = useState<string | null>(null);
+    const [fileRecommendation, setFileRecommendation] = useState<PasteTabRecommendation | null>(null);
+    const [isRecommendationOpen, setIsRecommendationOpen] = useState(false);
     const dashboardRef = useRef<HTMLDivElement | null>(null);
 
     const { delete: destroy, processing: deleting } = useForm();
@@ -95,6 +108,9 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                 ? '* This video paste expires in 2 weeks. You can see its status in the My Pastes dropdown below.'
                 : '* This file paste expires in 2 weeks. You can see its status in the My Pastes dropdown below.'
           : '* This paste expires in 24 hours. You can see its status in the My Pastes dropdown below.';
+    const selectedFilePresentation = data.file
+        ? getFileTypePresentation(data.file.name, data.file.type)
+        : null;
 
     useEffect(() => {
         if (copied) {
@@ -351,11 +367,22 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
         if (! file) {
             setFileSelectionError(null);
             setData('file', null);
+            closeRecommendation();
             return;
         }
 
         setFileSelectionError(null);
         setData('file', file);
+
+        const recommendation = getPasteTabRecommendation(file);
+
+        if (recommendation) {
+            setFileRecommendation(recommendation);
+            setIsRecommendationOpen(true);
+            return;
+        }
+
+        closeRecommendation();
     };
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -376,6 +403,51 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
         event.preventDefault();
         setIsDraggingFile(false);
         setSelectedFile(event.dataTransfer.files?.[0] ?? null);
+    };
+
+    const closeRecommendation = (): void => {
+        setIsRecommendationOpen(false);
+        setFileRecommendation(null);
+    };
+
+    const continueWithFileTab = (): void => {
+        closeRecommendation();
+    };
+
+    const switchToRecommendedTab = async (): Promise<void> => {
+        if (!fileRecommendation || !data.file) {
+            closeRecommendation();
+            return;
+        }
+
+        const selectedFile = data.file;
+        const recommendation = fileRecommendation;
+
+        closeRecommendation();
+
+        if (recommendation.targetType === 'image') {
+            switchType('image');
+            setData('image', selectedFile);
+            return;
+        }
+
+        if (recommendation.targetType === 'video') {
+            switchType('video');
+            setData('video', selectedFile);
+            return;
+        }
+
+        try {
+            const fileContents = await selectedFile.text();
+
+            switchType('text');
+            setData('content', fileContents);
+            setData('syntax', 'plaintext');
+        } catch {
+            setFileSelectionError('We could not read that text file. Please try again.');
+            switchType('file');
+            setData('file', selectedFile);
+        }
     };
 
     return (
@@ -660,23 +732,31 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                         : 'border-gray-300 bg-gray-50 hover:border-[#f53003] hover:bg-red-50/30 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:hover:border-[#FF4433] dark:hover:bg-red-950/20'
                                                 }`}
                                             >
-                                                <svg
-                                                    width="24"
-                                                    height="24"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    className="text-gray-400 dark:text-gray-500"
-                                                >
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                                    <line x1="10" y1="9" x2="8" y2="9"></line>
-                                                </svg>
+                                                {data.file ? (
+                                                    <FileTypeIcon
+                                                        filename={data.file.name}
+                                                        mimeType={data.file.type}
+                                                        className="h-20 w-20 rounded-3xl"
+                                                    />
+                                                ) : (
+                                                    <svg
+                                                        width="24"
+                                                        height="24"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        className="text-gray-400 dark:text-gray-500"
+                                                    >
+                                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                        <line x1="10" y1="9" x2="8" y2="9"></line>
+                                                    </svg>
+                                                )}
                                                 <span className="max-w-full truncate text-sm font-semibold text-gray-700 dark:text-gray-300">
                                                     {data.file
                                                         ? data.file.name
@@ -963,6 +1043,13 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                 >
                                                     <div className="flex-1 space-y-1">
                                                         <div className="flex items-center gap-2">
+                                                            {paste.type === 'file' && (
+                                                                <FileTypeIcon
+                                                                    filename={paste.snippet}
+                                                                    className="h-10 w-10 rounded-xl"
+                                                                    badgeClassName="text-[9px]"
+                                                                />
+                                                            )}
                                                             <a
                                                                 href={paste.public_url}
                                                                 target="_blank"
@@ -1076,6 +1163,82 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                     </div>
                 </div>
             </div>
+            <Dialog
+                open={isRecommendationOpen}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        closeRecommendation();
+                    }
+                }}
+            >
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <div className="mb-4 flex justify-center">
+                            <FileTypeIcon
+                                filename={data.file?.name}
+                                mimeType={data.file?.type}
+                                className="h-20 w-20 rounded-3xl"
+                                badgeClassName="text-[11px]"
+                            />
+                        </div>
+                        <DialogTitle className="text-center text-xl font-bold text-gray-900 dark:text-white">
+                            {fileRecommendation?.title}
+                        </DialogTitle>
+                        <DialogDescription className="text-center text-gray-500 dark:text-gray-400">
+                            {fileRecommendation?.description}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {data.file && selectedFilePresentation && fileRecommendation && (
+                        <div className="space-y-4">
+                            <div className="rounded-2xl border border-black/5 bg-black/[0.02] p-4 text-center dark:border-white/10 dark:bg-white/[0.03]">
+                                <p className="truncate text-sm font-semibold text-foreground">
+                                    {data.file.name}
+                                </p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    {selectedFilePresentation.label} file detected
+                                </p>
+                            </div>
+
+                            <div className="rounded-2xl border border-[#f53003]/10 bg-[#f53003]/5 p-4 dark:border-[#ff4433]/15 dark:bg-[#ff4433]/10">
+                                <p className="text-sm font-semibold text-foreground">
+                                    Why switch?
+                                </p>
+                                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                                    {fileRecommendation.benefits.map((benefit) => (
+                                        <li key={benefit} className="flex items-start gap-2">
+                                            <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#f53003] dark:bg-[#ff4433]"></span>
+                                            <span>{benefit}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
+
+                    <DialogFooter className="gap-2 sm:justify-between">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={continueWithFileTab}
+                            className="h-12 rounded-xl"
+                        >
+                            Continue with Files
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={() => void switchToRecommendedTab()}
+                            className="h-12 rounded-xl bg-[#f53003] text-white shadow-lg shadow-red-500/20 hover:bg-[#e22c02] dark:bg-[#FF4433] dark:hover:bg-[#f63d2d]"
+                        >
+                            Switch to {fileRecommendation?.targetType === 'text'
+                                ? 'Text'
+                                : fileRecommendation?.targetType === 'image'
+                                  ? 'Image'
+                                  : 'Video'} tab
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
             <DeleteConfirmModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
