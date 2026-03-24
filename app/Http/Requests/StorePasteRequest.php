@@ -25,7 +25,7 @@ class StorePasteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type' => ['required', Rule::in(['text', 'image', 'video'])],
+            'type' => ['required', Rule::in(['text', 'image', 'video', 'file'])],
             'content' => [
                 Rule::requiredIf($this->pasteType() === 'text'),
                 'nullable',
@@ -60,6 +60,12 @@ class StorePasteRequest extends FormRequest
                 'mimes:mp4,webm,ogg,ogv,mov,mkv',
                 'max:25600',
             ],
+            'file' => [
+                Rule::requiredIf($this->pasteType() === 'file'),
+                'nullable',
+                'file',
+                'max:25600',
+            ],
         ];
     }
 
@@ -73,6 +79,8 @@ class StorePasteRequest extends FormRequest
             'video.required' => 'Please choose a video to upload.',
             'video.mimes' => 'Please upload an MP4, WebM, OGG, MOV, or MKV video.',
             'video.max' => 'Videos must be 25 MB or smaller.',
+            'file.required' => 'Please choose a file to upload.',
+            'file.max' => 'Files must be 25 MB or smaller.',
             'type.in' => 'The selected paste type is invalid.',
             'slug.not_in' => 'That slug is reserved by the app.',
             'slug.unique' => 'That slug is already taken.',

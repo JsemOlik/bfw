@@ -6,11 +6,27 @@ import PasteController from '@/actions/App/Http/Controllers/PasteController';
 import MarketingNavbar from '@/components/marketing-navbar';
 import { formatDateTime } from '@/lib/dates';
 
+function formatBytes(size: number | null): string | null {
+    if (! size) {
+        return null;
+    }
+
+    if (size < 1024) {
+        return `${size} B`;
+    }
+
+    if (size < 1024 * 1024) {
+        return `${(size / 1024).toFixed(1)} KB`;
+    }
+
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 interface Props {
     paste: {
         id: number;
         user_id: number | null;
-        type: 'text' | 'image' | 'video';
+        type: 'text' | 'image' | 'video' | 'file';
         slug: string;
         public_url: string;
         syntax: string | null;
@@ -20,6 +36,7 @@ interface Props {
         media_url: string | null;
         original_filename: string | null;
         mime_type: string | null;
+        size_bytes?: number | null;
         created_at: string;
         expires_at: string | null;
         is_expired: boolean;
@@ -38,6 +55,7 @@ export default function Status({ paste }: Props) {
     const isOwner = auth.user && paste.user_id === auth.user.id;
     const isImagePaste = paste.type === 'image';
     const isVideoPaste = paste.type === 'video';
+    const isFilePaste = paste.type === 'file';
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
@@ -93,6 +111,8 @@ export default function Status({ paste }: Props) {
                                 ? 'Image Preview'
                                 : isVideoPaste
                                   ? 'Video Preview'
+                                  : isFilePaste
+                                    ? 'File Preview'
                                 : `Snippet Preview (${paste.syntax ?? 'plaintext'})`}
                         </label>
                         {isImagePaste && paste.media_url ? (
@@ -117,10 +137,39 @@ export default function Status({ paste }: Props) {
                                     videoClassName="max-h-80 w-full rounded-lg bg-black object-contain"
                                 />
                             </div>
+                        ) : isFilePaste ? (
+                            <div className="rounded-xl border border-gray-100 bg-gray-50 p-6 text-center dark:border-[#3E3E3A] dark:bg-[#0a0a0a]">
+                                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f53003]/10 text-[#f53003] dark:bg-[#FF4433]/15 dark:text-[#FF786C]">
+                                    <svg
+                                        width="28"
+                                        height="28"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        <line x1="10" y1="9" x2="8" y2="9"></line>
+                                    </svg>
+                                </div>
+                                <p className="mt-4 truncate text-sm font-semibold text-gray-900 dark:text-white">
+                                    {paste.original_filename ?? 'File paste'}
+                                </p>
+                                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                    {[paste.mime_type, formatBytes(paste.size_bytes ?? null)]
+                                        .filter(Boolean)
+                                        .join(' • ')}
+                                </p>
+                            </div>
                         ) : (
                             <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 font-mono text-sm leading-snug break-all text-gray-900 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-[#EDEDEC]">
                                 {paste.snippet}
-                                {!isImagePaste && '...'}
+                                {!isImagePaste && !isFilePaste && '...'}
                             </div>
                         )}
                     </div>

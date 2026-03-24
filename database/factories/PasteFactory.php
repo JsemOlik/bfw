@@ -59,4 +59,20 @@ class PasteFactory extends Factory
             'image_height' => null,
         ]);
     }
+
+    public function file(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'type' => 'file',
+            'content' => null,
+            'syntax' => null,
+            'storage_disk' => 'paste_media',
+            'storage_path' => 'pastes/files/test/example.pdf',
+            'original_filename' => 'example.pdf',
+            'mime_type' => 'application/pdf',
+            'size_bytes' => 4096,
+            'image_width' => null,
+            'image_height' => null,
+        ]);
+    }
 }

@@ -43,7 +43,7 @@ class PublicSlugController extends Controller
                 'slug' => $sluggable->slug,
                 'public_url' => $sluggable->publicUrl(),
                 'raw_url' => $sluggable->rawUrl(),
-                'media_url' => $sluggable->isMedia() ? $pasteMediaManager->url($sluggable) : null,
+                'media_url' => $sluggable->isStoredUpload() ? $pasteMediaManager->url($sluggable) : null,
                 'original_filename' => $sluggable->original_filename,
                 'mime_type' => $sluggable->mime_type,
                 'size_bytes' => $sluggable->size_bytes,
@@ -93,9 +93,10 @@ class PublicSlugController extends Controller
                     : ($sluggable->original_filename ?? Str::headline($sluggable->type).' paste'),
                 'view_count' => $sluggable->view_count,
                 'today_view_count' => $sluggable->viewedTodayCount(),
-                'media_url' => $sluggable->isMedia() ? $pasteMediaManager->url($sluggable) : null,
+                'media_url' => $sluggable->isStoredUpload() ? $pasteMediaManager->url($sluggable) : null,
                 'original_filename' => $sluggable->original_filename,
                 'mime_type' => $sluggable->mime_type,
+                'size_bytes' => $sluggable->size_bytes,
                 'created_at' => $sluggable->created_at->toDateTimeString(),
                 'expires_at' => $sluggable->expires_at?->toDateTimeString(),
                 'is_expired' => $sluggable->expires_at?->isPast() ?? false,
@@ -112,7 +113,7 @@ class PublicSlugController extends Controller
 
         $sluggable->recordView();
 
-        if ($sluggable->isMedia()) {
+        if ($sluggable->isStoredUpload()) {
             $url = $pasteMediaManager->url($sluggable);
 
             if (Str::startsWith($url, ['http://', 'https://'])) {

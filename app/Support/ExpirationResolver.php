@@ -19,7 +19,7 @@ class ExpirationResolver
 
         return match ($context) {
             'link' => now()->addMonthsNoOverflow(3),
-            'paste.image', 'paste.video' => now()->addDays(14),
+            'paste.image', 'paste.video', 'paste.file' => now()->addDays(14),
             default => now()->addMonthsNoOverflow(2),
         };
     }

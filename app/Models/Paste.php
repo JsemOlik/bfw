@@ -66,9 +66,19 @@ class Paste extends Model
         return $this->type === 'video';
     }
 
+    public function isFile(): bool
+    {
+        return $this->type === 'file';
+    }
+
     public function isMedia(): bool
     {
         return $this->isImage() || $this->isVideo();
+    }
+
+    public function isStoredUpload(): bool
+    {
+        return $this->isMedia() || $this->isFile();
     }
 
     public function rawUrl(): string

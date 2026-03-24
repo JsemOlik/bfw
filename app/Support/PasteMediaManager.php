@@ -54,6 +54,22 @@ class PasteMediaManager
      *     original_filename: string
      * }
      */
+    public function storeUploadedFile(UploadedFile $file): array
+    {
+        return $this->storeUploadedMedia($file, 'file');
+    }
+
+    /**
+     * @return array{
+     *     disk: string,
+     *     path: string,
+     *     mime_type: string,
+     *     size_bytes: int,
+     *     image_width: int|null,
+     *     image_height: int|null,
+     *     original_filename: string
+     * }
+     */
     protected function storeUploadedMedia(UploadedFile $file, string $type): array
     {
         $disk = (string) config('filesystems.default_media_disk', 'public');
@@ -61,6 +77,7 @@ class PasteMediaManager
         $directory = match ($type) {
             'image' => 'images',
             'video' => 'videos',
+            'file' => 'files',
             default => throw new RuntimeException('Unsupported media type.'),
         };
         $path = sprintf(
@@ -74,13 +91,13 @@ class PasteMediaManager
         $contents = @file_get_contents($file->getRealPath() ?: '');
 
         if (! is_string($contents)) {
-            throw new RuntimeException('Unable to store uploaded image.');
+            throw new RuntimeException('Unable to store uploaded media.');
         }
 
         $stored = $this->storeContents($disk, $path, $contents, $file);
 
         if ($stored === false) {
-            throw new RuntimeException('Unable to store uploaded image.');
+            throw new RuntimeException('Unable to store uploaded media.');
         }
 
         [$width, $height] = $type === 'image'
@@ -113,7 +130,7 @@ class PasteMediaManager
 
     public function delete(Paste $paste): void
     {
-        if (! $paste->isMedia() || ! $paste->storage_path) {
+        if (! $paste->isStoredUpload() || ! $paste->storage_path) {
             return;
         }
 

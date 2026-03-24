@@ -10,7 +10,7 @@ interface HighlightedToken {
 }
 
 interface Paste {
-    type: 'text' | 'image' | 'video';
+    type: 'text' | 'image' | 'video' | 'file';
     content: string | null;
     syntax: string | null;
     slug: string;
@@ -49,9 +49,10 @@ export default function Show({ paste }: Props) {
     const [copied, setCopied] = useState(false);
     const isImagePaste = paste.type === 'image';
     const isVideoPaste = paste.type === 'video';
-    const isMediaPaste = isImagePaste || isVideoPaste;
+    const isFilePaste = paste.type === 'file';
+    const isStoredUploadPaste = isImagePaste || isVideoPaste || isFilePaste;
     const copyLabel = 'Copy Raw';
-    const badgeLabel = isMediaPaste ? paste.type : (paste.syntax ?? 'plaintext');
+    const badgeLabel = isStoredUploadPaste ? paste.type : (paste.syntax ?? 'plaintext');
     const metadata = [
         paste.original_filename,
         isImagePaste && paste.image_width && paste.image_height
@@ -93,7 +94,7 @@ export default function Show({ paste }: Props) {
                         <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold tracking-wider text-gray-600 uppercase dark:bg-[#161615] dark:text-gray-400">
                             {badgeLabel}
                         </span>
-                        {isMediaPaste ? (
+                        {isStoredUploadPaste ? (
                             <a
                                 href={paste.raw_url}
                                 className="flex items-center gap-2 rounded-lg bg-[#f53003] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-red-500/20 transition-all hover:bg-[#e22c02] dark:bg-[#FF4433] dark:hover:bg-[#f63d2d]"
@@ -220,6 +221,40 @@ export default function Show({ paste }: Props) {
                                         videoClassName="max-h-[75vh] w-full max-w-full bg-black object-contain"
                                     />
                                 )}
+                            </div>
+                        ) : isFilePaste ? (
+                            <div className="flex justify-center">
+                                <div className="w-full max-w-2xl rounded-2xl border border-gray-200 bg-gray-50 p-6 text-center dark:border-[#3E3E3A] dark:bg-[#0a0a0a]">
+                                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f53003]/10 text-[#f53003] dark:bg-[#FF4433]/15 dark:text-[#FF786C]">
+                                        <svg
+                                            width="28"
+                                            height="28"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        >
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            <line x1="10" y1="9" x2="8" y2="9"></line>
+                                        </svg>
+                                    </div>
+                                    <p className="mt-4 truncate text-base font-semibold text-gray-900 dark:text-white">
+                                        {paste.original_filename ?? 'File paste'}
+                                    </p>
+                                    {metadata.length > 0 && (
+                                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            {metadata.join(' • ')}
+                                        </p>
+                                    )}
+                                    <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                                        Open the raw file to download or view it directly.
+                                    </p>
+                                </div>
                             </div>
                         ) : (
                             <pre className="paste-code font-mono text-sm leading-relaxed text-gray-800 dark:text-gray-200">

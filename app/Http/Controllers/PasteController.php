@@ -47,14 +47,16 @@ class PasteController extends Controller
     {
         $storedMedia = null;
 
-        if (in_array($request->pasteType(), ['image', 'video'], true)) {
+        if (in_array($request->pasteType(), ['image', 'video', 'file'], true)) {
             $pasteType = $request->pasteType();
             $uploadField = $pasteType;
 
             try {
-                $storedMedia = $pasteType === 'image'
-                    ? $pasteMediaManager->storeUploadedImage($request->file('image'))
-                    : $pasteMediaManager->storeUploadedVideo($request->file('video'));
+                $storedMedia = match ($pasteType) {
+                    'image' => $pasteMediaManager->storeUploadedImage($request->file('image')),
+                    'video' => $pasteMediaManager->storeUploadedVideo($request->file('video')),
+                    'file' => $pasteMediaManager->storeUploadedFile($request->file('file')),
+                };
 
                 $paste = DB::transaction(fn (): Paste => Paste::create([
                     'type' => $pasteType,
@@ -142,7 +144,7 @@ class PasteController extends Controller
                 'slug' => $paste->slug,
                 'public_url' => $paste->publicUrl(),
                 'raw_url' => $paste->rawUrl(),
-                'media_url' => $paste->isMedia() ? $pasteMediaManager->url($paste) : null,
+                'media_url' => $paste->isStoredUpload() ? $pasteMediaManager->url($paste) : null,
                 'original_filename' => $paste->original_filename,
                 'mime_type' => $paste->mime_type,
                 'size_bytes' => $paste->size_bytes,
@@ -170,7 +172,7 @@ class PasteController extends Controller
 
         $paste->recordView();
 
-        if ($paste->isMedia()) {
+        if ($paste->isStoredUpload()) {
             $url = $pasteMediaManager->url($paste);
 
             if (Str::startsWith($url, ['http://', 'https://'])) {
@@ -205,9 +207,10 @@ class PasteController extends Controller
                     : ($paste->original_filename ?? Str::headline($paste->type).' paste'),
                 'view_count' => $paste->view_count,
                 'today_view_count' => $paste->viewedTodayCount(),
-                'media_url' => $paste->isMedia() ? $pasteMediaManager->url($paste) : null,
+                'media_url' => $paste->isStoredUpload() ? $pasteMediaManager->url($paste) : null,
                 'original_filename' => $paste->original_filename,
                 'mime_type' => $paste->mime_type,
+                'size_bytes' => $paste->size_bytes,
                 'created_at' => $paste->created_at->toDateTimeString(),
                 'expires_at' => $paste->expires_at?->toDateTimeString(),
                 'is_expired' => $paste->expires_at?->isPast() ?? false,

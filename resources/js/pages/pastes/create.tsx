@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/app-layout';
 
 interface UserPaste {
     id: number;
-    type: 'text' | 'image' | 'video';
+    type: 'text' | 'image' | 'video' | 'file';
     slug: string;
     public_url: string;
     status_url: string;
@@ -16,12 +16,13 @@ interface UserPaste {
 }
 
 interface PasteFormData {
-    type: 'text' | 'image' | 'video';
+    type: 'text' | 'image' | 'video' | 'file';
     content: string;
     syntax: string;
     slug: string;
     image: File | null;
     video: File | null;
+    file: File | null;
 }
 
 export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }) {
@@ -40,6 +41,8 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
     const [videoThumbnailUrl, setVideoThumbnailUrl] = useState<string | null>(null);
     const [isDraggingVideo, setIsDraggingVideo] = useState(false);
     const [videoSelectionError, setVideoSelectionError] = useState<string | null>(null);
+    const [isDraggingFile, setIsDraggingFile] = useState(false);
+    const [fileSelectionError, setFileSelectionError] = useState<string | null>(null);
     const dashboardRef = useRef<HTMLDivElement | null>(null);
 
     const { delete: destroy, processing: deleting } = useForm();
@@ -52,6 +55,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
             slug: '',
             image: null,
             video: null,
+            file: null,
         });
 
     const shortenedLink = flash?.shortened_link;
@@ -60,7 +64,9 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
         ? 'text paste'
         : data.type === 'image'
           ? 'image paste'
-          : 'video paste';
+          : data.type === 'video'
+            ? 'video paste'
+            : 'file paste';
     const expiryDescription = isAdmin
         ? `Create a ${currentPasteLabel}. Admin pastes never expire ;)`
         : auth.user
@@ -68,12 +74,16 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
             ? 'Paste text, your code, or even logs. Expires in 3 months.'
             : data.type === 'image'
               ? 'Upload your cat, dog, or any other image. Expires in 2 weeks.'
-              : 'Upload your birthday party, or any other video. Expires in 2 weeks.'
+              : data.type === 'video'
+                ? 'Upload your birthday party, or any other video. Expires in 2 weeks.'
+                : 'Upload documents, archives, or other classic files. Expires in 2 weeks.'
           : data.type === 'text'
             ? 'Paste text, your code, or even logs. Expires in 24 hours.'
             : data.type === 'image'
               ? 'Upload your cat, dog, or any other image. Expires in 24 hours.'
-              : 'Upload your birthday party, or any other video. Expires in 24 hours.';
+              : data.type === 'video'
+                ? 'Upload your birthday party, or any other video. Expires in 24 hours.'
+                : 'Upload documents, archives, or other classic files. Expires in 24 hours.';
     const successExpiryNote = isAdmin
         ? '* Admin pastes do not expire. You can still manage them from My Pastes below.'
         : auth.user
@@ -81,7 +91,9 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
             ? '* This text paste expires in 2 months. You can see its status in the My Pastes dropdown below.'
             : data.type === 'image'
               ? '* This image paste expires in 2 weeks. You can see its status in the My Pastes dropdown below.'
-              : '* This video paste expires in 2 weeks. You can see its status in the My Pastes dropdown below.'
+              : data.type === 'video'
+                ? '* This video paste expires in 2 weeks. You can see its status in the My Pastes dropdown below.'
+                : '* This file paste expires in 2 weeks. You can see its status in the My Pastes dropdown below.'
           : '* This paste expires in 24 hours. You can see its status in the My Pastes dropdown below.';
 
     useEffect(() => {
@@ -188,7 +200,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
         }
     };
 
-    const switchType = (type: 'text' | 'image' | 'video'): void => {
+    const switchType = (type: 'text' | 'image' | 'video' | 'file'): void => {
         setData('type', type);
 
         if (type !== 'image') {
@@ -201,6 +213,12 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
             setData('video', null);
             setVideoSelectionError(null);
             setIsDraggingVideo(false);
+        }
+
+        if (type !== 'file') {
+            setData('file', null);
+            setFileSelectionError(null);
+            setIsDraggingFile(false);
         }
     };
 
@@ -329,6 +347,37 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
         setSelectedVideo(event.dataTransfer.files?.[0] ?? null);
     };
 
+    const setSelectedFile = (file: File | null): void => {
+        if (! file) {
+            setFileSelectionError(null);
+            setData('file', null);
+            return;
+        }
+
+        setFileSelectionError(null);
+        setData('file', file);
+    };
+
+    const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
+        setSelectedFile(event.target.files?.[0] ?? null);
+    };
+
+    const handleFileDragOver = (event: DragEvent<HTMLLabelElement>): void => {
+        event.preventDefault();
+        setIsDraggingFile(true);
+    };
+
+    const handleFileDragLeave = (event: DragEvent<HTMLLabelElement>): void => {
+        event.preventDefault();
+        setIsDraggingFile(false);
+    };
+
+    const handleFileDrop = (event: DragEvent<HTMLLabelElement>): void => {
+        event.preventDefault();
+        setIsDraggingFile(false);
+        setSelectedFile(event.dataTransfer.files?.[0] ?? null);
+    };
+
     return (
         <AppLayout>
             <Head title="Create a Paste" />
@@ -390,7 +439,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                                     Paste Type
                                 </label>
-                                <div className="grid grid-cols-3 gap-3">
+                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                                     <button
                                         type="button"
                                         onClick={() => switchType('text')}
@@ -423,6 +472,17 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                         }`}
                                     >
                                         Video
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => switchType('file')}
+                                        className={`rounded-xl border px-4 py-3 text-sm font-bold transition-all ${
+                                            data.type === 'file'
+                                                ? 'border-[#f53003] bg-red-50 text-[#f53003] dark:border-[#FF4433] dark:bg-red-950/30 dark:text-[#FF4433]'
+                                                : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-gray-300'
+                                        }`}
+                                    >
+                                        Files
                                     </button>
                                 </div>
                             </div>
@@ -571,6 +631,71 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                             {(imageSelectionError || errors.image) && (
                                                 <p className="mt-1 text-xs text-red-500">
                                                     {imageSelectionError ?? errors.image}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div
+                                    aria-hidden={data.type !== 'file'}
+                                    className={`grid transition-[grid-template-rows,opacity,transform] duration-300 ease-out ${
+                                        data.type === 'file'
+                                            ? 'grid-rows-[1fr] opacity-100'
+                                            : 'pointer-events-none grid-rows-[0fr] translate-y-1 opacity-0'
+                                    }`}
+                                >
+                                    <div className="overflow-hidden">
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                                File Upload
+                                            </label>
+                                            <label
+                                                onDragOver={handleFileDragOver}
+                                                onDragLeave={handleFileDragLeave}
+                                                onDrop={handleFileDrop}
+                                                className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-10 text-center transition-all ${
+                                                    isDraggingFile
+                                                        ? 'border-[#f53003] bg-red-50/60 dark:border-[#FF4433] dark:bg-red-950/30'
+                                                        : 'border-gray-300 bg-gray-50 hover:border-[#f53003] hover:bg-red-50/30 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:hover:border-[#FF4433] dark:hover:bg-red-950/20'
+                                                }`}
+                                            >
+                                                <svg
+                                                    width="24"
+                                                    height="24"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    className="text-gray-400 dark:text-gray-500"
+                                                >
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                    <line x1="10" y1="9" x2="8" y2="9"></line>
+                                                </svg>
+                                                <span className="max-w-full truncate text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                                    {data.file
+                                                        ? data.file.name
+                                                        : 'Choose a file to upload'}
+                                                </span>
+                                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {isDraggingFile
+                                                        ? 'Drop your file here'
+                                                        : 'Any file up to 25 MB'}
+                                                </span>
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    onChange={handleFileChange}
+                                                />
+                                            </label>
+                                            {(fileSelectionError || errors.file) && (
+                                                <p className="mt-1 text-xs text-red-500">
+                                                    {fileSelectionError ?? errors.file}
                                                 </p>
                                             )}
                                         </div>
@@ -876,7 +1001,9 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                                     ? 'image'
                                                                     : paste.type === 'video'
                                                                       ? 'video'
-                                                                      : paste.syntax}
+                                                                      : paste.type === 'file'
+                                                                        ? 'file'
+                                                                        : paste.syntax}
                                                             </span>
                                                         </div>
                                                         <p className="max-w-[300px] truncate font-mono text-xs text-gray-500">

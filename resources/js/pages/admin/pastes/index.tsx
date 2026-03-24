@@ -118,7 +118,7 @@ export default function AdminPastes({
                     <Heading
                         variant="small"
                         title="Pastes"
-                        description="Review every text, image, and video paste created on bfw.cz"
+                        description="Review every text, image, video, and file paste created on bfw.cz"
                     />
 
                     <form

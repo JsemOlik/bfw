@@ -5,12 +5,16 @@ use App\Models\Paste;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->withoutVite();
+    config()->set('filesystems.default_media_disk', 'paste_media');
+    config()->set('filesystems.paste_media_cdn_url', null);
+    Storage::fake('paste_media');
 });
 
 it('resolves root link slugs to their destination', function () {
@@ -120,6 +124,25 @@ it('returns raw content for root paste raw urls', function () {
 
     expect($response->getContent())->toBe('Root raw content');
     expect($paste->fresh()->view_count)->toBe(1);
+});
+
+it('renders root file slugs', function () {
+    Storage::disk('paste_media')->put('pastes/files/test/example.pdf', 'file-bytes');
+
+    $paste = Paste::factory()->file()->create([
+        'slug' => 'root-file-paste',
+    ]);
+
+    $response = $this->get('/'.$paste->slug);
+
+    $response->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('pastes/show')
+            ->where('paste.slug', $paste->slug)
+            ->where('paste.type', 'file')
+            ->where('paste.media_url', Storage::disk('paste_media')->url('pastes/files/test/example.pdf'))
+            ->etc()
+        );
 });
 
 it('prevents pastes from reusing link slugs', function () {

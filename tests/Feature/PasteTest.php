@@ -60,6 +60,13 @@ function fakeVideoUpload(string $name = 'clip.mp4'): UploadedFile
         ->mimeType($mimeType);
 }
 
+function fakeFileUpload(string $name = 'manual.pdf', string $contents = 'file-placeholder', string $mimeType = 'application/pdf'): UploadedFile
+{
+    return UploadedFile::fake()
+        ->createWithContent($name, $contents)
+        ->mimeType($mimeType);
+}
+
 it('allows guests to create a paste', function () {
     $response = $this->from('/paste')->post('/paste', [
         'content' => 'Hello World!',
@@ -228,6 +235,34 @@ it('allows guests to create mov and mkv video pastes', function (string $filenam
     'mkv' => ['clip.mkv', 'video/x-matroska'],
 ]);
 
+it('allows guests to create a file paste', function () {
+    $file = fakeFileUpload();
+    $originalContents = file_get_contents($file->getRealPath());
+
+    expect($originalContents)->toBeString();
+
+    $response = $this->from('/paste')->post('/paste', [
+        'type' => 'file',
+        'slug' => 'manual-file',
+        'file' => $file,
+    ]);
+
+    $paste = Paste::first();
+
+    $response->assertRedirect('/paste');
+    $response->assertSessionHas('shortened_link', url('/manual-file'));
+    expect($paste->type)
+        ->toBe('file')
+        ->and($paste->content)->toBeNull()
+        ->and($paste->original_filename)->toBe('manual.pdf')
+        ->and($paste->mime_type)->toBe('application/pdf')
+        ->and($paste->image_width)->toBeNull()
+        ->and($paste->image_height)->toBeNull();
+
+    Storage::disk('paste_media')->assertExists($paste->storage_path);
+    expect(Storage::disk('paste_media')->get($paste->storage_path))->toBe($originalContents);
+});
+
 it('does not create a broken paste record when image upload fails', function () {
     $this->mock(PasteMediaManager::class, function (MockInterface $mock) {
         $mock->shouldReceive('storeUploadedImage')
@@ -297,6 +332,22 @@ it('expires authenticated video pastes in fourteen days', function () {
     $this->actingAs($user)->from('/paste')->post('/paste', [
         'type' => 'video',
         'video' => fakeVideoUpload(),
+    ]);
+
+    $paste = Paste::first();
+
+    expect($paste->expires_at?->toDateTimeString())
+        ->toBe(now()->addDays(14)->toDateTimeString());
+});
+
+it('expires authenticated file pastes in fourteen days', function () {
+    $this->travelTo(now()->startOfSecond());
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->from('/paste')->post('/paste', [
+        'type' => 'file',
+        'file' => fakeFileUpload(),
     ]);
 
     $paste = Paste::first();
@@ -393,6 +444,26 @@ it('shows video pastes with a raw video url', function () {
     expect($paste->fresh()->view_count)->toBe(1);
 });
 
+it('shows file pastes with a raw file url', function () {
+    Storage::disk('paste_media')->put('pastes/files/test/example.pdf', 'file-bytes');
+
+    $paste = Paste::factory()->file()->create([
+        'slug' => 'file-paste',
+    ]);
+
+    $response = $this->get('/paste/'.$paste->slug);
+
+    $response->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('pastes/show')
+            ->where('paste.type', 'file')
+            ->where('paste.media_url', Storage::disk('paste_media')->url('pastes/files/test/example.pdf'))
+            ->etc()
+        );
+
+    expect($paste->fresh()->view_count)->toBe(1);
+});
+
 it('highlights additional supported syntaxes', function (string $syntax, string $content) {
     $paste = Paste::factory()->create([
         'content' => $content,
@@ -449,6 +520,17 @@ it('redirects video raw requests to the stored media url', function () {
     $response = $this->get('/'.$paste->slug.'/raw');
 
     $response->assertRedirect(Storage::disk('paste_media')->url('pastes/videos/test/example.mp4'));
+    expect($paste->fresh()->view_count)->toBe(1);
+});
+
+it('redirects file raw requests to the stored file url', function () {
+    Storage::disk('paste_media')->put('pastes/files/test/example.pdf', 'file-bytes');
+
+    $paste = Paste::factory()->file()->create();
+
+    $response = $this->get('/'.$paste->slug.'/raw');
+
+    $response->assertRedirect(Storage::disk('paste_media')->url('pastes/files/test/example.pdf'));
     expect($paste->fresh()->view_count)->toBe(1);
 });
 
@@ -548,6 +630,21 @@ it('deletes stored video files when owners delete video pastes', function () {
     $response->assertRedirect();
     $this->assertDatabaseMissing('pastes', ['id' => $paste->id]);
     Storage::disk('paste_media')->assertMissing('pastes/videos/test/example.mp4');
+});
+
+it('deletes stored files when owners delete file pastes', function () {
+    $user = User::factory()->create();
+    Storage::disk('paste_media')->put('pastes/files/test/example.pdf', 'file-bytes');
+
+    $paste = Paste::factory()->file()->create([
+        'user_id' => $user->id,
+    ]);
+
+    $response = $this->actingAs($user)->delete(route('paste.destroy', $paste));
+
+    $response->assertRedirect();
+    $this->assertDatabaseMissing('pastes', ['id' => $paste->id]);
+    Storage::disk('paste_media')->assertMissing('pastes/files/test/example.pdf');
 });
 
 it('permanently deletes all backblaze object versions for media files', function () {
