@@ -30,6 +30,7 @@ interface Props {
         type: 'text' | 'image' | 'video' | 'file';
         slug: string;
         public_url: string;
+        download_url: string;
         syntax: string | null;
         snippet: string;
         view_count: number;

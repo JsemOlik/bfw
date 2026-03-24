@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Paste;
 use Illuminate\Filesystem\AwsS3V3Adapter;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -138,6 +139,17 @@ class PasteMediaManager
             $paste->storage_disk ?: config('filesystems.default_media_disk', 'public'),
             $paste->storage_path,
         );
+    }
+
+    public function download(Paste $paste): RedirectResponse
+    {
+        $url = $this->url($paste);
+
+        if (Str::startsWith($url, ['http://', 'https://'])) {
+            return redirect()->away($url);
+        }
+
+        return redirect($url);
     }
 
     public function deleteFile(string $disk, string $path): void

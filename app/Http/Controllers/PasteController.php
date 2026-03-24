@@ -144,6 +144,7 @@ class PasteController extends Controller
                 'slug' => $paste->slug,
                 'public_url' => $paste->publicUrl(),
                 'raw_url' => $paste->rawUrl(),
+                'download_url' => $paste->downloadUrl(),
                 'media_url' => $paste->isStoredUpload() ? $pasteMediaManager->url($paste) : null,
                 'original_filename' => $paste->original_filename,
                 'mime_type' => $paste->mime_type,
@@ -187,6 +188,28 @@ class PasteController extends Controller
         ]);
     }
 
+    public function download(string $slug, PasteMediaManager $pasteMediaManager): SymfonyResponse
+    {
+        $paste = Paste::where('slug', $slug)
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->firstOrFail();
+
+        $paste->recordView();
+
+        if ($paste->isStoredUpload()) {
+            return $pasteMediaManager->download($paste);
+        }
+
+        return response()->streamDownload(function () use ($paste): void {
+            echo $paste->content ?? '';
+        }, $paste->slug.'.txt', [
+            'Content-Type' => 'text/plain; charset=UTF-8',
+        ]);
+    }
+
     /**
      * Display the status of a paste.
      */
@@ -201,6 +224,7 @@ class PasteController extends Controller
                 'type' => $paste->type,
                 'slug' => $paste->slug,
                 'public_url' => $paste->publicUrl(),
+                'download_url' => $paste->downloadUrl(),
                 'syntax' => $paste->syntax,
                 'snippet' => $paste->isText()
                     ? Str::limit($paste->content ?? '', 100)

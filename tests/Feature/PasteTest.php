@@ -391,6 +391,7 @@ it('shows the raw text of a paste', function () {
             ->component('pastes/show')
             ->where('paste.syntax', 'php')
             ->where('paste.raw_url', url('/'.$paste->slug.'/raw'))
+            ->where('paste.download_url', url('/'.$paste->slug.'/download'))
             ->where('paste.highlighted_lines.0.0.type', 'keyword')
             ->where('paste.highlighted_lines.1.2.type', 'string')
             ->etc()
@@ -532,6 +533,48 @@ it('redirects file raw requests to the stored file url', function () {
 
     $response->assertRedirect(Storage::disk('paste_media')->url('pastes/files/test/example.pdf'));
     expect($paste->fresh()->view_count)->toBe(1);
+});
+
+it('downloads text pastes as txt files', function () {
+    $paste = Paste::factory()->create([
+        'slug' => 'download-me',
+        'content' => "Hello download\nfrom text paste",
+    ]);
+
+    $response = $this->get('/'.$paste->slug.'/download');
+
+    $response->assertSuccessful()
+        ->assertDownload('download-me.txt')
+        ->assertHeader('content-type', 'text/plain; charset=UTF-8');
+
+    expect($response->streamedContent())->toBe("Hello download\nfrom text paste");
+    expect($paste->fresh()->view_count)->toBe(1);
+});
+
+it('redirects stored upload paste downloads to the public media url', function (string $type, string $path) {
+    Storage::disk('paste_media')->put($path, 'media-bytes');
+
+    $paste = Paste::factory()->{$type}()->create([
+        'slug' => 'download-'.$type,
+    ]);
+
+    $response = $this->get('/'.$paste->slug.'/download');
+
+    $response->assertRedirect(Storage::disk('paste_media')->url($path));
+
+    expect($paste->fresh()->view_count)->toBe(1);
+})->with([
+    'image' => ['image', 'pastes/images/test/example.png'],
+    'video' => ['video', 'pastes/videos/test/example.mp4'],
+    'file' => ['file', 'pastes/files/test/example.pdf'],
+]);
+
+it('redirects legacy paste download urls to the root download url', function () {
+    $paste = Paste::factory()->create(['slug' => 'legacy-download-paste']);
+
+    $response = $this->get('/paste/'.$paste->slug.'/download');
+
+    $response->assertRedirect('/'.$paste->slug.'/download');
 });
 
 it('shows paste view counts on the status page', function () {

@@ -16,6 +16,7 @@ interface Paste {
     syntax: string | null;
     slug: string;
     raw_url: string;
+    download_url: string;
     media_url: string | null;
     original_filename: string | null;
     mime_type: string | null;
@@ -96,29 +97,78 @@ export default function Show({ paste }: Props) {
                             {badgeLabel}
                         </span>
                         {isStoredUploadPaste ? (
-                            <a
-                                href={paste.raw_url}
-                                className="flex items-center gap-2 rounded-lg bg-[#f53003] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-red-500/20 transition-all hover:bg-[#e22c02] dark:bg-[#FF4433] dark:hover:bg-[#f63d2d]"
-                            >
-                                <svg
-                                    width="14"
-                                    height="14"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
-                                    <path d="M14 3h7v7"></path>
-                                    <path d="M10 14 21 3"></path>
-                                    <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path>
-                                </svg>
-                                Open Raw
-                            </a>
-                        ) : (
                             <>
                                 <a
+                                    href={paste.download_url}
+                                    className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold shadow-sm transition-all ${
+                                        isFilePaste
+                                            ? 'bg-[#f53003] text-white shadow-red-500/20 hover:bg-[#e22c02] dark:bg-[#FF4433] dark:hover:bg-[#f63d2d]'
+                                            : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-[#3E3E3A] dark:bg-[#161615] dark:text-gray-200 dark:hover:bg-[#202020]'
+                                    }`}
+                                >
+                                    <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <path d="M7 10l5 5 5-5"></path>
+                                        <path d="M12 15V3"></path>
+                                    </svg>
+                                    Download
+                                </a>
+                                {!isFilePaste && (
+                                    <a
+                                        href={paste.raw_url}
+                                        className="flex items-center gap-2 rounded-lg bg-[#f53003] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-red-500/20 transition-all hover:bg-[#e22c02] dark:bg-[#FF4433] dark:hover:bg-[#f63d2d]"
+                                    >
+                                        <svg
+                                            width="14"
+                                            height="14"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        >
+                                            <path d="M14 3h7v7"></path>
+                                            <path d="M10 14 21 3"></path>
+                                            <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path>
+                                        </svg>
+                                        Open Raw
+                                    </a>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                            
+                                <a
+                                    href={paste.download_url}
+                                    className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:border-[#3E3E3A] dark:bg-[#161615] dark:text-gray-200 dark:hover:bg-[#202020]"
+                                >
+                                    <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <path d="M7 10l5 5 5-5"></path>
+                                        <path d="M12 15V3"></path>
+                                    </svg>
+                                    Download
+                                </a>
+                                 <a
                                     href={paste.raw_url}
                                     className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:border-[#3E3E3A] dark:bg-[#161615] dark:text-gray-200 dark:hover:bg-[#202020]"
                                 >
@@ -241,7 +291,7 @@ export default function Show({ paste }: Props) {
                                         </p>
                                     )}
                                     <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                                        Open the raw file to download or view it directly.
+                                        Download the original file directly.
                                     </p>
                                 </div>
                             </div>

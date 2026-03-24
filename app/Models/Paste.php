@@ -86,6 +86,11 @@ class Paste extends Model
         return route('paste.raw', ['slugRegistry' => $this->slug]);
     }
 
+    public function downloadUrl(): string
+    {
+        return route('paste.download', ['slugRegistry' => $this->slug]);
+    }
+
     /**
      * Get the user that owns the paste.
      */
