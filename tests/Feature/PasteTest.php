@@ -391,7 +391,7 @@ it('shows the raw text of a paste', function () {
             ->component('pastes/show')
             ->where('paste.syntax', 'php')
             ->where('paste.raw_url', url('/'.$paste->slug.'/raw'))
-            ->where('paste.download_url', url('/'.$paste->slug.'/download'))
+            ->where('paste.download_url', null)
             ->where('paste.highlighted_lines.0.0.type', 'keyword')
             ->where('paste.highlighted_lines.1.2.type', 'string')
             ->etc()
@@ -535,7 +535,7 @@ it('redirects file raw requests to the stored file url', function () {
     expect($paste->fresh()->view_count)->toBe(1);
 });
 
-it('downloads text pastes as txt files', function () {
+it('does not allow downloading text pastes', function () {
     $paste = Paste::factory()->create([
         'slug' => 'download-me',
         'content' => "Hello download\nfrom text paste",
@@ -543,12 +543,9 @@ it('downloads text pastes as txt files', function () {
 
     $response = $this->get('/'.$paste->slug.'/download');
 
-    $response->assertSuccessful()
-        ->assertDownload('download-me.txt')
-        ->assertHeader('content-type', 'text/plain; charset=UTF-8');
+    $response->assertNotFound();
 
-    expect($response->streamedContent())->toBe("Hello download\nfrom text paste");
-    expect($paste->fresh()->view_count)->toBe(1);
+    expect($paste->fresh()->view_count)->toBe(0);
 });
 
 it('redirects stored upload paste downloads to the public media url', function (string $type, string $path) {

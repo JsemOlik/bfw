@@ -144,7 +144,7 @@ class PasteController extends Controller
                 'slug' => $paste->slug,
                 'public_url' => $paste->publicUrl(),
                 'raw_url' => $paste->rawUrl(),
-                'download_url' => $paste->downloadUrl(),
+                'download_url' => $paste->isStoredUpload() ? $paste->downloadUrl() : null,
                 'media_url' => $paste->isStoredUpload() ? $pasteMediaManager->url($paste) : null,
                 'original_filename' => $paste->original_filename,
                 'mime_type' => $paste->mime_type,
@@ -197,17 +197,11 @@ class PasteController extends Controller
             })
             ->firstOrFail();
 
+        abort_unless($paste->isStoredUpload(), 404);
+
         $paste->recordView();
 
-        if ($paste->isStoredUpload()) {
-            return $pasteMediaManager->download($paste);
-        }
-
-        return response()->streamDownload(function () use ($paste): void {
-            echo $paste->content ?? '';
-        }, $paste->slug.'.txt', [
-            'Content-Type' => 'text/plain; charset=UTF-8',
-        ]);
+        return $pasteMediaManager->download($paste);
     }
 
     /**
@@ -224,7 +218,7 @@ class PasteController extends Controller
                 'type' => $paste->type,
                 'slug' => $paste->slug,
                 'public_url' => $paste->publicUrl(),
-                'download_url' => $paste->downloadUrl(),
+                'download_url' => $paste->isStoredUpload() ? $paste->downloadUrl() : null,
                 'syntax' => $paste->syntax,
                 'snippet' => $paste->isText()
                     ? Str::limit($paste->content ?? '', 100)

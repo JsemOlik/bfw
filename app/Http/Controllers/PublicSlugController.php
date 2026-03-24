@@ -43,7 +43,7 @@ class PublicSlugController extends Controller
                 'slug' => $sluggable->slug,
                 'public_url' => $sluggable->publicUrl(),
                 'raw_url' => $sluggable->rawUrl(),
-                'download_url' => $sluggable->downloadUrl(),
+                'download_url' => $sluggable->isStoredUpload() ? $sluggable->downloadUrl() : null,
                 'media_url' => $sluggable->isStoredUpload() ? $pasteMediaManager->url($sluggable) : null,
                 'original_filename' => $sluggable->original_filename,
                 'mime_type' => $sluggable->mime_type,
@@ -88,7 +88,7 @@ class PublicSlugController extends Controller
                 'type' => $sluggable->type,
                 'slug' => $sluggable->slug,
                 'public_url' => $sluggable->publicUrl(),
-                'download_url' => $sluggable->downloadUrl(),
+                'download_url' => $sluggable->isStoredUpload() ? $sluggable->downloadUrl() : null,
                 'syntax' => $sluggable->syntax,
                 'snippet' => $sluggable->isText()
                     ? Str::limit($sluggable->content ?? '', 100)
@@ -136,17 +136,10 @@ class PublicSlugController extends Controller
 
         abort_unless($sluggable instanceof Paste, 404);
         abort_if($sluggable->expires_at?->isPast() ?? false, 404);
+        abort_unless($sluggable->isStoredUpload(), 404);
 
         $sluggable->recordView();
 
-        if ($sluggable->isStoredUpload()) {
-            return $pasteMediaManager->download($sluggable);
-        }
-
-        return response()->streamDownload(function () use ($sluggable): void {
-            echo $sluggable->content ?? '';
-        }, $sluggable->slug.'.txt', [
-            'Content-Type' => 'text/plain; charset=UTF-8',
-        ]);
+        return $pasteMediaManager->download($sluggable);
     }
 }
