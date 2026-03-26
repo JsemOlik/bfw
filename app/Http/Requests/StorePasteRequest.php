@@ -11,7 +11,7 @@ class StorePasteRequest extends FormRequest
 {
     protected const DEFAULT_MEDIA_MAX_KILOBYTES = 25_600;
 
-    protected const ADMIN_MEDIA_MAX_KILOBYTES = 33_554_432;
+    protected const ADMIN_MEDIA_MAX_KILOBYTES = 256_000;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -113,6 +113,6 @@ class StorePasteRequest extends FormRequest
 
     protected function mediaUploadMaxLabel(): string
     {
-        return $this->user()?->isAdmin() ? '32 GB' : '25 MB';
+        return $this->user()?->isAdmin() ? '250 MB' : '25 MB';
     }
 }

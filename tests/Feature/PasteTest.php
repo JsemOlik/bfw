@@ -152,7 +152,7 @@ it('allows guests to create image pastes up to twenty five megabytes', function 
     expect(Paste::query()->where('slug', 'large-image-paste')->exists())->toBeTrue();
 });
 
-it('allows admins to create larger media pastes up to thirty two gigabytes', function (string $type, string $field, UploadedFile $upload, string $slug) {
+it('allows admins to create larger media pastes up to two hundred fifty megabytes', function (string $type, string $field, UploadedFile $upload, string $slug) {
     $admin = User::factory()->admin()->create();
 
     $response = $this->actingAs($admin)->from('/paste')->post('/paste', [
@@ -169,19 +169,19 @@ it('allows admins to create larger media pastes up to thirty two gigabytes', fun
     'image' => [
         'image',
         'image',
-        UploadedFile::fake()->image('massive-image.png', 320, 240)->size(30_000),
+        UploadedFile::fake()->image('massive-image.png', 320, 240)->size(200_000),
         'admin-large-image',
     ],
     'video' => [
         'video',
         'video',
-        UploadedFile::fake()->create('massive-video.mp4', 30_000, 'video/mp4'),
+        UploadedFile::fake()->create('massive-video.mp4', 200_000, 'video/mp4'),
         'admin-large-video',
     ],
     'file' => [
         'file',
         'file',
-        UploadedFile::fake()->create('massive-file.pdf', 30_000, 'application/pdf'),
+        UploadedFile::fake()->create('massive-file.pdf', 200_000, 'application/pdf'),
         'admin-large-file',
     ],
 ]);

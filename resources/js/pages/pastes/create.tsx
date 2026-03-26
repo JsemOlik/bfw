@@ -93,7 +93,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
 
     const shortenedLink = flash?.shortened_link;
     const isAdmin = auth.user?.role === 'admin';
-    const mediaUploadLimitLabel = isAdmin ? '32 GB' : '25 MB';
+    const mediaUploadLimitLabel = isAdmin ? '250 MB' : '25 MB';
     const currentPasteLabel = data.type === 'text'
         ? 'text paste'
         : data.type === 'image'
@@ -139,14 +139,22 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
           : data.type === 'file'
             ? data.file
             : null;
+    const selectedUploadBytes = selectedUpload?.size ?? null;
     const uploadedBytes = progress?.loaded ?? null;
-    const totalUploadBytes = progress?.total ?? selectedUpload?.size ?? null;
-    const progressPercentage = progress?.percentage ?? null;
-    const uploadProgressLabel = uploadedBytes !== null && totalUploadBytes !== null
-        ? `${formatBytes(uploadedBytes)} of ${formatBytes(totalUploadBytes)} uploaded`
-        : totalUploadBytes !== null
-          ? `Uploading ${formatBytes(totalUploadBytes)} file...`
-          : 'Uploading file...';
+    const displayedUploadedBytes = uploadedBytes !== null && selectedUploadBytes !== null
+        ? Math.min(uploadedBytes, selectedUploadBytes)
+        : uploadedBytes;
+    const totalUploadBytes = selectedUploadBytes;
+    const progressPercentage = displayedUploadedBytes !== null && selectedUploadBytes !== null && selectedUploadBytes > 0
+        ? Math.min(100, Math.round((displayedUploadedBytes / selectedUploadBytes) * 100))
+        : (progress?.percentage ?? null);
+    const uploadProgressLabel = progress && displayedUploadedBytes !== null && totalUploadBytes !== null
+        ? `${formatBytes(displayedUploadedBytes)} of ${formatBytes(totalUploadBytes)} uploaded`
+        : processing
+          ? 'Finishing upload...'
+          : totalUploadBytes !== null
+            ? `Uploading ${formatBytes(totalUploadBytes)} file...`
+            : 'Uploading file...';
 
     useEffect(() => {
         if (copied) {
