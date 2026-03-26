@@ -135,6 +135,23 @@ it('allows guests to create an image paste', function () {
     expect(Storage::disk('paste_media')->get($paste->storage_path))->toBe($originalContents);
 });
 
+it('allows guests to create image pastes up to twenty five megabytes', function () {
+    $image = UploadedFile::fake()
+        ->image('large-kittten.png', 320, 240)
+        ->size(25_000);
+
+    $response = $this->from('/paste')->post('/paste', [
+        'type' => 'image',
+        'slug' => 'large-image-paste',
+        'image' => $image,
+    ]);
+
+    $response->assertRedirect('/paste');
+    $response->assertSessionHasNoErrors();
+
+    expect(Paste::query()->where('slug', 'large-image-paste')->exists())->toBeTrue();
+});
+
 it('allows guests to create an svg image paste', function () {
     $image = fakeSvgUpload();
     $originalContents = file_get_contents($image->getRealPath());

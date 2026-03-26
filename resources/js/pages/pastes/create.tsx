@@ -691,7 +691,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                 <span className="text-xs text-gray-500 dark:text-gray-400">
                                                     {isDraggingImage
                                                         ? 'Drop your image here'
-                                                        : 'PNG, JPG, GIF, WebP, SVG or ICO up to 10 MB'}
+                                                        : 'PNG, JPG, GIF, WebP, SVG or ICO up to 25 MB'}
                                                 </span>
                                                 <input
                                                     type="file"
