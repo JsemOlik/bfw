@@ -152,6 +152,57 @@ it('allows guests to create image pastes up to twenty five megabytes', function 
     expect(Paste::query()->where('slug', 'large-image-paste')->exists())->toBeTrue();
 });
 
+it('allows admins to create larger media pastes up to thirty two gigabytes', function (string $type, string $field, UploadedFile $upload, string $slug) {
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)->from('/paste')->post('/paste', [
+        'type' => $type,
+        'slug' => $slug,
+        $field => $upload,
+    ]);
+
+    $response->assertRedirect('/paste');
+    $response->assertSessionHasNoErrors();
+
+    expect(Paste::query()->where('slug', $slug)->exists())->toBeTrue();
+})->with([
+    'image' => [
+        'image',
+        'image',
+        UploadedFile::fake()->image('massive-image.png', 320, 240)->size(30_000),
+        'admin-large-image',
+    ],
+    'video' => [
+        'video',
+        'video',
+        UploadedFile::fake()->create('massive-video.mp4', 30_000, 'video/mp4'),
+        'admin-large-video',
+    ],
+    'file' => [
+        'file',
+        'file',
+        UploadedFile::fake()->create('massive-file.pdf', 30_000, 'application/pdf'),
+        'admin-large-file',
+    ],
+]);
+
+it('still rejects oversized guest image pastes above twenty five megabytes', function () {
+    $image = UploadedFile::fake()
+        ->image('too-large-guest-image.png', 320, 240)
+        ->size(30_000);
+
+    $response = $this->from('/paste')->post('/paste', [
+        'type' => 'image',
+        'slug' => 'too-large-guest-image',
+        'image' => $image,
+    ]);
+
+    $response->assertRedirect('/paste');
+    $response->assertSessionHasErrors('image');
+
+    expect(Paste::query()->where('slug', 'too-large-guest-image')->exists())->toBeFalse();
+});
+
 it('allows guests to create an svg image paste', function () {
     $image = fakeSvgUpload();
     $originalContents = file_get_contents($image->getRealPath());

@@ -73,6 +73,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
 
     const shortenedLink = flash?.shortened_link;
     const isAdmin = auth.user?.role === 'admin';
+    const mediaUploadLimitLabel = isAdmin ? '32 GB' : '25 MB';
     const currentPasteLabel = data.type === 'text'
         ? 'text paste'
         : data.type === 'image'
@@ -691,7 +692,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                 <span className="text-xs text-gray-500 dark:text-gray-400">
                                                     {isDraggingImage
                                                         ? 'Drop your image here'
-                                                        : 'PNG, JPG, GIF, WebP, SVG or ICO up to 25 MB'}
+                                                        : `PNG, JPG, GIF, WebP, SVG or ICO up to ${mediaUploadLimitLabel}`}
                                                 </span>
                                                 <input
                                                     type="file"
@@ -765,7 +766,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                 <span className="text-xs text-gray-500 dark:text-gray-400">
                                                     {isDraggingFile
                                                         ? 'Drop your file here'
-                                                        : 'Any file up to 25 MB'}
+                                                        : `Any file up to ${mediaUploadLimitLabel}`}
                                                 </span>
                                                 <input
                                                     type="file"
@@ -842,7 +843,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                         <span className="text-xs text-gray-500 dark:text-gray-400">
                                                             {isDraggingVideo
                                                                 ? 'Drop your video here'
-                                                                : 'MP4, WebM, OGG, MOV or MKV up to 25 MB'}
+                                                                : `MP4, WebM, OGG, MOV or MKV up to ${mediaUploadLimitLabel}`}
                                                         </span>
                                                     </>
                                                 )}

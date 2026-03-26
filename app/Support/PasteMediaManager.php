@@ -89,13 +89,17 @@ class PasteMediaManager
             Str::random(12),
             $extension,
         );
-        $contents = @file_get_contents($file->getRealPath() ?: '');
+        $stream = @fopen($file->getRealPath() ?: '', 'rb');
 
-        if (! is_string($contents)) {
+        if (! is_resource($stream)) {
             throw new RuntimeException('Unable to store uploaded media.');
         }
 
-        $stored = $this->storeContents($disk, $path, $contents, $file);
+        try {
+            $stored = $this->storeStream($disk, $path, $stream);
+        } finally {
+            fclose($stream);
+        }
 
         if ($stored === false) {
             throw new RuntimeException('Unable to store uploaded media.');
@@ -167,14 +171,14 @@ class PasteMediaManager
         Storage::disk($disk)->delete($path);
     }
 
-    protected function storeContents(string $disk, string $path, string $contents, UploadedFile $file): bool
+    protected function storeStream(string $disk, string $path, mixed $stream): bool
     {
         $filesystem = Storage::disk($disk);
         $visibility = (string) config("filesystems.disks.{$disk}.visibility", 'public');
 
         return $filesystem->put(
             $path,
-            $contents,
+            $stream,
             ['visibility' => $visibility],
         );
     }
