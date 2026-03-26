@@ -36,6 +36,26 @@ interface PasteFormData {
     file: File | null;
 }
 
+function formatBytes(size: number | null | undefined): string | null {
+    if (size === null || size === undefined) {
+        return null;
+    }
+
+    if (size < 1024) {
+        return `${size} B`;
+    }
+
+    if (size < 1024 * 1024) {
+        return `${(size / 1024).toFixed(1)} KB`;
+    }
+
+    if (size < 1024 * 1024 * 1024) {
+        return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    return `${(size / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
 export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }) {
     const { auth, flash } = usePage<{
         auth: { user?: { role?: string } | null };
@@ -60,7 +80,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
 
     const { delete: destroy, processing: deleting } = useForm();
 
-    const { data, setData, post, processing, errors, reset } =
+    const { data, setData, post, processing, progress, errors, reset } =
         useForm<PasteFormData>({
             type: 'text',
             content: '',
@@ -112,6 +132,21 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
     const selectedFilePresentation = data.file
         ? getFileTypePresentation(data.file.name, data.file.type)
         : null;
+    const selectedUpload = data.type === 'image'
+        ? data.image
+        : data.type === 'video'
+          ? data.video
+          : data.type === 'file'
+            ? data.file
+            : null;
+    const uploadedBytes = progress?.loaded ?? null;
+    const totalUploadBytes = progress?.total ?? selectedUpload?.size ?? null;
+    const progressPercentage = progress?.percentage ?? null;
+    const uploadProgressLabel = uploadedBytes !== null && totalUploadBytes !== null
+        ? `${formatBytes(uploadedBytes)} of ${formatBytes(totalUploadBytes)} uploaded`
+        : totalUploadBytes !== null
+          ? `Uploading ${formatBytes(totalUploadBytes)} file...`
+          : 'Uploading file...';
 
     useEffect(() => {
         if (copied) {
@@ -889,6 +924,33 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                         </p>
                                     )}
                                 </div>
+
+                                {selectedUpload && (progress || processing) && (
+                                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-[#3E3E3A] dark:bg-[#0a0a0a]">
+                                        <div className="mb-2 flex items-center justify-between gap-3">
+                                            <div>
+                                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                                    Upload Progress
+                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {uploadProgressLabel}
+                                                </p>
+                                            </div>
+                                            <span className="text-sm font-bold text-[#f53003] dark:text-[#FF4433]">
+                                                {progressPercentage ?? 100}%
+                                            </span>
+                                        </div>
+
+                                        <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-[#202020]">
+                                            <div
+                                                className={`h-full rounded-full bg-[#f53003] transition-all duration-300 dark:bg-[#FF4433] ${
+                                                    progressPercentage === null ? 'w-full animate-pulse opacity-80' : ''
+                                                }`}
+                                                style={progressPercentage !== null ? { width: `${progressPercentage}%` } : undefined}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
 
                                 <button
                                     type="submit"
