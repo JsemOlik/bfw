@@ -647,6 +647,7 @@ export default function Create({ userPastes = [] }: { userPastes?: UserPaste[] }
                                                     className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-[#3E3E3A] dark:bg-[#0a0a0a] dark:text-[#EDEDEC] dark:focus:border-blue-400 dark:focus:ring-blue-400"
                                                 >
                                                     <option value="plaintext">Plain Text</option>
+                                                    <option value="markdown">Markdown</option>
                                                     <option value="json">JSON</option>
                                                     <option value="yaml">YAML</option>
                                                     <option value="bash">Bash / Shell</option>

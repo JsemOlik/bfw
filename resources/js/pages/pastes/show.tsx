@@ -1,5 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import FileTypeIcon from '@/components/file-type-icon';
 import MarketingNavbar from '@/components/marketing-navbar';
 import PasteVideoPlayer from '@/components/paste-video-player';
@@ -52,6 +54,7 @@ export default function Show({ paste }: Props) {
     const isImagePaste = paste.type === 'image';
     const isVideoPaste = paste.type === 'video';
     const isFilePaste = paste.type === 'file';
+    const isMarkdownPaste = paste.type === 'text' && paste.syntax === 'markdown';
     const isStoredUploadPaste = isImagePaste || isVideoPaste || isFilePaste;
     const copyLabel = 'Copy Raw';
     const badgeLabel = isStoredUploadPaste ? paste.type : (paste.syntax ?? 'plaintext');
@@ -273,6 +276,12 @@ export default function Show({ paste }: Props) {
                                         Download the original file directly.
                                     </p>
                                 </div>
+                            </div>
+                        ) : isMarkdownPaste ? (
+                            <div className="markdown-body">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {paste.content ?? undefined}
+                                </ReactMarkdown>
                             </div>
                         ) : (
                             <pre className="paste-code font-mono text-sm leading-relaxed text-gray-800 dark:text-gray-200">
