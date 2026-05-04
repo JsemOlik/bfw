@@ -97,13 +97,13 @@ export default function ManagerIndex({
     releases: ManagerRelease[];
 }) {
     const activeRelease = releases.find((release) => release.is_active);
-    const [editingRelease, setEditingRelease] = useState<ManagerRelease | null>(activeRelease ?? null);
+    const [editingRelease, setEditingRelease] = useState<ManagerRelease | null>(null);
     const [releaseToDelete, setReleaseToDelete] = useState<number | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [copiedJsonUrl, setCopiedJsonUrl] = useState(false);
 
     const { data, setData, post, processing, progress, errors, reset, clearErrors, transform } =
-        useForm<ReleaseFormData>(buildInitialData(activeRelease));
+        useForm<ReleaseFormData>(buildInitialData(undefined));
 
     const currentJson = useMemo(() => {
         if (!activeRelease) {
@@ -210,7 +210,7 @@ export default function ManagerIndex({
             <h1 className="sr-only">4C Manager admin</h1>
 
             <AdminLayout>
-                <div className="space-y-6">
+                <div className="min-w-0 space-y-6">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <Heading
                             variant="small"
@@ -228,9 +228,9 @@ export default function ManagerIndex({
                     </div>
 
                     <div className="space-y-4">
-                        <div className="rounded-3xl border border-black/5 bg-white/80 p-5 shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-black/30 dark:ring-white/10">
+                        <div className="min-w-0 rounded-3xl border border-black/5 bg-white/80 p-5 shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-black/30 dark:ring-white/10">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
+                                <div className="min-w-0">
                                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                                         Permanent updater JSON
                                     </p>
@@ -258,12 +258,12 @@ export default function ManagerIndex({
                                 </Button>
                             </div>
 
-                            <pre className="mt-4 max-h-[360px] overflow-auto rounded-2xl bg-zinc-950 p-4 text-xs leading-relaxed text-zinc-100 shadow-inner">
+                            <pre className="mt-4 max-h-[360px] max-w-full overflow-y-auto overflow-x-hidden rounded-2xl bg-zinc-950 p-4 text-xs leading-relaxed whitespace-pre-wrap break-all text-zinc-100 shadow-inner">
                                 {currentJson}
                             </pre>
                         </div>
 
-                        <div className="rounded-3xl border border-black/5 bg-gradient-to-br from-[#fff7f4] to-white p-5 shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:from-[#2a0f0b]/60 dark:to-black/30 dark:ring-white/10">
+                        <div className="min-w-0 rounded-3xl border border-black/5 bg-gradient-to-br from-[#fff7f4] to-white p-5 shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:from-[#2a0f0b]/60 dark:to-black/30 dark:ring-white/10">
                             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                                 Live release
                             </p>

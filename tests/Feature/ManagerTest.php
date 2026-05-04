@@ -93,6 +93,33 @@ it('lets admins upload a release and exposes it through the permanent json endpo
         ->assertJsonPath('platforms.windows-x86_64.url', 'https://cdn.bfw.cz/4c-manager/releases/1.4.0/4CAMPS.Manager_1.4.0_x64_en-US.msi.zip');
 });
 
+it('lets admins upload an inactive release while the permanent json endpoint stays unavailable', function () {
+    Storage::fake('public');
+
+    $admin = User::factory()->admin()->create();
+    $installer = UploadedFile::fake()->create(
+        '4CAMPS.Manager_1.4.0_x64_en-US.msi.zip',
+        128,
+        'application/zip',
+    );
+
+    $response = $this->actingAs($admin)->post(route('admin.manager.store'), [
+        'version' => '1.4.0',
+        'notes' => '',
+        'pub_date' => '2025-07-01T12:24:47.829Z',
+        'platform' => 'windows-x86_64',
+        'signature' => 'signed-by-tauri',
+        'installer' => $installer,
+        'is_active' => false,
+    ]);
+
+    $response->assertRedirect(route('admin.manager.index'));
+
+    expect(ManagerRelease::query()->sole()->is_active)->toBeFalse();
+
+    $this->get(route('manager.json'))->assertNotFound();
+});
+
 it('rejects manager installer uploads larger than 250 mb', function () {
     Storage::fake('public');
 
@@ -157,6 +184,30 @@ it('lets admins update metadata and promote only one active release', function (
         ->assertJsonPath('platforms.windows-x86_64.signature', 'new-signature');
 });
 
+it('lets admins disable the active release so the permanent json endpoint returns 404', function () {
+    $admin = User::factory()->admin()->create();
+    $release = ManagerRelease::factory()->active()->create([
+        'version' => '1.4.0',
+        'pub_date' => '2025-07-01 12:00:00',
+        'original_filename' => '4CAMPS.Manager_1.4.0_x64_en-US.msi.zip',
+    ]);
+
+    $response = $this->actingAs($admin)->patch(route('admin.manager.update', $release), [
+        'version' => '1.4.0',
+        'notes' => 'Paused rollout',
+        'pub_date' => '2025-07-01T12:24:47.829Z',
+        'platform' => 'windows-x86_64',
+        'signature' => 'signed-by-tauri',
+        'is_active' => false,
+    ]);
+
+    $response->assertRedirect(route('admin.manager.index'));
+
+    expect($release->fresh()->is_active)->toBeFalse();
+
+    $this->get(route('manager.json'))->assertNotFound();
+});
+
 it('redirects downloads through the configured cdn url', function () {
     config(['filesystems.manager_cdn_url' => 'https://cdn.bfw.cz']);
 
@@ -182,7 +233,7 @@ it('redirects downloads when the url filename contains encoded characters', func
         ->assertRedirect('https://cdn.bfw.cz/4c-manager/releases/1.4.0/4CAMPS-Manager-1.4.0-x64-.msi.zip');
 });
 
-it('lets admins delete releases and promotes the newest remaining release', function () {
+it('lets admins delete active releases without promoting another release', function () {
     Storage::fake('public');
 
     $admin = User::factory()->admin()->create();
@@ -206,7 +257,8 @@ it('lets admins delete releases and promotes the newest remaining release', func
     $response->assertRedirect();
     $this->assertDatabaseMissing('manager_releases', ['id' => $activeRelease->id]);
     Storage::disk('public')->assertMissing($activeRelease->storage_path);
-    expect($archivedRelease->fresh()->is_active)->toBeTrue();
+    expect($archivedRelease->fresh()->is_active)->toBeFalse();
+    $this->get(route('manager.json'))->assertNotFound();
 });
 
 it('keeps the release record when installer deletion fails', function () {

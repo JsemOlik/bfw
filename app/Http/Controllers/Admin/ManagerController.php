@@ -49,8 +49,7 @@ class ManagerController extends Controller
     ): RedirectResponse {
         $validated = $request->validated();
         $storedFile = $storage->store($request->file('installer'), $validated['version']);
-        $isActive = $request->boolean('is_active')
-            || ! ManagerRelease::query()->where('is_active', true)->exists();
+        $isActive = $request->boolean('is_active');
 
         DB::transaction(function () use ($validated, $storedFile, $isActive): void {
             if ($isActive) {
@@ -85,11 +84,7 @@ class ManagerController extends Controller
         $storedFile = $request->hasFile('installer')
             ? $storage->store($request->file('installer'), $validated['version'])
             : null;
-        $isActive = $request->boolean('is_active')
-            || ($release->is_active && ! ManagerRelease::query()
-                ->whereKeyNot($release->id)
-                ->where('is_active', true)
-                ->exists());
+        $isActive = $request->boolean('is_active');
 
         DB::transaction(function () use ($release, $validated, $storedFile, $isActive): void {
             if ($isActive) {
@@ -131,23 +126,9 @@ class ManagerController extends Controller
         ManagerRelease $release,
         ManagerReleaseStorage $storage,
     ): RedirectResponse {
-        $wasActive = $release->is_active;
-
         $storage->delete($release);
 
-        DB::transaction(function () use ($release, $wasActive): void {
-            $release->delete();
-
-            if (! $wasActive) {
-                return;
-            }
-
-            ManagerRelease::query()
-                ->latest('pub_date')
-                ->latest()
-                ->first()
-                ?->update(['is_active' => true]);
-        });
+        $release->delete();
 
         return back()->with('message', '4C Manager release deleted.');
     }
