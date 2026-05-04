@@ -27,8 +27,21 @@ class ManagerController extends Controller
         string $filename,
         ManagerReleaseStorage $storage,
     ): RedirectResponse {
+        $decodedFilename = basename(rawurldecode($filename));
+        $sanitizedFilename = $storage->sanitizeFilename($decodedFilename);
+        $filenameCandidates = array_values(array_unique([
+            $decodedFilename,
+            $sanitizedFilename,
+        ]));
+
         $release = ManagerRelease::query()
-            ->where('original_filename', $filename)
+            ->where(function ($query) use ($filenameCandidates): void {
+                $query->whereIn('original_filename', $filenameCandidates);
+
+                foreach ($filenameCandidates as $filenameCandidate) {
+                    $query->orWhere('storage_path', 'like', '%/'.$filenameCandidate);
+                }
+            })
             ->latest('pub_date')
             ->latest()
             ->firstOrFail();

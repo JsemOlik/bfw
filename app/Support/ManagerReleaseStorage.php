@@ -68,7 +68,7 @@ class ManagerReleaseStorage
         Storage::disk($release->storage_disk)->delete($release->storage_path);
     }
 
-    protected function sanitizeFilename(string $filename): string
+    public function sanitizeFilename(string $filename): string
     {
         $basename = basename($filename);
         $sanitized = preg_replace('/[^A-Za-z0-9._-]+/', '-', $basename) ?: '';

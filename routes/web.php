@@ -12,7 +12,7 @@ Route::inertia('/', 'welcome')->name('home');
 
 Route::get('4c-manager/json', [ManagerController::class, 'json'])->name('manager.json');
 Route::get('4c-manager/download/{filename}', [ManagerController::class, 'download'])
-    ->where('filename', '[A-Za-z0-9._-]+')
+    ->where('filename', '[^/]+')
     ->name('manager.download');
 
 // Compressor routes

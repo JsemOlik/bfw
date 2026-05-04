@@ -166,6 +166,18 @@ it('redirects downloads through the configured cdn url', function () {
     ]))->assertRedirect('https://cdn.bfw.cz/4c-manager/releases/1.4.0/4CAMPS.Manager_1.4.0_x64_en-US.msi.zip');
 });
 
+it('redirects downloads when the url filename contains encoded characters', function () {
+    config(['filesystems.manager_cdn_url' => 'https://cdn.bfw.cz']);
+
+    $release = ManagerRelease::factory()->active()->create([
+        'storage_path' => '4c-manager/releases/1.4.0/4CAMPS-Manager-1.4.0-x64-.msi.zip',
+        'original_filename' => '4CAMPS Manager 1.4.0 (x64).msi.zip',
+    ]);
+
+    $this->get('/4c-manager/download/'.rawurlencode($release->original_filename))
+        ->assertRedirect('https://cdn.bfw.cz/4c-manager/releases/1.4.0/4CAMPS-Manager-1.4.0-x64-.msi.zip');
+});
+
 it('lets admins delete releases and promotes the newest remaining release', function () {
     Storage::fake('public');
 
