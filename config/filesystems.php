@@ -19,6 +19,10 @@ return [
 
     'paste_media_cdn_url' => env('PASTE_MEDIA_CDN_URL'),
 
+    'manager_disk' => env('MANAGER_DISK', env('FOUR_C_MANAGER_DISK', env('PASTE_MEDIA_DISK', 'public'))),
+
+    'manager_cdn_url' => env('MANAGER_CDN_URL', env('FOUR_C_MANAGER_CDN_URL')),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks

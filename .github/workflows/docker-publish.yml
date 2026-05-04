@@ -1,0 +1,120 @@
+name: publish docker image
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Docker image version tag, for example 1.4.0'
+        required: true
+        type: string
+      image_name:
+        description: 'GHCR image name'
+        required: true
+        default: 'ghcr.io/jsemolik/bfw'
+        type: string
+      publish_latest:
+        description: 'Also push the latest tag'
+        required: true
+        default: true
+        type: boolean
+      platforms:
+        description: 'Target Docker platform(s)'
+        required: true
+        default: 'linux/amd64'
+        type: choice
+        options:
+          - linux/amd64
+          - linux/amd64,linux/arm64
+      app_env:
+        description: 'Docker build APP_ENV argument'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - local
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: docker-publish-${{ github.ref }}-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build and publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up QEMU
+        if: contains(inputs.platforms, 'arm64')
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare tags
+        id: docker-tags
+        shell: bash
+        env:
+          VERSION: ${{ inputs.version }}
+          IMAGE_NAME: ${{ inputs.image_name }}
+          PUBLISH_LATEST: ${{ inputs.publish_latest }}
+        run: |
+          set -euo pipefail
+
+          version="${VERSION}"
+          image_name="${IMAGE_NAME,,}"
+          publish_latest="${PUBLISH_LATEST}"
+
+          if [[ ! "${version}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+            echo "Version may only contain letters, numbers, dots, underscores, and dashes." >&2
+            exit 1
+          fi
+
+          if [[ ! "${image_name}" =~ ^ghcr\.io/[a-z0-9._/-]+$ ]]; then
+            echo "Image name must be a lowercase GHCR image path like ghcr.io/jsemolik/bfw." >&2
+            exit 1
+          fi
+
+          if [[ "${version}" == "latest" ]]; then
+            echo "Use a real version tag. The workflow can add latest separately." >&2
+            exit 1
+          fi
+
+          tags="${image_name}:${version}"
+
+          if [[ "${publish_latest}" == "true" ]]; then
+            tags="${tags}"$'\n'"${image_name}:latest"
+          fi
+
+          {
+            echo 'tags<<EOF'
+            echo "${tags}"
+            echo 'EOF'
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: ${{ inputs.platforms }}
+          push: true
+          build-args: |
+            APP_ENV=${{ inputs.app_env }}
+          tags: ${{ steps.docker-tags.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

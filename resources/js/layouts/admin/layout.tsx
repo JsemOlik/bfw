@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import { index as adminLinksIndex } from '@/routes/admin/links';
+import { index as adminManagerIndex } from '@/routes/admin/manager';
 import { index as adminPastesIndex } from '@/routes/admin/pastes';
 import { index as adminUsersIndex } from '@/routes/admin/users';
 import type { NavItem } from '@/types';
@@ -24,6 +25,11 @@ const sidebarNavItems: NavItem[] = [
     {
         title: 'Pastes',
         href: adminPastesIndex(),
+        icon: null,
+    },
+    {
+        title: '4C Manager',
+        href: adminManagerIndex(),
         icon: null,
     },
 ];

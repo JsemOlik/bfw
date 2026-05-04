@@ -3,11 +3,17 @@
 use App\Http\Controllers\CompressorController;
 use App\Http\Controllers\ConverterController;
 use App\Http\Controllers\LinkController;
+use App\Http\Controllers\ManagerController;
 use App\Http\Controllers\PasteController;
 use App\Http\Controllers\PublicSlugController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
+
+Route::get('4c-manager/json', [ManagerController::class, 'json'])->name('manager.json');
+Route::get('4c-manager/download/{filename}', [ManagerController::class, 'download'])
+    ->where('filename', '[A-Za-z0-9._-]+')
+    ->name('manager.download');
 
 // Compressor routes
 Route::get('compressor', [CompressorController::class, 'create'])->name('compressor.create');
