@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ManagerReleaseStorage;
 use Database\Factories\ManagerReleaseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -41,9 +42,7 @@ class ManagerRelease extends Model
 
     public function downloadUrl(): string
     {
-        return route('manager.download', [
-            'filename' => $this->original_filename,
-        ]);
+        return app(ManagerReleaseStorage::class)->url($this);
     }
 
     /**

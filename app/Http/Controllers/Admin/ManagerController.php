@@ -133,6 +133,8 @@ class ManagerController extends Controller
     ): RedirectResponse {
         $wasActive = $release->is_active;
 
+        $storage->delete($release);
+
         DB::transaction(function () use ($release, $wasActive): void {
             $release->delete();
 
@@ -146,8 +148,6 @@ class ManagerController extends Controller
                 ->first()
                 ?->update(['is_active' => true]);
         });
-
-        $storage->delete($release);
 
         return back()->with('message', '4C Manager release deleted.');
     }

@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\ManagerRelease;
+use Illuminate\Filesystem\AwsS3V3Adapter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -65,7 +66,22 @@ class ManagerReleaseStorage
 
     public function delete(ManagerRelease $release): void
     {
-        Storage::disk($release->storage_disk)->delete($release->storage_path);
+        $this->deleteFile($release->storage_disk, $release->storage_path);
+    }
+
+    public function deleteFile(string $disk, string $path): void
+    {
+        $path = ltrim($path, '/');
+
+        if ($path === '') {
+            return;
+        }
+
+        if ($this->permanentlyDeleteS3Object($disk, $path)) {
+            return;
+        }
+
+        Storage::disk($disk)->delete($path);
     }
 
     public function sanitizeFilename(string $filename): string
@@ -75,5 +91,49 @@ class ManagerReleaseStorage
         $sanitized = trim($sanitized, '.-');
 
         return $sanitized !== '' ? $sanitized : Str::uuid()->toString().'.bin';
+    }
+
+    protected function permanentlyDeleteS3Object(string $disk, string $path): bool
+    {
+        $filesystem = Storage::disk($disk);
+        $bucket = (string) config("filesystems.disks.{$disk}.bucket", '');
+
+        if (! $filesystem instanceof AwsS3V3Adapter || $bucket === '') {
+            return false;
+        }
+
+        $client = $filesystem->getClient();
+        $versionIds = [];
+
+        foreach ($client->getPaginator('ListObjectVersions', [
+            'Bucket' => $bucket,
+            'Prefix' => $path,
+        ]) as $page) {
+            foreach (['Versions', 'DeleteMarkers'] as $entryKey) {
+                foreach ($page[$entryKey] ?? [] as $entry) {
+                    if (($entry['Key'] ?? null) !== $path || ! is_string($entry['VersionId'] ?? null)) {
+                        continue;
+                    }
+
+                    $versionIds[] = $entry['VersionId'];
+                }
+            }
+        }
+
+        $versionIds = array_unique($versionIds);
+
+        if ($versionIds === []) {
+            return false;
+        }
+
+        foreach ($versionIds as $versionId) {
+            $client->deleteObject([
+                'Bucket' => $bucket,
+                'Key' => $path,
+                'VersionId' => $versionId,
+            ]);
+        }
+
+        return true;
     }
 }

@@ -21,7 +21,10 @@ return [
 
     'manager_disk' => env('MANAGER_DISK', env('FOUR_C_MANAGER_DISK', env('PASTE_MEDIA_DISK', 'public'))),
 
-    'manager_cdn_url' => env('MANAGER_CDN_URL', env('FOUR_C_MANAGER_CDN_URL')),
+    'manager_cdn_url' => env(
+        'MANAGER_CDN_URL',
+        env('FOUR_C_MANAGER_CDN_URL', env('PASTE_MEDIA_CDN_URL', env('APP_ENV') === 'production' ? 'https://cdn.bfw.cz' : null)),
+    ),
 
     /*
     |--------------------------------------------------------------------------

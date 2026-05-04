@@ -2,6 +2,7 @@
 
 use App\Models\ManagerRelease;
 use App\Models\User;
+use App\Support\ManagerReleaseStorage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -18,11 +19,14 @@ beforeEach(function () {
 });
 
 it('shows the 4c manager admin tab to admins', function () {
+    config(['filesystems.manager_cdn_url' => 'https://cdn.bfw.cz']);
+
     $admin = User::factory()->admin()->create();
 
     ManagerRelease::factory()->active()->create([
         'version' => '1.4.0',
         'original_filename' => '4CAMPS.Manager_1.4.0_x64_en-US.msi.zip',
+        'storage_path' => '4c-manager/releases/1.4.0/4CAMPS.Manager_1.4.0_x64_en-US.msi.zip',
     ]);
 
     expect(route('admin.manager.index', absolute: false))->toBe('/admin/4c-manager');
@@ -36,6 +40,7 @@ it('shows the 4c manager admin tab to admins', function () {
             ->has('releases', 1)
             ->where('releases.0.version', '1.4.0')
             ->where('releases.0.is_active', true)
+            ->where('releases.0.download_url', 'https://cdn.bfw.cz/4c-manager/releases/1.4.0/4CAMPS.Manager_1.4.0_x64_en-US.msi.zip')
             ->etc()
         );
 });
@@ -50,6 +55,7 @@ it('forbids non-admin users from managing 4c manager releases', function () {
 
 it('lets admins upload a release and exposes it through the permanent json endpoint', function () {
     Storage::fake('public');
+    config(['filesystems.manager_cdn_url' => 'https://cdn.bfw.cz']);
 
     $admin = User::factory()->admin()->create();
     $installer = UploadedFile::fake()->create(
@@ -84,9 +90,7 @@ it('lets admins upload a release and exposes it through the permanent json endpo
         ->assertJsonPath('version', '1.4.0')
         ->assertJsonPath('notes', '')
         ->assertJsonPath('platforms.windows-x86_64.signature', 'signed-by-tauri')
-        ->assertJsonPath('platforms.windows-x86_64.url', route('manager.download', [
-            'filename' => '4CAMPS.Manager_1.4.0_x64_en-US.msi.zip',
-        ]));
+        ->assertJsonPath('platforms.windows-x86_64.url', 'https://cdn.bfw.cz/4c-manager/releases/1.4.0/4CAMPS.Manager_1.4.0_x64_en-US.msi.zip');
 });
 
 it('rejects manager installer uploads larger than 250 mb', function () {
@@ -203,4 +207,33 @@ it('lets admins delete releases and promotes the newest remaining release', func
     $this->assertDatabaseMissing('manager_releases', ['id' => $activeRelease->id]);
     Storage::disk('public')->assertMissing($activeRelease->storage_path);
     expect($archivedRelease->fresh()->is_active)->toBeTrue();
+});
+
+it('keeps the release record when installer deletion fails', function () {
+    $admin = User::factory()->admin()->create();
+    $activeRelease = ManagerRelease::factory()->active()->create([
+        'version' => '1.4.0',
+        'storage_disk' => 's3',
+        'storage_path' => '4c-manager/releases/1.4.0/current.zip',
+    ]);
+
+    $this->mock(ManagerReleaseStorage::class, function ($mock) use ($activeRelease): void {
+        $mock->shouldReceive('delete')
+            ->once()
+            ->withArgs(fn (ManagerRelease $release) => $release->is($activeRelease))
+            ->andThrow(new RuntimeException('S3 delete failed.'));
+    });
+
+    $this->withoutExceptionHandling();
+
+    try {
+        $this->actingAs($admin)->delete(route('admin.manager.destroy', $activeRelease));
+    } catch (RuntimeException $exception) {
+        expect($exception->getMessage())->toBe('S3 delete failed.');
+    }
+
+    $this->assertDatabaseHas('manager_releases', [
+        'id' => $activeRelease->id,
+        'is_active' => true,
+    ]);
 });
