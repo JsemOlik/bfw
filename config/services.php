@@ -41,4 +41,8 @@ return [
         'script_url' => env('UMAMI_SCRIPT_URL'),
     ],
 
+    'manager' => [
+        'api_token' => env('MANAGER_API_TOKEN'),
+    ],
+
 ];
