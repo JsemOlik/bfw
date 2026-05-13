@@ -1,117 +1,137 @@
 services:
-    app:
-        image: ghcr.io/jsemolik/bfw:latest
-        platform: linux/amd64
-        build:
-            context: .
-            dockerfile: Dockerfile
-            args:
-                - APP_ENV=production
-        container_name: bfw-app-prod
-        restart: unless-stopped
-        ports:
-            - "6300:80"
-        volumes:
-            - ./.env:/var/www/html/.env
-        environment:
-            - APP_ENV=production
-            - APP_DEBUG=false
-            - CONTAINER_ROLE=app
-            - DB_CONNECTION=pgsql
-            - DB_HOST=db
-            - DB_PORT=5432
-            - DB_DATABASE=${DB_DATABASE:-bfw}
-            - DB_USERNAME=${DB_USERNAME:-bfw}
-            - DB_PASSWORD=${DB_PASSWORD:-password}
-            - SESSION_DRIVER=${SESSION_DRIVER:-redis}
-            - SESSION_CONNECTION=${SESSION_CONNECTION:-default}
-            - QUEUE_CONNECTION=${QUEUE_CONNECTION:-redis}
-            - CACHE_STORE=${CACHE_STORE:-redis}
-            - REDIS_HOST=redis
-            - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-            - REDIS_PORT=6379
-        depends_on:
-            db:
-                condition: service_healthy
-            redis:
-                condition: service_healthy
-        healthcheck:
-            test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/up >/dev/null || exit 1"]
-            interval: 10s
-            timeout: 5s
-            retries: 5
+  app:
+    image: ghcr.io/jsemolik/bfw:latest
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_ENV=production
+    container_name: bfw-app
+    restart: unless-stopped
+    expose:
+      - '80'
+    volumes:
+      - ./.env:/var/www/html/.env
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - CONTAINER_ROLE=app
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-bfw}
+      - DB_USERNAME=${DB_USERNAME:-bfw}
+      - DB_PASSWORD=${DB_PASSWORD:-bfw}
+      - SESSION_DRIVER=${SESSION_DRIVER:-redis}
+      - SESSION_CONNECTION=${SESSION_CONNECTION:-default}
+      - QUEUE_CONNECTION=${QUEUE_CONNECTION:-redis}
+      - CACHE_STORE=${CACHE_STORE:-redis}
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_PORT=6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fsS http://127.0.0.1/up >/dev/null || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - default
+      - proxy
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'traefik.http.routers.bfw-app.rule=Host(`${APP_HOST:-app.local}`)'
+      - 'traefik.http.routers.bfw-app.entrypoints=websecure'
+      - 'traefik.http.routers.bfw-app.tls=true'
+      - 'traefik.http.routers.bfw-app.tls.certresolver=letsencrypt'
+      - 'traefik.http.services.bfw-app.loadbalancer.server.port=80'
 
-    db:
-        image: postgres:17-alpine
-        container_name: bfw-db-prod
-        restart: unless-stopped
-        environment:
-            - POSTGRES_DB=${DB_DATABASE:-bfw}
-            - POSTGRES_USER=${DB_USERNAME:-bfw}
-            - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
-        volumes:
-            - bfw-db-prod-data:/var/lib/postgresql/data
-        healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-bfw} -d ${DB_DATABASE:-bfw}"]
-            interval: 10s
-            timeout: 5s
-            retries: 5
+  db:
+    image: postgres:17-alpine
+    container_name: bfw-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${DB_DATABASE:-bfw}
+      - POSTGRES_USER=${DB_USERNAME:-bfw}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-bfw}
+    volumes:
+      - ./bfw-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${DB_USERNAME:-bfw} -d ${DB_DATABASE:-bfw}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-    redis:
-        image: redis:7-alpine
-        container_name: bfw-redis-prod
-        restart: unless-stopped
-        command: redis-server --appendonly yes
-        volumes:
-            - bfw-redis-prod-data:/data
-        healthcheck:
-            test: ["CMD", "redis-cli", "ping"]
-            interval: 5s
-            timeout: 5s
-            retries: 5
+  redis:
+    image: redis:7-alpine
+    container_name: bfw-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - ./bfw-redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-    dbgate:
-        image: dbgate/dbgate
-        container_name: bfw-dbgate-prod
-        restart: unless-stopped
-        ports:
-            - "6301:3000"
-        depends_on:
-            - db
+  umami:
+    image: docker.umami.is/umami-software/umami:postgresql-latest
+    container_name: bfw-umami
+    restart: unless-stopped
+    expose:
+      - '3000'
+    environment:
+      - DATABASE_URL=postgresql://${UMAMI_DB_USER:-umami}:${UMAMI_DB_PASSWORD:-umami}@umami-db:5432/${UMAMI_DB_NAME:-umami}
+      - APP_SECRET=${UMAMI_APP_SECRET:-umami}
+      - APP_URL=${UMAMI_APP_URL:-https://umami.example.com}
+      - CLIENT_IP_HEADER=${UMAMI_CLIENT_IP_HEADER:-x-forwarded-for}
+    depends_on:
+      umami-db:
+        condition: service_healthy
+    networks:
+      - default
+      - proxy
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'traefik.http.routers.bfw-umami.rule=Host(`${UMAMI_HOST:-umami.local}`)'
+      - 'traefik.http.routers.bfw-umami.entrypoints=websecure'
+      - 'traefik.http.routers.bfw-umami.tls=true'
+      - 'traefik.http.routers.bfw-umami.tls.certresolver=letsencrypt'
+      - 'traefik.http.services.bfw-umami.loadbalancer.server.port=3000'
 
-    umami:
-        image: docker.umami.is/umami-software/umami:postgresql-latest
-        container_name: bfw-umami-prod
-        restart: unless-stopped
-        ports:
-            - "${UMAMI_PORT:-6302}:3000"
-        environment:
-            - DATABASE_URL=postgresql://${UMAMI_DB_USER:-umami}:${UMAMI_DB_PASSWORD:-umami-password}@umami-db:5432/${UMAMI_DB_NAME:-umami}
-            - APP_SECRET=${UMAMI_APP_SECRET:-change-this-umami-secret}
-            - APP_URL=${UMAMI_APP_URL:-http://localhost:3001}
-            - CLIENT_IP_HEADER=${UMAMI_CLIENT_IP_HEADER:-x-forwarded-for}
-        depends_on:
-            umami-db:
-                condition: service_healthy
+  umami-db:
+    image: postgres:17-alpine
+    container_name: bfw-umami-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${UMAMI_DB_NAME:-umami}
+      - POSTGRES_USER=${UMAMI_DB_USER:-umami}
+      - POSTGRES_PASSWORD=${UMAMI_DB_PASSWORD:-umami}
+    volumes:
+      - ./umami-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${UMAMI_DB_USER:-umami} -d ${UMAMI_DB_NAME:-umami}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-    umami-db:
-        image: postgres:17-alpine
-        container_name: bfw-umami-db-prod
-        restart: unless-stopped
-        environment:
-            - POSTGRES_DB=${UMAMI_DB_NAME:-umami}
-            - POSTGRES_USER=${UMAMI_DB_USER:-umami}
-            - POSTGRES_PASSWORD=${UMAMI_DB_PASSWORD:-umami-password}
-        volumes:
-            - bfw-umami-db-prod-data:/var/lib/postgresql/data
-        healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U ${UMAMI_DB_USER:-umami} -d ${UMAMI_DB_NAME:-umami}"]
-            interval: 10s
-            timeout: 5s
-            retries: 5
-
-volumes:
-    bfw-db-prod-data:
-    bfw-redis-prod-data:
-    bfw-umami-db-prod-data:
-    
+networks:
+  proxy:
+    external: true
+    name: proxy
