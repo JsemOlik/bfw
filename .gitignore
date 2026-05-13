@@ -25,3 +25,8 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# bfw stack local data
+bfw-db-data/
+bfw-redis-data/
+umami-db-data/
